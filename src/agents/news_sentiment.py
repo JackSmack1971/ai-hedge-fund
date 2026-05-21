@@ -54,12 +54,13 @@ def news_sentiment_agent(state: AgentState, agent_id: str = "news_sentiment_agen
 
         news_signals = []
         sentiment_confidences = {}  # Store confidence scores for each article
-        
+        sentiments_classified_by_llm = 0
+
         if company_news:
             # Check the 10 most recent articles
             recent_articles = company_news[:10]
             articles_without_sentiment = [news for news in recent_articles if news.sentiment is None]
-            
+
             # Analyze only the 5 most recent articles without sentiment to reduce LLM calls
             sentiments_classified_by_llm = 0
             if articles_without_sentiment:
