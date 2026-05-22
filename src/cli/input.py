@@ -190,7 +190,11 @@ def select_model(use_ollama: bool, model_flag: str | None = None) -> tuple[str, 
 
 
 def resolve_dates(
-    start_date: str | None, end_date: str | None, *, default_months_back: int | None = None
+    start_date: str | None,
+    end_date: str | None,
+    *,
+    default_months_back: int | None = None,
+    _now: datetime | None = None,
 ) -> tuple[str, str]:
     if start_date:
         try:
@@ -203,13 +207,18 @@ def resolve_dates(
         except ValueError:
             raise ValueError("End date must be in YYYY-MM-DD format")
 
-    final_end = end_date or datetime.now().strftime("%Y-%m-%d")
+    now = _now or datetime.now()
+    final_end = end_date or now.strftime("%Y-%m-%d")
     if start_date:
         final_start = start_date
     else:
         months = default_months_back if default_months_back is not None else 3
         end_date_obj = datetime.strptime(final_end, "%Y-%m-%d")
         final_start = (end_date_obj - relativedelta(months=months)).strftime("%Y-%m-%d")
+
+    if final_start >= final_end:
+        raise ValueError(f"start_date ({final_start}) must be before end_date ({final_end})")
+
     return final_start, final_end
 
 

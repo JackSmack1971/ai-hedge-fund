@@ -80,12 +80,27 @@ class TestResolveDates:
 
     def test_no_end_date_defaults_to_today(self):
         from datetime import datetime
-        _, end = resolve_dates("2024-01-01", None)
-        today = datetime.now().strftime("%Y-%m-%d")
-        assert end == today
+        fixed_now = datetime(2024, 6, 15)
+        _, end = resolve_dates("2024-01-01", None, _now=fixed_now)
+        assert end == "2024-06-15"
 
     def test_both_none_uses_defaults(self):
         from datetime import datetime
-        start, end = resolve_dates(None, None, default_months_back=1)
-        assert end == datetime.now().strftime("%Y-%m-%d")
+        fixed_now = datetime(2024, 6, 15)
+        start, end = resolve_dates(None, None, default_months_back=1, _now=fixed_now)
+        assert end == "2024-06-15"
         assert start < end
+
+    def test_start_after_end_raises(self):
+        with pytest.raises(ValueError, match="must be before"):
+            resolve_dates("2025-01-01", "2024-01-01")
+
+    def test_start_equal_end_raises(self):
+        with pytest.raises(ValueError, match="must be before"):
+            resolve_dates("2024-01-01", "2024-01-01")
+
+    def test_january_month_boundary(self):
+        from datetime import datetime
+        fixed_now = datetime(2024, 1, 31)
+        start, end = resolve_dates(None, "2024-01-31", default_months_back=3, _now=fixed_now)
+        assert start == "2023-10-31"
