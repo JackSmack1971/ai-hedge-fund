@@ -1,5 +1,6 @@
 import datetime
 import os
+import random
 import pandas as pd
 import requests
 import time
@@ -49,9 +50,14 @@ def _make_api_request(url: str, headers: dict, method: str = "GET", json_data: d
             response = requests.get(url, headers=headers, timeout=_REQUEST_TIMEOUT)
         
         if response.status_code == 429 and attempt < max_retries:
-            # Linear backoff: 60s, 90s, 120s, 150s...
-            delay = 60 + (30 * attempt)
-            print(f"Rate limited (429). Attempt {attempt + 1}/{max_retries + 1}. Waiting {delay}s before retrying...")
+            # Honour Retry-After header when present; otherwise full-jitter exponential backoff
+            retry_after = response.headers.get("Retry-After")
+            if retry_after:
+                delay = float(retry_after)
+            else:
+                cap = min(60.0, 1.0 * (2 ** attempt))
+                delay = random.uniform(0, cap)
+            print(f"Rate limited (429). Attempt {attempt + 1}/{max_retries + 1}. Retrying in {delay:.1f}s...")
             time.sleep(delay)
             continue
         

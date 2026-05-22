@@ -22,7 +22,7 @@ class HedgeFundFlow(Base):
     data = Column(JSON, nullable=True)  # Store node internal states (tickers, models, etc.)
     
     # Additional metadata
-    is_template = Column(Boolean, default=False)  # Mark as template for reuse
+    is_template = Column(Boolean, default=False, index=True)  # Mark as template for reuse
     tags = Column(JSON, nullable=True)  # Store tags for categorization
 
 
@@ -36,12 +36,12 @@ class HedgeFundFlowRun(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Run execution tracking
-    status = Column(String(50), nullable=False, default="IDLE")  # IDLE, IN_PROGRESS, COMPLETE, ERROR
+    status = Column(String(50), nullable=False, default="IDLE", index=True)  # IDLE, IN_PROGRESS, COMPLETE, ERROR
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     
     # Run configuration
-    trading_mode = Column(String(50), nullable=False, default="one-time")  # one-time, continuous, advisory
+    trading_mode = Column(String(50), nullable=False, default="one-time", index=True)  # one-time, continuous, advisory
     schedule = Column(String(50), nullable=True)  # hourly, daily, weekly (for continuous mode)
     duration = Column(String(50), nullable=True)  # 1day, 1week, 1month (for continuous mode)
     
@@ -62,7 +62,7 @@ class HedgeFundFlowRunCycle(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     flow_run_id = Column(Integer, ForeignKey("hedge_fund_flow_runs.id"), nullable=False, index=True)
-    cycle_number = Column(Integer, nullable=False)  # 1, 2, 3, etc. within the run
+    cycle_number = Column(Integer, nullable=False, index=True)  # 1, 2, 3, etc. within the run
     
     # Timing
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -81,7 +81,7 @@ class HedgeFundFlowRunCycle(Base):
     performance_metrics = Column(JSON, nullable=True)  # Returns, sharpe ratio, etc.
     
     # Execution tracking
-    status = Column(String(50), nullable=False, default="IN_PROGRESS")  # IN_PROGRESS, COMPLETED, ERROR
+    status = Column(String(50), nullable=False, default="IN_PROGRESS", index=True)  # IN_PROGRESS, COMPLETED, ERROR
     error_message = Column(Text, nullable=True)  # Store error details if cycle failed
     
     # Cost tracking
@@ -105,7 +105,7 @@ class ApiKey(Base):
     # API key details
     provider = Column(String(100), nullable=False, unique=True, index=True)  # e.g., "ANTHROPIC_API_KEY"
     key_value = Column(Text, nullable=False)  # The actual API key (encrypted in production)
-    is_active = Column(Boolean, default=True)  # Enable/disable without deletion
+    is_active = Column(Boolean, default=True, index=True)  # Enable/disable without deletion
     
     # Optional metadata
     description = Column(Text, nullable=True)  # Human-readable description
