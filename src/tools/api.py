@@ -4,6 +4,8 @@ import pandas as pd
 import requests
 import time
 
+_REQUEST_TIMEOUT = (10, 30)  # (connect_seconds, read_seconds)
+
 from src.data.cache import get_cache
 from src.data.models import (
     CompanyNews,
@@ -40,12 +42,11 @@ def _make_api_request(url: str, headers: dict, method: str = "GET", json_data: d
     Raises:
         Exception: If the request fails with a non-429 error
     """
-    _TIMEOUT = (10, 30)  # (connect_seconds, read_seconds)
     for attempt in range(max_retries + 1):  # +1 for initial attempt
         if method.upper() == "POST":
-            response = requests.post(url, headers=headers, json=json_data, timeout=_TIMEOUT)
+            response = requests.post(url, headers=headers, json=json_data, timeout=_REQUEST_TIMEOUT)
         else:
-            response = requests.get(url, headers=headers, timeout=_TIMEOUT)
+            response = requests.get(url, headers=headers, timeout=_REQUEST_TIMEOUT)
         
         if response.status_code == 429 and attempt < max_retries:
             # Linear backoff: 60s, 90s, 120s, 150s...
