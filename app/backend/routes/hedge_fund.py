@@ -29,6 +29,7 @@ async def run(request_data: HedgeFundRequest, request: Request, db: Session = De
         if not request_data.api_keys:
             api_key_service = ApiKeyService(db)
             request_data.api_keys = api_key_service.get_api_keys_dict()
+        db.close()  # release connection before the long-running streaming response
 
         # Create the portfolio
         portfolio = create_portfolio(request_data.initial_cash, request_data.margin_requirement, request_data.tickers, request_data.portfolio_positions)
@@ -174,6 +175,7 @@ async def backtest(request_data: BacktestRequest, request: Request, db: Session 
         if not request_data.api_keys:
             api_key_service = ApiKeyService(db)
             request_data.api_keys = api_key_service.get_api_keys_dict()
+        db.close()  # release connection before the long-running streaming response
 
         # Convert model_provider to string if it's an enum
         model_provider = request_data.model_provider

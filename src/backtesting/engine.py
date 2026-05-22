@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Sequence, Dict
 
@@ -83,14 +84,21 @@ class BacktestEngine:
         start_date_dt = end_date_dt - relativedelta(years=1)
         start_date_str = start_date_dt.strftime("%Y-%m-%d")
 
+        tasks: list[tuple] = []
         for ticker in self._tickers:
-            get_prices(ticker, start_date_str, self._end_date)
-            get_financial_metrics(ticker, self._end_date, limit=10)
-            get_insider_trades(ticker, self._end_date, start_date=self._start_date, limit=1000)
-            get_company_news(ticker, self._end_date, start_date=self._start_date, limit=1000)
-        
-        # Preload data for SPY for benchmark comparison
-        get_prices("SPY", self._start_date, self._end_date)
+            tasks += [
+                (get_prices, [ticker, start_date_str, self._end_date], {}),
+                (get_financial_metrics, [ticker, self._end_date], {"limit": 10}),
+                (get_insider_trades, [ticker, self._end_date], {"start_date": self._start_date, "limit": 1000}),
+                (get_company_news, [ticker, self._end_date], {"start_date": self._start_date, "limit": 1000}),
+            ]
+        tasks.append((get_prices, ["SPY", self._start_date, self._end_date], {}))
+
+        max_workers = min(len(tasks), 10)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(fn, *args, **kwargs): (fn, args) for fn, args, kwargs in tasks}
+            for future in as_completed(futures):
+                future.result()  # surface any exceptions from individual fetches
 
 
     def run_backtest(self) -> PerformanceMetrics:
