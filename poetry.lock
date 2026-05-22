@@ -735,18 +735,6 @@ docs = ["ipython", "matplotlib", "numpydoc", "sphinx"]
 tests = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [[package]]
-name = "defusedxml"
-version = "0.7.1"
-description = "XML bomb protection for Python stdlib modules"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-groups = ["main"]
-files = [
-    {file = "defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"},
-    {file = "defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69"},
-]
-
-[[package]]
 name = "distro"
 version = "1.9.0"
 description = "Distro - an OS platform information API"
@@ -1805,20 +1793,19 @@ xai = ["langchain-xai"]
 
 [[package]]
 name = "langchain-anthropic"
-version = "0.3.5"
-description = "An integration package connecting AnthropicMessages and LangChain"
+version = "0.3.22"
+description = "An integration package connecting Anthropic and LangChain"
 optional = false
-python-versions = "<4.0,>=3.9"
+python-versions = "<4.0.0,>=3.9.0"
 groups = ["main"]
 files = [
-    {file = "langchain_anthropic-0.3.5-py3-none-any.whl", hash = "sha256:bad34b02d7b4bdca9a9471bc391b01269fd8dc4600b83ca2a3e76925b7c27fe6"},
-    {file = "langchain_anthropic-0.3.5.tar.gz", hash = "sha256:2aa1673511056061680492871f386d68a8b62947e0eb1f15303ef10db16c8357"},
+    {file = "langchain_anthropic-0.3.22-py3-none-any.whl", hash = "sha256:17721b240342a1a3f70bf0b2ff33520ba60d69008e3b9433190a62a52ff87cf6"},
+    {file = "langchain_anthropic-0.3.22.tar.gz", hash = "sha256:6c440278bd8012bc94ae341f416bfc724fdc5d2d2b69630fe6e82fa6ee9682ac"},
 ]
 
 [package.dependencies]
-anthropic = ">=0.41.0,<1"
-defusedxml = ">=0.7.1,<0.8.0"
-langchain-core = ">=0.3.33,<0.4.0"
+anthropic = ">=0.69.0,<1.0.0"
+langchain-core = ">=0.3.78,<1.0.0"
 pydantic = ">=2.7.4,<3.0.0"
 
 [[package]]
@@ -1895,35 +1882,35 @@ pydantic = ">=2,<3"
 
 [[package]]
 name = "langchain-groq"
-version = "0.2.3"
+version = "0.2.5"
 description = "An integration package connecting Groq and LangChain"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "langchain_groq-0.2.3-py3-none-any.whl", hash = "sha256:3572c812acc1478ab0670c48eb9a135c95f47631190da750e48408267462a12d"},
-    {file = "langchain_groq-0.2.3.tar.gz", hash = "sha256:f94810fe734c9402b36273ddc3509eaa67f12a7d06b666c6ca472ab0bfdf37b7"},
+    {file = "langchain_groq-0.2.5-py3-none-any.whl", hash = "sha256:1d1635a8274228654c440a9115a32d51c4d99944f36ac3180a7c27076694036c"},
+    {file = "langchain_groq-0.2.5.tar.gz", hash = "sha256:7f194c77bffbbaf3cf4f038d46927043e4364cca97f406a939a69be3b34ce595"},
 ]
 
 [package.dependencies]
 groq = ">=0.4.1,<1"
-langchain-core = ">=0.3.29,<0.4.0"
+langchain-core = ">=0.3.42,<1.0.0"
 
 [[package]]
 name = "langchain-ollama"
-version = "0.3.6"
+version = "0.3.10"
 description = "An integration package connecting Ollama and LangChain"
 optional = false
-python-versions = ">=3.9"
+python-versions = "<4.0.0,>=3.9.0"
 groups = ["main"]
 files = [
-    {file = "langchain_ollama-0.3.6-py3-none-any.whl", hash = "sha256:b339bd3fcf913b8d606ad426ef39e7122695532507fcd85aa96271b3f33dc3df"},
-    {file = "langchain_ollama-0.3.6.tar.gz", hash = "sha256:4270c4b30b3f3d10850cb9a1183b8c77d616195e0d9717ac745ef7f7f6cc2b6e"},
+    {file = "langchain_ollama-0.3.10-py3-none-any.whl", hash = "sha256:7550792872e8f86d362568e9ceb0f8085428bc59946c7b44e726358ba4b280f9"},
+    {file = "langchain_ollama-0.3.10.tar.gz", hash = "sha256:5d942d331c44351bae5c5c5965603ceb20b0ee4d70082290f4b15bc638559756"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.3.70,<1.0.0"
-ollama = ">=0.5.1,<1.0.0"
+langchain-core = ">=0.3.76,<2.0.0"
+ollama = ">=0.5.3,<1.0.0"
 
 [[package]]
 name = "langchain-openai"
@@ -3694,14 +3681,14 @@ six = ">=1.5"
 
 [[package]]
 name = "python-dotenv"
-version = "1.0.0"
+version = "1.2.2"
 description = "Read key-value pairs from a .env file and set them as environment variables"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "python-dotenv-1.0.0.tar.gz", hash = "sha256:a8df96034aae6d2d50a4ebe8216326c61c3eb64836776504fcca410e5937a3ba"},
-    {file = "python_dotenv-1.0.0-py3-none-any.whl", hash = "sha256:f5971a9226b701070a4bf2c38c89e5a3f0d64de8debda981d1db98583009122a"},
+    {file = "python_dotenv-1.2.2-py3-none-any.whl", hash = "sha256:1d8214789a24de455a8b8bd8ae6fe3c6b69a5e3d64aa8a8e5d68e694bbcb285a"},
+    {file = "python_dotenv-1.2.2.tar.gz", hash = "sha256:2c371a91fbd7ba082c2c1dc1f8bf89ca22564a087c2c287cd9b662adde799cf3"},
 ]
 
 [package.extras]
@@ -5158,4 +5145,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "921ec17c71a6f9496346cc1a9017b6b83acc4ff21dc9582d1f4cc080c1a78f8f"
+content-hash = "db177a76f2df4930ad0727a8b597bd4f85ba7c880937cd0aedcda724db9fc2cd"

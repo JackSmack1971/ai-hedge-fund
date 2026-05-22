@@ -74,7 +74,7 @@ class PerformanceMetricsCalculator:
         # Sharpe (sample std, ddof=1)
         std_excess = (self._M2_excess / (self._n - 1)) ** 0.5
         if std_excess > 1e-12:
-            sharpe = float(self.annual_trading_days ** 0.5 * (self._mean_excess / std_excess))
+            sharpe = float(self.annual_trading_days**0.5 * (self._mean_excess / std_excess))
         else:
             sharpe = 0.0
 
@@ -82,7 +82,7 @@ class PerformanceMetricsCalculator:
         if self._n_down >= 2:
             downside_std = (self._M2_down / (self._n_down - 1)) ** 0.5
             if downside_std > 1e-12:
-                sortino = float(self.annual_trading_days ** 0.5 * (self._mean_excess / downside_std))
+                sortino = float(self.annual_trading_days**0.5 * (self._mean_excess / downside_std))
             else:
                 sortino = float("inf") if self._mean_excess > 0 else 0.0
         else:

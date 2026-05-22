@@ -19,6 +19,7 @@ class PeterLynchSignal(BaseModel):
     """
     Container for the Peter Lynch-style output signal.
     """
+
     signal: Literal["bullish", "bearish", "neutral"]
     confidence: float
     reasoning: str
@@ -492,11 +493,7 @@ def generate_lynch_output(
     prompt = template.invoke({"analysis_data": json.dumps(analysis_data, indent=2), "ticker": ticker})
 
     def create_default_signal():
-        return PeterLynchSignal(
-            signal="neutral",
-            confidence=0.0,
-            reasoning="Error in analysis; defaulting to neutral"
-        )
+        return PeterLynchSignal(signal="neutral", confidence=0.0, reasoning="Error in analysis; defaulting to neutral")
 
     return call_llm(
         prompt=prompt,

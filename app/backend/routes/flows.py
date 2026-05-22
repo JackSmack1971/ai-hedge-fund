@@ -5,11 +5,11 @@ from typing import List
 from app.backend.database import get_db
 from app.backend.repositories.flow_repository import FlowRepository
 from app.backend.models.schemas import (
-    FlowCreateRequest, 
-    FlowUpdateRequest, 
-    FlowResponse, 
+    FlowCreateRequest,
+    FlowUpdateRequest,
+    FlowResponse,
     FlowSummaryResponse,
-    ErrorResponse
+    ErrorResponse,
 )
 
 router = APIRouter(prefix="/flows", tags=["flows"])
@@ -35,7 +35,7 @@ async def create_flow(request: FlowCreateRequest, db: Session = Depends(get_db))
             viewport=request.viewport,
             data=request.data,
             is_template=request.is_template,
-            tags=request.tags
+            tags=request.tags,
         )
         return FlowResponse.from_orm(flow)
     except Exception as e:
@@ -102,7 +102,7 @@ async def update_flow(flow_id: int, request: FlowUpdateRequest, db: Session = De
             viewport=request.viewport,
             data=request.data,
             is_template=request.is_template,
-            tags=request.tags
+            tags=request.tags,
         )
         if not flow:
             raise HTTPException(status_code=404, detail="Flow not found")
@@ -171,4 +171,4 @@ async def search_flows(name: str, db: Session = Depends(get_db)):
         flows = repo.get_flows_by_name(name)
         return [FlowSummaryResponse.from_orm(flow) for flow in flows]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to search flows: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Failed to search flows: {str(e)}")

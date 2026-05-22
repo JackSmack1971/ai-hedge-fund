@@ -169,7 +169,9 @@ ANALYST_CONFIG = {
 }
 
 # Derive ANALYST_ORDER from ANALYST_CONFIG for backwards compatibility
-ANALYST_ORDER = [(config["display_name"], key) for key, config in sorted(ANALYST_CONFIG.items(), key=lambda x: x[1]["order"])]
+ANALYST_ORDER = [
+    (config["display_name"], key) for key, config in sorted(ANALYST_CONFIG.items(), key=lambda x: x[1]["order"])
+]
 
 
 def get_analyst_nodes():
@@ -185,7 +187,7 @@ def get_agents_list():
             "display_name": config["display_name"],
             "description": config["description"],
             "investing_style": config["investing_style"],
-            "order": config["order"]
+            "order": config["order"],
         }
         for key, config in sorted(ANALYST_CONFIG.items(), key=lambda x: x[1]["order"])
     ]

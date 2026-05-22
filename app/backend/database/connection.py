@@ -26,9 +26,10 @@ def _set_sqlite_pragmas(dbapi_connection, connection_record):
         return
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA journal_mode=WAL")
-    cursor.execute("PRAGMA synchronous=NORMAL")   # safe with WAL, faster than FULL
-    cursor.execute("PRAGMA cache_size=-64000")    # 64 MB page cache
+    cursor.execute("PRAGMA synchronous=NORMAL")  # safe with WAL, faster than FULL
+    cursor.execute("PRAGMA cache_size=-64000")  # 64 MB page cache
     cursor.close()
+
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -36,10 +37,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Create Base class for models
 Base = declarative_base()
 
+
 # Dependency for FastAPI
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.close() 
+        db.close()

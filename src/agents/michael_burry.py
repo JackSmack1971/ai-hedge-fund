@@ -170,6 +170,7 @@ def _latest_line_item(line_items: list):
 
 # ----- Value ----------------------------------------------------------------
 
+
 def _analyze_value(metrics, line_items, market_cap):
     """Free cash‑flow yield, EV/EBIT, other classic deep‑value metrics."""
 
@@ -218,6 +219,7 @@ def _analyze_value(metrics, line_items, market_cap):
 
 # ----- Balance sheet --------------------------------------------------------
 
+
 def _analyze_balance_sheet(metrics, line_items):
     """Leverage and liquidity checks."""
 
@@ -259,6 +261,7 @@ def _analyze_balance_sheet(metrics, line_items):
 
 # ----- Insider activity -----------------------------------------------------
 
+
 def _analyze_insider_activity(insider_trades):
     """Net insider buying over the last 12 months acts as a hard catalyst."""
 
@@ -284,6 +287,7 @@ def _analyze_insider_activity(insider_trades):
 
 # ----- Contrarian sentiment -------------------------------------------------
 
+
 def _analyze_contrarian_sentiment(news):
     """Very rough gauge: a wall of recent negative headlines can be a *positive* for a contrarian."""
 
@@ -296,10 +300,8 @@ def _analyze_contrarian_sentiment(news):
         return {"score": score, "max_score": max_score, "details": "; ".join(details)}
 
     # Count negative sentiment articles
-    sentiment_negative_count = sum(
-        1 for n in news if n.sentiment and n.sentiment.lower() in ["negative", "bearish"]
-    )
-    
+    sentiment_negative_count = sum(1 for n in news if n.sentiment and n.sentiment.lower() in ["negative", "bearish"])
+
     if sentiment_negative_count >= 5:
         score += 1  # The more hated, the better (assuming fundamentals hold up)
         details.append(f"{sentiment_negative_count} negative headlines (contrarian opportunity)")
@@ -312,6 +314,7 @@ def _analyze_contrarian_sentiment(news):
 ###############################################################################
 # LLM generation
 ###############################################################################
+
 
 def _generate_burry_output(
     ticker: str,
