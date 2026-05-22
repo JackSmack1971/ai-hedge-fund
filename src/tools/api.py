@@ -40,11 +40,12 @@ def _make_api_request(url: str, headers: dict, method: str = "GET", json_data: d
     Raises:
         Exception: If the request fails with a non-429 error
     """
+    _TIMEOUT = (10, 30)  # (connect_seconds, read_seconds)
     for attempt in range(max_retries + 1):  # +1 for initial attempt
         if method.upper() == "POST":
-            response = requests.post(url, headers=headers, json=json_data)
+            response = requests.post(url, headers=headers, json=json_data, timeout=_TIMEOUT)
         else:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=_TIMEOUT)
         
         if response.status_code == 429 and attempt < max_retries:
             # Linear backoff: 60s, 90s, 120s, 150s...
@@ -81,7 +82,7 @@ def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None)
     try:
         price_response = PriceResponse(**response.json())
         prices = price_response.prices
-    except:
+    except Exception:
         return []
 
     if not prices:
@@ -122,7 +123,7 @@ def get_financial_metrics(
     try:
         metrics_response = FinancialMetricsResponse(**response.json())
         financial_metrics = metrics_response.financial_metrics
-    except:
+    except Exception:
         return []
 
     if not financial_metrics:
@@ -165,7 +166,7 @@ def search_line_items(
         data = response.json()
         response_model = LineItemResponse(**data)
         search_results = response_model.search_results
-    except:
+    except Exception:
         return []
     if not search_results:
         return []
@@ -212,7 +213,7 @@ def get_insider_trades(
             data = response.json()
             response_model = InsiderTradeResponse(**data)
             insider_trades = response_model.insider_trades
-        except:
+        except Exception:
             break  # Parsing error, exit loop
 
         if not insider_trades:
@@ -277,7 +278,7 @@ def get_company_news(
             data = response.json()
             response_model = CompanyNewsResponse(**data)
             company_news = response_model.news
-        except:
+        except Exception:
             break  # Parsing error, exit loop
 
         if not company_news:

@@ -1,24 +1,17 @@
-import sys
-
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
-from colorama import Fore, Style, init
-import questionary
+from colorama import init
 from src.agents.portfolio_manager import portfolio_management_agent
 from src.agents.risk_manager import risk_management_agent
 from src.graph.state import AgentState
 from src.utils.display import print_trading_output
-from src.utils.analysts import ANALYST_ORDER, get_analyst_nodes
+from src.utils.analysts import get_analyst_nodes
 from src.utils.progress import progress
-from src.utils.visualize import save_graph_as_png
 from src.cli.input import (
     parse_cli_inputs,
 )
 
-import argparse
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 import json
 
 # Load environment variables from .env file
@@ -49,7 +42,7 @@ def run_hedge_fund(
     end_date: str,
     portfolio: dict,
     show_reasoning: bool = False,
-    selected_analysts: list[str] = [],
+    selected_analysts: list[str] | None = None,
     model_name: str = "gpt-4.1",
     model_provider: str = "OpenAI",
 ):
