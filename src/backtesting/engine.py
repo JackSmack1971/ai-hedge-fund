@@ -101,6 +101,8 @@ class BacktestEngine:
             self._portfolio_values = [
                 {"Date": dates[0], "Portfolio Value": self._initial_capital}
             ]
+            # Seed incremental calculator with initial capital value
+            self._perf.add_value(self._initial_capital, dates[0])
         else:
             self._portfolio_values = []
 
@@ -180,11 +182,10 @@ class BacktestEngine:
             # Print full history with latest day first (matches backtester.py behavior)
             self._results.print_rows(self._table_rows)
 
-            # Update performance metrics after printing (match original timing)
-            if len(self._portfolio_values) > 3:
-                computed = self._perf.compute_metrics(self._portfolio_values)
-                if computed:
-                    self._performance_metrics.update(computed)
+            # Update performance metrics incrementally — O(1) per day instead of O(n)
+            computed = self._perf.add_value(total_value, current_date)
+            if computed:
+                self._performance_metrics.update(computed)
 
         return self._performance_metrics
 

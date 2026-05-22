@@ -149,8 +149,12 @@ def search_line_items(
     limit: int = 10,
     api_key: str = None,
 ) -> list[LineItem]:
-    """Fetch line items from API."""
-    # If not in cache or insufficient data, fetch from API
+    """Fetch line items from cache or API."""
+    items_key = "_".join(sorted(line_items))
+    cache_key = f"{ticker}_{period}_{end_date}_{limit}_{items_key}"
+    if cached_data := _cache.get_line_items(cache_key):
+        return [LineItem(**item) for item in cached_data][:limit]
+
     headers = {}
     financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
     if financial_api_key:
@@ -168,7 +172,7 @@ def search_line_items(
     response = _make_api_request(url, headers, method="POST", json_data=body)
     if response.status_code != 200:
         return []
-    
+
     try:
         data = response.json()
         response_model = LineItemResponse(**data)
@@ -178,7 +182,7 @@ def search_line_items(
     if not search_results:
         return []
 
-    # Cache the results
+    _cache.set_line_items(cache_key, [item.model_dump() for item in search_results])
     return search_results[:limit]
 
 
