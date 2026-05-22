@@ -68,8 +68,9 @@ class TestGetPrices:
 
     def test_cache_hit_skips_http(self):
         fresh_cache = Cache()
+        # Cache is keyed by ticker only; the range filter happens inside get_prices()
         fresh_cache.set_prices(
-            "AAPL_2024-03-01_2024-03-08",
+            "AAPL",
             [{"open": 179.0, "close": 180.0, "high": 181.0, "low": 178.0, "volume": 1000000, "time": "2024-03-01T05:00:00Z"}],
         )
         with patch("src.tools.api._cache", fresh_cache):

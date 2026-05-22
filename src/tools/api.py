@@ -61,14 +61,14 @@ def _make_api_request(url: str, headers: dict, method: str = "GET", json_data: d
 
 def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None) -> list[Price]:
     """Fetch price data from cache or API."""
-    # Create a cache key that includes all parameters to ensure exact matches
-    cache_key = f"{ticker}_{start_date}_{end_date}"
-    
-    # Check cache first - simple exact match
-    if cached_data := _cache.get_prices(cache_key):
-        return [Price(**price) for price in cached_data]
+    # Cache is keyed by ticker only so that a wide prefetch range covers all
+    # narrow per-day queries in the backtest loop (fixes cache-key mismatch).
+    if cached_data := _cache.get_prices(ticker):
+        filtered = [p for p in cached_data if start_date <= p["time"][:10] <= end_date]
+        if filtered:
+            return [Price(**price) for price in filtered]
 
-    # If not in cache, fetch from API
+    # Range not in cache — fetch from API
     headers = {}
     financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
     if financial_api_key:
@@ -89,8 +89,8 @@ def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None)
     if not prices:
         return []
 
-    # Cache the results using the comprehensive cache key
-    _cache.set_prices(cache_key, [p.model_dump() for p in prices])
+    # Store under ticker key; _cache.set_prices merges by 'time' to avoid duplicates
+    _cache.set_prices(ticker, [p.model_dump() for p in prices])
     return prices
 
 
