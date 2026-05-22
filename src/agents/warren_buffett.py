@@ -90,13 +90,14 @@ def warren_buffett_agent(state: AgentState, agent_id: str = "warren_buffett_agen
                 book_value_analysis["score"]
         )
 
-        # Update max possible score calculation
+        # max_score keys are declared in each analysis function
         max_possible_score = (
-                10 +  # fundamental_analysis (ROE, debt, margins, current ratio)
-                moat_analysis["max_score"] +
-                mgmt_analysis["max_score"] +
-                5 +  # pricing_power (0-5)
-                5  # book_value_growth (0-5)
+                fundamental_analysis["max_score"] +   # 7: ROE(2)+D/E(2)+Op.Margin(2)+Current Ratio(1)
+                consistency_analysis["max_score"] +   # 3: earnings growth
+                moat_analysis["max_score"] +          # 5
+                mgmt_analysis["max_score"] +          # 2
+                pricing_power_analysis.get("max_score", 5) +  # 5
+                book_value_analysis.get("max_score", 5)       # 5
         )
 
         # Add margin of safety analysis if we have both intrinsic value and current price
@@ -156,7 +157,7 @@ def warren_buffett_agent(state: AgentState, agent_id: str = "warren_buffett_agen
 def analyze_fundamentals(metrics: list) -> dict[str, any]:
     """Analyze company fundamentals based on Buffett's criteria."""
     if not metrics:
-        return {"score": 0, "details": "Insufficient fundamental data"}
+        return {"score": 0, "max_score": 7, "details": "Insufficient fundamental data"}
 
     latest_metrics = metrics[0]
 
@@ -199,13 +200,13 @@ def analyze_fundamentals(metrics: list) -> dict[str, any]:
     else:
         reasoning.append("Current ratio data not available")
 
-    return {"score": score, "details": "; ".join(reasoning), "metrics": latest_metrics.model_dump()}
+    return {"score": score, "max_score": 7, "details": "; ".join(reasoning), "metrics": latest_metrics.model_dump()}
 
 
 def analyze_consistency(financial_line_items: list) -> dict[str, any]:
     """Analyze earnings consistency and growth."""
     if len(financial_line_items) < 4:  # Need at least 4 periods for trend analysis
-        return {"score": 0, "details": "Insufficient historical data"}
+        return {"score": 0, "max_score": 3, "details": "Insufficient historical data"}
 
     score = 0
     reasoning = []
@@ -231,6 +232,7 @@ def analyze_consistency(financial_line_items: list) -> dict[str, any]:
 
     return {
         "score": score,
+        "max_score": 3,
         "details": "; ".join(reasoning),
     }
 
@@ -704,11 +706,14 @@ def analyze_pricing_power(financial_line_items: list, metrics: list) -> dict[str
     score = 0
     reasoning = []
 
-    # Check gross margin trends (ability to maintain/expand margins)
+    # Compute gross margin from already-fetched gross_profit and revenue line items.
+    # The search_line_items call requests gross_profit and revenue but not gross_margin.
     gross_margins = []
     for item in financial_line_items:
-        if hasattr(item, 'gross_margin') and item.gross_margin is not None:
-            gross_margins.append(item.gross_margin)
+        gp = getattr(item, 'gross_profit', None)
+        rev = getattr(item, 'revenue', None)
+        if gp is not None and rev and rev > 0:
+            gross_margins.append(gp / rev)
 
     if len(gross_margins) >= 3:
         # Check margin stability/improvement
