@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -18,6 +19,10 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 from app.backend.database.models import Base
 target_metadata = Base.metadata
+
+# Override sqlalchemy.url with DATABASE_URL env var if set (12-factor compliance)
+if db_url := os.environ.get("DATABASE_URL"):
+    config.set_main_option("sqlalchemy.url", db_url)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

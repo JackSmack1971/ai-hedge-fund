@@ -1,5 +1,6 @@
 import os
 import json
+from functools import lru_cache
 from langchain_anthropic import ChatAnthropic
 from langchain_deepseek import ChatDeepSeek
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -135,7 +136,7 @@ def get_models_list():
     ]
 
 
-def get_model(model_name: str, model_provider: ModelProvider, api_keys: dict = None) -> ChatOpenAI | ChatGroq | ChatOllama | GigaChat | None:
+def _build_model(model_name: str, model_provider: ModelProvider, api_keys: dict = None) -> ChatOpenAI | ChatGroq | ChatOllama | GigaChat | None:  # noqa: E501
     if model_provider == ModelProvider.GROQ:
         api_key = (api_keys or {}).get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
         if not api_key:
@@ -236,3 +237,17 @@ def get_model(model_name: str, model_provider: ModelProvider, api_keys: dict = N
             print("Azure Deployment Name Error: Please make sure AZURE_OPENAI_DEPLOYMENT_NAME is set in your .env file.")
             raise ValueError("Azure OpenAI deployment name not found.  Please make sure AZURE_OPENAI_DEPLOYMENT_NAME is set in your .env file.")
         return AzureChatOpenAI(azure_endpoint=azure_endpoint, azure_deployment=azure_deployment_name, api_key=api_key, api_version="2024-10-21")
+
+
+@lru_cache(maxsize=32)
+def _cached_get_model(model_name: str, provider_str: str, frozen_keys: frozenset | None):
+    """LRU-cached wrapper — one client instance per (model, provider, api_keys) tuple."""
+    api_keys = dict(frozen_keys) if frozen_keys else None
+    return _build_model(model_name, provider_str, api_keys)
+
+
+def get_model(model_name: str, model_provider, api_keys: dict = None):
+    """Return a cached LLM client, reusing instances across repeated call_llm() invocations."""
+    provider_str = model_provider.value if hasattr(model_provider, "value") else str(model_provider)
+    frozen_keys = frozenset(api_keys.items()) if api_keys else None
+    return _cached_get_model(model_name, provider_str, frozen_keys)

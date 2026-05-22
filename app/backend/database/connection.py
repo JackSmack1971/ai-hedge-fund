@@ -8,14 +8,14 @@ from pathlib import Path
 BACKEND_DIR = Path(__file__).parent.parent
 DATABASE_PATH = BACKEND_DIR / "hedge_fund.db"
 
-# Database configuration - use absolute path
-DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+# Database configuration — read from env for 12-factor compliance; fall back to local SQLite
+_default_db_url = f"sqlite:///{DATABASE_PATH}"
+DATABASE_URL = os.environ.get("DATABASE_URL", _default_db_url)
+
+_connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
 # Create SQLAlchemy engine
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}  # Needed for SQLite
-)
+engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
