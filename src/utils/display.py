@@ -256,8 +256,8 @@ def print_trading_output(result: dict) -> None:
 
 def print_backtest_results(table_rows: list) -> None:
     """Print the backtest results in a nicely formatted table"""
-    # Clear the screen
-    os.system("cls" if os.name == "nt" else "clear")
+    # Clear the screen using ANSI escape codes (avoids shell invocation)
+    print("\033[H\033[J", end="", flush=True)
 
     # Split rows into ticker rows and summary rows
     ticker_rows = []

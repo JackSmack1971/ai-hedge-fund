@@ -73,8 +73,10 @@ export function getActionColor(action: string): string {
   }
 }
 
+type AgentData = { timestamp?: string | number; [key: string]: unknown };
+
 // Helper function to sort agents in display order
-export function sortAgents(agents: [string, any][]): [string, any][] {
+export function sortAgents(agents: [string, AgentData][]): [string, AgentData][] {
   return agents.sort(([agentA, dataA], [agentB, dataB]) => {
     // First, sort by agent type priority (Risk Management and Portfolio Management at bottom)
     const getPriority = (agentName: string) => {

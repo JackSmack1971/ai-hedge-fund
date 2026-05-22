@@ -198,10 +198,9 @@ class OllamaService:
         """Check if Ollama is installed on the system."""
         system = platform.system().lower()
         command = ["which", "ollama"] if system in ["darwin", "linux"] else ["where", "ollama"]
-        shell = system == "windows"
 
         try:
-            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=shell)
+            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             return result.returncode == 0
         except Exception:
             return False
@@ -246,12 +245,9 @@ class OllamaService:
 
     def _start_ollama_process(self) -> bool:
         """Start the Ollama server process."""
-        system = platform.system().lower()
-
         try:
             command = ["ollama", "serve"]
-            shell = system == "windows"
-            subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell)
+            subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             return self._wait_for_server_start()
 

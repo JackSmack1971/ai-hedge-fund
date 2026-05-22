@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
@@ -11,9 +12,8 @@ function BacktestProgress({ agentData }: { agentData: Record<string, any> }) {
   if (!backtestAgent) return null;
   
   // Get the latest backtest result from the backtest results array
-  const backtestResults = backtestAgent.backtestResults || [];
-  const latestBacktestResult = backtestResults.length > 0 ? backtestResults[backtestResults.length - 1] : null;
-  
+  const _backtestResults = backtestAgent.backtestResults || [];
+
   return (
     <Card className="bg-transparent mb-4">
       <CardHeader>
