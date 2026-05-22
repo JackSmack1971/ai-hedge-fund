@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Sequence
 
+import numpy as np
+import pandas as pd
+
 from .types import PerformanceMetrics, PortfolioValuePoint
 
 
@@ -113,9 +116,6 @@ class PerformanceMetricsCalculator:
         metrics.update(computed)  # type: ignore[arg-type]
 
     def compute_metrics(self, values: Sequence[PortfolioValuePoint]) -> PerformanceMetrics:
-        import pandas as pd
-        import numpy as np
-
         if not values:
             return {"sharpe_ratio": None, "sortino_ratio": None, "max_drawdown": None}
 

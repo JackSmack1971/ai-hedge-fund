@@ -1,7 +1,9 @@
+import asyncio
+import json
+
 from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-import asyncio
 
 from app.backend.database import get_db
 from app.backend.models.schemas import (
@@ -259,8 +261,6 @@ async def backtest(request_data: BacktestRequest, request: Request, db: Session 
                     backtest_result = BacktestDayResult(**update["data"])
 
                     # Send the full day result data as JSON in the analysis field
-                    import json
-
                     analysis_data = json.dumps(update["data"])
 
                     event = ProgressUpdateEvent(

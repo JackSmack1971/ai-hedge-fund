@@ -184,15 +184,17 @@ class BacktestEngine:
                 total_value=total_value,
                 benchmark_return_pct=self._benchmark.get_return_pct("SPY", self._start_date, current_date_str),
             )
-            # Prepend today's rows to historical rows so latest day is on top
+            # Accumulate for the final summary; print only today O(1) per iteration
             self._table_rows = rows + self._table_rows
-            # Print full history with latest day first (matches backtester.py behavior)
-            self._results.print_rows(self._table_rows)
+            self._results.print_rows(rows)
 
             # Update performance metrics incrementally — O(1) per day instead of O(n)
             computed = self._perf.add_value(total_value, current_date)
             if computed:
                 self._performance_metrics.update(computed)
+
+        if self._table_rows:
+            self._results.print_rows(self._table_rows)
 
         return self._performance_metrics
 
