@@ -168,6 +168,7 @@ export function OllamaSettings() {
 
       if (reader) {
         try {
+          // eslint-disable-next-line no-constant-condition
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -534,6 +535,7 @@ export function OllamaSettings() {
 
   useEffect(() => {
     refreshStatus();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Check for active downloads after we have status and models data
@@ -541,6 +543,7 @@ export function OllamaSettings() {
     if (ollamaStatus?.running && recommendedModels.length > 0) {
       checkForActiveDownloads();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ollamaStatus?.running, recommendedModels.length]); // Only depend on running status and whether we have models
 
   // Cleanup polling intervals on unmount

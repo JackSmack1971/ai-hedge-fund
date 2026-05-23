@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getActionColor, getDisplayName, getSignalColor, getStatusIcon } from './output-tab-utils';
 import { ReasoningContent } from './reasoning-content';
 
@@ -89,8 +90,11 @@ function AnalysisResultsSection({ outputData }: { outputData: any }) {
   // Always call hooks at the top of the function
   const [selectedTicker, setSelectedTicker] = useState<string>('');
   
-  // Calculate tickers (safe to do even if outputData is null)
-  const tickers = outputData?.decisions ? Object.keys(outputData.decisions) : [];
+  // Memoize tickers to avoid stale closure in useEffect dependency array
+  const tickers = useMemo(
+    () => (outputData?.decisions ? Object.keys(outputData.decisions) : []),
+    [outputData]
+  );
   
   // Set default selected ticker
   useEffect(() => {

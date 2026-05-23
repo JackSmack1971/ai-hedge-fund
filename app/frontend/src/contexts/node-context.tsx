@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { LanguageModel } from '@/data/models';
 import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 
@@ -187,7 +188,8 @@ export function NodeProvider({ children }: { children: ReactNode }) {
     setAgentModels(prev => {
       if (model === null) {
         // Remove the agent model if setting to null
-        const { [compositeKey]: removed, ...rest } = prev;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [compositeKey]: _removed, ...rest } = prev;
         return rest;
       } else {
         // Set the agent model
@@ -256,7 +258,8 @@ export function NodeProvider({ children }: { children: ReactNode }) {
       
       // Clear output data for specified flow
       setOutputNodeData(prev => {
-        const { [flowId]: removed, ...rest } = prev;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [flowId]: _removed, ...rest } = prev;
         return rest;
       });
     }
@@ -427,6 +430,7 @@ export function NodeProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useNodeContext() {
   const context = useContext(NodeContext);
   

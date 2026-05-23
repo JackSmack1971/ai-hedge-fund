@@ -1,6 +1,8 @@
+import math
 from datetime import datetime, timedelta
 
 import numpy as np
+import pytest
 
 from src.backtesting.metrics import PerformanceMetricsCalculator
 
@@ -96,4 +98,41 @@ def test_metrics_nan_values_handled():
         calc.update_metrics(metrics, vals)
     except Exception as e:
         pytest.fail(f"update_metrics raised unexpectedly: {e}")
+
+
+# ──────────────────────────────────────────────────────────
+# Numerical correctness (#207)
+# ──────────────────────────────────────────────────────────
+
+
+def test_max_drawdown_magnitude_known_values():
+    """Portfolio 100→120→80: max drawdown = (80-120)/120*100 = -33.33%."""
+    calc = PerformanceMetricsCalculator(annual_trading_days=252, annual_rf_rate=0.0)
+    result = calc.compute_metrics(_build_values([100.0, 120.0, 80.0]))
+    expected = (80.0 - 120.0) / 120.0 * 100.0
+    assert result["max_drawdown"] == pytest.approx(expected, rel=1e-6)
+
+
+def test_max_drawdown_date_correct():
+    """Max drawdown date for [100, 120, 80] should be 2024-01-03."""
+    calc = PerformanceMetricsCalculator(annual_trading_days=252, annual_rf_rate=0.0)
+    result = calc.compute_metrics(_build_values([100.0, 120.0, 80.0]))
+    assert result["max_drawdown_date"] == "2024-01-03"
+
+
+def test_sharpe_ratio_numerical_correctness():
+    """Verify annualised Sharpe formula for [100, 120, 110] with rf=0."""
+    calc = PerformanceMetricsCalculator(annual_trading_days=252, annual_rf_rate=0.0)
+    result = calc.compute_metrics(_build_values([100.0, 120.0, 110.0]))
+    excess = np.array([0.2, -1.0 / 12.0])
+    expected = float(math.sqrt(252) * excess.mean() / excess.std(ddof=1))
+    assert result["sharpe_ratio"] == pytest.approx(expected, rel=1e-4)
+
+
+def test_max_drawdown_zero_when_strictly_increasing():
+    """Strictly increasing portfolio: drawdown = 0.0 and no drawdown date."""
+    calc = PerformanceMetricsCalculator(annual_trading_days=252, annual_rf_rate=0.0)
+    result = calc.compute_metrics(_build_values([100.0, 110.0, 120.0, 130.0]))
+    assert result["max_drawdown"] == pytest.approx(0.0, abs=1e-10)
+    assert result["max_drawdown_date"] is None
 

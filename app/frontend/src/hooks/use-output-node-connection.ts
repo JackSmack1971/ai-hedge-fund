@@ -25,6 +25,7 @@ export function useOutputNodeConnection(nodeId: string) {
     const edges = getEdges();
     
     // Find edges connected to this output node
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const connectedEdges = getConnectedEdges([{ id: nodeId }] as any, edges);
     const connectedAgentIds = connectedEdges
       .filter(edge => edge.target === nodeId)

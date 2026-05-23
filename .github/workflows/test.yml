@@ -15,19 +15,54 @@ jobs:
         python-version: ["3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout v4.2.2 — SHA-pinned (#229)
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
+      # actions/setup-python v5.3.0 — SHA-pinned (#229); cache: pip speeds up wheel install (#223)
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
         with:
           python-version: ${{ matrix.python-version }}
+          cache: "pip"
 
+      # Cache Poetry virtualenv keyed on poetry.lock for deterministic installs (#223)
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-${{ matrix.python-version }}-
+
+      # Pin Poetry version to match docker/Dockerfile (#223)
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install poetry
+          pip install poetry==1.7.1
           poetry install --with dev
 
+      # Lint gate — continue-on-error until codebase formatting cleanup PR (#225)
+      # TODO: remove continue-on-error once all 687 flake8 violations are resolved
+      - name: Lint (black, isort, flake8)
+        continue-on-error: true
+        run: |
+          poetry run black --check src/ app/ tests/ --line-length 120
+          poetry run isort --check-only src/ app/ tests/
+          poetry run flake8 src/ app/ tests/ --max-line-length=120
+
+      # Type check gate — continue-on-error until stub packages are added (#226)
+      # TODO: tighten to strict=true incrementally
+      - name: Type check (mypy)
+        continue-on-error: true
+        run: |
+          poetry run mypy src/ app/backend/ --ignore-missing-imports --no-strict-optional
+
+      # Security scan — hard-fail on medium+ severity bandit findings (#227)
+      - name: Security scan (bandit)
+        run: |
+          poetry run bandit -r src/ app/backend/ -ll -x tests/
+
+      # Coverage threshold enforced by pyproject.toml cov-fail-under=42 (#224)
       - name: Run tests with coverage
         env:
           OPENAI_API_KEY: "test-key"
@@ -37,10 +72,41 @@ jobs:
           GOOGLE_API_KEY: "test-key"
           DEEPSEEK_API_KEY: "test-key"
         run: |
-          poetry run pytest --cov=src --cov=app/backend --cov-report=xml --cov-fail-under=40
+          poetry run pytest
 
+      # codecov/codecov-action v4.3.0 — SHA-pinned (#229)
       - name: Upload coverage report
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@84508663e988701840491b86de86b666e8a86bed
         with:
           file: coverage.xml
           fail_ci_if_error: false
+
+  # Frontend lint + build job — catches TypeScript errors and ESLint violations (#228)
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # actions/checkout v4.2.2 — SHA-pinned (#229)
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      # Node.js 20 with npm cache (#228)
+      # TODO: SHA-pin actions/setup-node once version is stabilised
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: app/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: app/frontend
+        run: npm ci
+
+      - name: Lint frontend (ESLint)
+        working-directory: app/frontend
+        run: npm run lint
+
+      - name: Build frontend (TypeScript + Vite)
+        working-directory: app/frontend
+        run: npm run build

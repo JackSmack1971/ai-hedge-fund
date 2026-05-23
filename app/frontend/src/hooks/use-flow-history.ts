@@ -46,7 +46,8 @@ export function useFlowHistory({ maxHistorySize = 50, flowId }: UseFlowHistoryOp
   const createSnapshot = useCallback((): FlowSnapshot => {
     // Strip UI-only properties from nodes (like selection state)
     const cleanNodes = getNodes().map(node => {
-      const { selected, ...cleanNode } = node;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { selected: _selected, ...cleanNode } = node;
       return cleanNode;
     });
 

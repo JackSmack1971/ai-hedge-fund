@@ -6,13 +6,18 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+import datetime
+
 from src.tools.api import (
     get_prices,
     get_financial_metrics,
     get_company_news,
     get_insider_trades,
     get_market_cap,
+    prices_to_df,
+    get_price_data,
 )
+from src.data.models import Price
 from src.data.cache import Cache
 
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "api"
@@ -68,8 +73,9 @@ class TestGetPrices:
 
     def test_cache_hit_skips_http(self):
         fresh_cache = Cache()
+        # Cache is keyed by ticker only; the range filter happens inside get_prices()
         fresh_cache.set_prices(
-            "AAPL_2024-03-01_2024-03-08",
+            "AAPL",
             [{"open": 179.0, "close": 180.0, "high": 181.0, "low": 178.0, "volume": 1000000, "time": "2024-03-01T05:00:00Z"}],
         )
         with patch("src.tools.api._cache", fresh_cache):
@@ -185,3 +191,235 @@ class TestGetInsiderTrades:
         mock_request.return_value = _mock_response(200, {"wrong": "schema"})
         result = get_insider_trades("AAPL", "2024-03-08")
         assert result == []
+
+
+# ──────────────────────────────────────────────────────────
+# get_market_cap  (#200)
+# ──────────────────────────────────────────────────────────
+
+_COMPANY_FACTS_PAYLOAD = {
+    "company_facts": {
+        "ticker": "AAPL",
+        "name": "Apple Inc.",
+        "market_cap": 2_800_000_000_000.0,
+    }
+}
+
+def _financial_metrics_payload(market_cap: float | None = 2_500_000_000_000.0) -> dict:
+    """Build a valid FinancialMetricsResponse payload (all nullable fields present)."""
+    base = load_fixture("financial_metrics/AAPL_2024-03-01_2024-03-08.json")
+    base["financial_metrics"][0]["market_cap"] = market_cap
+    return base
+
+
+class TestGetMarketCap:
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_today_branch_returns_company_facts_cap(self, mock_cache, mock_request):
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
+        mock_request.return_value = _mock_response(200, _COMPANY_FACTS_PAYLOAD)
+        result = get_market_cap("AAPL", today)
+        assert result == 2_800_000_000_000.0
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_today_branch_non_200_returns_none(self, mock_cache, mock_request):
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
+        mock_request.return_value = _mock_response(404, {})
+        result = get_market_cap("AAPL", today)
+        assert result is None
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_historical_branch_returns_metrics_cap(self, mock_cache, mock_request):
+        mock_request.return_value = _mock_response(200, _financial_metrics_payload(2_500_000_000_000.0))
+        result = get_market_cap("AAPL", "2024-03-08")
+        assert result == 2_500_000_000_000.0
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_historical_branch_empty_metrics_returns_none(self, mock_cache, mock_request):
+        mock_request.return_value = _mock_response(200, {"financial_metrics": []})
+        result = get_market_cap("AAPL", "2024-03-08")
+        assert result is None
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_historical_branch_null_cap_returns_none(self, mock_cache, mock_request):
+        mock_request.return_value = _mock_response(200, _financial_metrics_payload(None))
+        result = get_market_cap("AAPL", "2024-03-08")
+        assert result is None
+
+
+# ──────────────────────────────────────────────────────────
+# prices_to_df / get_price_data  (#200)
+# ──────────────────────────────────────────────────────────
+
+def _make_price(time: str = "2024-03-01T05:00:00Z", close: float = 180.0) -> Price:
+    return Price(open=179.0, close=close, high=181.0, low=178.0, volume=1_000_000, time=time)
+
+
+class TestPricesToDf:
+    def test_valid_prices_produces_datetime_index(self):
+        prices = [_make_price("2024-03-01T05:00:00Z"), _make_price("2024-03-04T05:00:00Z")]
+        df = prices_to_df(prices)
+        import pandas as pd
+        assert isinstance(df.index, pd.DatetimeIndex)
+
+    def test_numeric_close_column(self):
+        df = prices_to_df([_make_price(close=123.45)])
+        assert df["close"].dtype.kind == "f"
+
+    def test_out_of_order_dates_sorted_ascending(self):
+        prices = [
+            _make_price("2024-03-04T05:00:00Z", close=182.0),
+            _make_price("2024-03-01T05:00:00Z", close=179.0),
+        ]
+        df = prices_to_df(prices)
+        assert df["close"].iloc[0] == 179.0
+        assert df["close"].iloc[1] == 182.0
+
+    def test_single_price_returns_one_row(self):
+        df = prices_to_df([_make_price()])
+        assert len(df) == 1
+
+
+class TestGetPriceData:
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_returns_dataframe_with_close(self, mock_cache, mock_request):
+        payload = load_fixture("prices/AAPL_2024-03-01_2024-03-08.json")
+        mock_request.return_value = _mock_response(200, payload)
+        df = get_price_data("AAPL", "2024-03-01", "2024-03-08")
+        assert not df.empty
+        assert "close" in df.columns
+
+
+# ──────────────────────────────────────────────────────────
+# Pagination tests for get_insider_trades / get_company_news  (#202)
+# ──────────────────────────────────────────────────────────
+
+def _trade(filing_date: str) -> dict:
+    return {
+        "ticker": "AAPL",
+        "issuer": None,
+        "name": None,
+        "title": None,
+        "is_board_director": None,
+        "transaction_date": None,
+        "transaction_shares": 100,
+        "transaction_price_per_share": 150.0,
+        "transaction_value": 15000.0,
+        "shares_owned_before_transaction": 1000,
+        "shares_owned_after_transaction": 1100,
+        "security_title": None,
+        "filing_date": filing_date,
+    }
+
+
+def _news(date: str) -> dict:
+    return {
+        "ticker": "AAPL",
+        "title": "News item",
+        "author": "Reporter",
+        "source": "Reuters",
+        "date": date,
+        "url": "https://reuters.com/a",
+    }
+
+
+class TestInsiderTradesPagination:
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_two_pages_combined(self, mock_cache, mock_request):
+        page1 = _mock_response(200, {"insider_trades": [_trade("2024-03-05"), _trade("2024-02-10")]})
+        page2 = _mock_response(200, {"insider_trades": [_trade("2024-01-20")]})
+        mock_request.side_effect = [page1, page2]
+        result = get_insider_trades("AAPL", "2024-03-08", start_date="2024-01-01", limit=2)
+        assert len(result) == 3
+        assert mock_request.call_count == 2
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_partial_page_stops_after_one_call(self, mock_cache, mock_request):
+        page1 = _mock_response(200, {"insider_trades": [_trade("2024-03-05")]})
+        mock_request.return_value = page1
+        result = get_insider_trades("AAPL", "2024-03-08", start_date="2024-01-01", limit=5)
+        assert len(result) == 1
+        assert mock_request.call_count == 1
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_no_start_date_single_call(self, mock_cache, mock_request):
+        page1 = _mock_response(200, {"insider_trades": [_trade("2024-03-05"), _trade("2024-02-10")]})
+        mock_request.return_value = page1
+        result = get_insider_trades("AAPL", "2024-03-08", limit=2)
+        assert len(result) == 2
+        assert mock_request.call_count == 1
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_iso_timestamp_filing_date_split(self, mock_cache, mock_request):
+        page1 = _mock_response(200, {"insider_trades": [_trade("2024-03-05T14:30:00Z"), _trade("2024-02-10T00:00:00")]})
+        page2 = _mock_response(200, {"insider_trades": [_trade("2024-01-20")]})
+        mock_request.side_effect = [page1, page2]
+        result = get_insider_trades("AAPL", "2024-03-08", start_date="2024-01-01", limit=2)
+        assert len(result) == 3
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_end_date_reached_stops_loop(self, mock_cache, mock_request):
+        # oldest filing_date on page1 is already <= start_date → stop after page1
+        page1 = _mock_response(200, {"insider_trades": [_trade("2024-01-15"), _trade("2024-01-01")]})
+        mock_request.return_value = page1
+        result = get_insider_trades("AAPL", "2024-03-08", start_date="2024-01-10", limit=2)
+        assert len(result) == 2
+        assert mock_request.call_count == 1
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_page2_error_returns_page1_results(self, mock_cache, mock_request):
+        page1 = _mock_response(200, {"insider_trades": [_trade("2024-03-05"), _trade("2024-02-10")]})
+        page2 = _mock_response(500, {})
+        mock_request.side_effect = [page1, page2]
+        result = get_insider_trades("AAPL", "2024-03-08", start_date="2024-01-01", limit=2)
+        assert len(result) == 2
+
+
+class TestCompanyNewsPagination:
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_two_pages_combined(self, mock_cache, mock_request):
+        page1 = _mock_response(200, {"news": [_news("2024-03-05"), _news("2024-02-10")]})
+        page2 = _mock_response(200, {"news": [_news("2024-01-20")]})
+        mock_request.side_effect = [page1, page2]
+        result = get_company_news("AAPL", "2024-03-08", start_date="2024-01-01", limit=2)
+        assert len(result) == 3
+        assert mock_request.call_count == 2
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_partial_page_stops_after_one_call(self, mock_cache, mock_request):
+        page1 = _mock_response(200, {"news": [_news("2024-03-05")]})
+        mock_request.return_value = page1
+        result = get_company_news("AAPL", "2024-03-08", start_date="2024-01-01", limit=5)
+        assert len(result) == 1
+        assert mock_request.call_count == 1
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_no_start_date_single_call(self, mock_cache, mock_request):
+        page1 = _mock_response(200, {"news": [_news("2024-03-05"), _news("2024-02-10")]})
+        mock_request.return_value = page1
+        result = get_company_news("AAPL", "2024-03-08", limit=2)
+        assert len(result) == 2
+        assert mock_request.call_count == 1
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_end_date_reached_stops_loop(self, mock_cache, mock_request):
+        page1 = _mock_response(200, {"news": [_news("2024-01-15"), _news("2024-01-01")]})
+        mock_request.return_value = page1
+        result = get_company_news("AAPL", "2024-03-08", start_date="2024-01-10", limit=2)
+        assert len(result) == 2
+        assert mock_request.call_count == 1

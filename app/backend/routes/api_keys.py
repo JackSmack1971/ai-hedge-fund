@@ -10,7 +10,7 @@ from app.backend.models.schemas import (
     ApiKeyResponse,
     ApiKeySummaryResponse,
     ApiKeyBulkUpdateRequest,
-    ErrorResponse
+    ErrorResponse,
 )
 
 router = APIRouter(prefix="/api-keys", tags=["api-keys"])
@@ -32,7 +32,7 @@ async def create_or_update_api_key(request: ApiKeyCreateRequest, db: Session = D
             provider=request.provider,
             key_value=request.key_value,
             description=request.description,
-            is_active=request.is_active
+            is_active=request.is_active,
         )
         return ApiKeyResponse.from_orm(api_key)
     except Exception as e:
@@ -91,10 +91,7 @@ async def update_api_key(provider: str, request: ApiKeyUpdateRequest, db: Sessio
     try:
         repo = ApiKeyRepository(db)
         api_key = repo.update_api_key(
-            provider=provider,
-            key_value=request.key_value,
-            description=request.description,
-            is_active=request.is_active
+            provider=provider, key_value=request.key_value, description=request.description, is_active=request.is_active
         )
         if not api_key:
             raise HTTPException(status_code=404, detail="API key not found")
@@ -142,7 +139,7 @@ async def deactivate_api_key(provider: str, db: Session = Depends(get_db)):
         success = repo.deactivate_api_key(provider)
         if not success:
             raise HTTPException(status_code=404, detail="API key not found")
-        
+
         # Return the updated key
         api_key = repo.get_api_key_by_provider(provider)
         return ApiKeySummaryResponse.from_orm(api_key)
@@ -166,10 +163,10 @@ async def bulk_update_api_keys(request: ApiKeyBulkUpdateRequest, db: Session = D
         repo = ApiKeyRepository(db)
         api_keys_data = [
             {
-                'provider': key.provider,
-                'key_value': key.key_value,
-                'description': key.description,
-                'is_active': key.is_active
+                "provider": key.provider,
+                "key_value": key.key_value,
+                "description": key.description,
+                "is_active": key.is_active,
             }
             for key in request.api_keys
         ]
@@ -198,4 +195,4 @@ async def update_last_used(provider: str, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update last used timestamp: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Failed to update last used timestamp: {str(e)}")

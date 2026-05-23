@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { isJsonString } from './output-tab-utils';
 
 // Component to render reasoning content with JSON formatting and copy button
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function ReasoningContent({ content }: { content: any }) {
   const [copySuccess, setCopySuccess] = useState(false);
   

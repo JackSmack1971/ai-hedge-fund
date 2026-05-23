@@ -5,10 +5,13 @@ import pandas as pd
 import pytest
 
 
-PRICES_ROOT = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "api" / "prices"
-FM_ROOT = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "api" / "financial_metrics"
-NEWS_ROOT = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "api" / "news"
-INSIDER_ROOT = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "api" / "insider_trades"
+_FIXTURES_API = Path(__file__).parent.parent.parent / "fixtures" / "api"
+assert _FIXTURES_API.exists(), f"Fixture directory not found: {_FIXTURES_API}"
+
+PRICES_ROOT = _FIXTURES_API / "prices"
+FM_ROOT = _FIXTURES_API / "financial_metrics"
+NEWS_ROOT = _FIXTURES_API / "news"
+INSIDER_ROOT = _FIXTURES_API / "insider_trades"
 
 
 def _find_price_fixture_file(ticker: str, start: str, end: str) -> Path | None:

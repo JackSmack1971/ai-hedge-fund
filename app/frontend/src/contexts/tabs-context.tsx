@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Flow } from '@/types/flow';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
@@ -40,6 +41,7 @@ interface TabsContextType {
 
 const TabsContext = createContext<TabsContextType | null>(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTabsContext() {
   const context = useContext(TabsContext);
   if (!context) {

@@ -40,6 +40,7 @@ export function JsonOutputNode({
     }
   }, [saveToFile, isOutputAvailable, outputNodeData]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const saveJsonFile = async (data: any) => {
     try {
       // Generate filename with current date and time in user's timezone

@@ -44,7 +44,9 @@ def add_common_args(
     return parser
 
 
-def add_date_args(parser: argparse.ArgumentParser, *, default_months_back: int | None = None) -> argparse.ArgumentParser:
+def add_date_args(
+    parser: argparse.ArgumentParser, *, default_months_back: int | None = None
+) -> argparse.ArgumentParser:
     if default_months_back is None:
         parser.add_argument("--start-date", type=str, help="Start date (YYYY-MM-DD)")
         parser.add_argument("--end-date", type=str, help="End date (YYYY-MM-DD)")
@@ -187,7 +189,13 @@ def select_model(use_ollama: bool, model_flag: str | None = None) -> tuple[str, 
     return model_name, model_provider or ""
 
 
-def resolve_dates(start_date: str | None, end_date: str | None, *, default_months_back: int | None = None) -> tuple[str, str]:
+def resolve_dates(
+    start_date: str | None,
+    end_date: str | None,
+    *,
+    default_months_back: int | None = None,
+    _now: datetime | None = None,
+) -> tuple[str, str]:
     if start_date:
         try:
             datetime.strptime(start_date, "%Y-%m-%d")
@@ -199,13 +207,18 @@ def resolve_dates(start_date: str | None, end_date: str | None, *, default_month
         except ValueError:
             raise ValueError("End date must be in YYYY-MM-DD format")
 
-    final_end = end_date or datetime.now().strftime("%Y-%m-%d")
+    now = _now or datetime.now()
+    final_end = end_date or now.strftime("%Y-%m-%d")
     if start_date:
         final_start = start_date
     else:
         months = default_months_back if default_months_back is not None else 3
         end_date_obj = datetime.strptime(final_end, "%Y-%m-%d")
         final_start = (end_date_obj - relativedelta(months=months)).strftime("%Y-%m-%d")
+
+    if final_start >= final_end:
+        raise ValueError(f"start_date ({final_start}) must be before end_date ({final_end})")
+
     return final_start, final_end
 
 
@@ -264,12 +277,16 @@ def parse_cli_inputs(
 
     # Normalize parsed values
     tickers = parse_tickers(getattr(args, "tickers", None))
-    selected_analysts = select_analysts({
-        "analysts_all": getattr(args, "analysts_all", False),
-        "analysts": getattr(args, "analysts", None),
-    })
+    selected_analysts = select_analysts(
+        {
+            "analysts_all": getattr(args, "analysts_all", False),
+            "analysts": getattr(args, "analysts", None),
+        }
+    )
     model_name, model_provider = select_model(getattr(args, "ollama", False), getattr(args, "model", None))
-    start_date, end_date = resolve_dates(getattr(args, "start_date", None), getattr(args, "end_date", None), default_months_back=default_months_back)
+    start_date, end_date = resolve_dates(
+        getattr(args, "start_date", None), getattr(args, "end_date", None), default_months_back=default_months_back
+    )
 
     return CLIInputs(
         tickers=tickers,
@@ -284,5 +301,3 @@ def parse_cli_inputs(
         show_agent_graph=getattr(args, "show_agent_graph", False),
         raw_args=args,
     )
-
-

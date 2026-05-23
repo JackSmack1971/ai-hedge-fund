@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Sequence, Dict
 
@@ -83,24 +84,30 @@ class BacktestEngine:
         start_date_dt = end_date_dt - relativedelta(years=1)
         start_date_str = start_date_dt.strftime("%Y-%m-%d")
 
+        tasks: list[tuple] = []
         for ticker in self._tickers:
-            get_prices(ticker, start_date_str, self._end_date)
-            get_financial_metrics(ticker, self._end_date, limit=10)
-            get_insider_trades(ticker, self._end_date, start_date=self._start_date, limit=1000)
-            get_company_news(ticker, self._end_date, start_date=self._start_date, limit=1000)
-        
-        # Preload data for SPY for benchmark comparison
-        get_prices("SPY", self._start_date, self._end_date)
+            tasks += [
+                (get_prices, [ticker, start_date_str, self._end_date], {}),
+                (get_financial_metrics, [ticker, self._end_date], {"limit": 10}),
+                (get_insider_trades, [ticker, self._end_date], {"start_date": self._start_date, "limit": 1000}),
+                (get_company_news, [ticker, self._end_date], {"start_date": self._start_date, "limit": 1000}),
+            ]
+        tasks.append((get_prices, ["SPY", self._start_date, self._end_date], {}))
 
+        max_workers = min(len(tasks), 10)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(fn, *args, **kwargs): (fn, args) for fn, args, kwargs in tasks}
+            for future in as_completed(futures):
+                future.result()  # surface any exceptions from individual fetches
 
     def run_backtest(self) -> PerformanceMetrics:
         self._prefetch_data()
 
         dates = pd.date_range(self._start_date, self._end_date, freq="B")
         if len(dates) > 0:
-            self._portfolio_values = [
-                {"Date": dates[0], "Portfolio Value": self._initial_capital}
-            ]
+            self._portfolio_values = [{"Date": dates[0], "Portfolio Value": self._initial_capital}]
+            # Seed incremental calculator with initial capital value
+            self._perf.add_value(self._initial_capital, dates[0])
         else:
             self._portfolio_values = []
 
@@ -146,7 +153,9 @@ class BacktestEngine:
                 d = decisions.get(ticker, {"action": "hold", "quantity": 0})
                 action = d.get("action", "hold")
                 qty = d.get("quantity", 0)
-                executed_qty = self._executor.execute_trade(ticker, action, qty, current_prices[ticker], self._portfolio)
+                executed_qty = self._executor.execute_trade(
+                    ticker, action, qty, current_prices[ticker], self._portfolio
+                )
                 executed_trades[ticker] = executed_qty
 
             total_value = calculate_portfolio_value(self._portfolio, current_prices)
@@ -162,7 +171,7 @@ class BacktestEngine:
                 "Long/Short Ratio": exposures["Long/Short Ratio"],
             }
             self._portfolio_values.append(point)
-            
+
             # Build daily rows (stateless usage)
             rows = self._results.build_day_rows(
                 date_str=current_date_str,
@@ -175,20 +184,19 @@ class BacktestEngine:
                 total_value=total_value,
                 benchmark_return_pct=self._benchmark.get_return_pct("SPY", self._start_date, current_date_str),
             )
-            # Prepend today's rows to historical rows so latest day is on top
+            # Accumulate for the final summary; print only today O(1) per iteration
             self._table_rows = rows + self._table_rows
-            # Print full history with latest day first (matches backtester.py behavior)
-            self._results.print_rows(self._table_rows)
+            self._results.print_rows(rows)
 
-            # Update performance metrics after printing (match original timing)
-            if len(self._portfolio_values) > 3:
-                computed = self._perf.compute_metrics(self._portfolio_values)
-                if computed:
-                    self._performance_metrics.update(computed)
+            # Update performance metrics incrementally — O(1) per day instead of O(n)
+            computed = self._perf.add_value(total_value, current_date)
+            if computed:
+                self._performance_metrics.update(computed)
+
+        if self._table_rows:
+            self._results.print_rows(self._table_rows)
 
         return self._performance_metrics
 
     def get_portfolio_values(self) -> Sequence[PortfolioValuePoint]:
         return list(self._portfolio_values)
-
-

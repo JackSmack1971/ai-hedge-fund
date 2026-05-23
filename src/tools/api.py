@@ -1,5 +1,6 @@
 import datetime
 import os
+import random
 import pandas as pd
 import requests
 import time
@@ -25,20 +26,22 @@ from src.data.models import (
 _cache = get_cache()
 
 
-def _make_api_request(url: str, headers: dict, method: str = "GET", json_data: dict = None, max_retries: int = 3) -> requests.Response:
+def _make_api_request(
+    url: str, headers: dict, method: str = "GET", json_data: dict = None, max_retries: int = 3
+) -> requests.Response:
     """
     Make an API request with rate limiting handling and moderate backoff.
-    
+
     Args:
         url: The URL to request
         headers: Headers to include in the request
         method: HTTP method (GET or POST)
         json_data: JSON data for POST requests
         max_retries: Maximum number of retries (default: 3)
-    
+
     Returns:
         requests.Response: The response object
-    
+
     Raises:
         Exception: If the request fails with a non-429 error
     """
@@ -47,28 +50,33 @@ def _make_api_request(url: str, headers: dict, method: str = "GET", json_data: d
             response = requests.post(url, headers=headers, json=json_data, timeout=_REQUEST_TIMEOUT)
         else:
             response = requests.get(url, headers=headers, timeout=_REQUEST_TIMEOUT)
-        
+
         if response.status_code == 429 and attempt < max_retries:
-            # Linear backoff: 60s, 90s, 120s, 150s...
-            delay = 60 + (30 * attempt)
-            print(f"Rate limited (429). Attempt {attempt + 1}/{max_retries + 1}. Waiting {delay}s before retrying...")
+            # Honour Retry-After header when present; otherwise full-jitter exponential backoff
+            retry_after = response.headers.get("Retry-After")
+            if retry_after:
+                delay = float(retry_after)
+            else:
+                cap = min(60.0, 1.0 * (2**attempt))
+                delay = random.uniform(0, cap)
+            print(f"Rate limited (429). Attempt {attempt + 1}/{max_retries + 1}. Retrying in {delay:.1f}s...")
             time.sleep(delay)
             continue
-        
+
         # Return the response (whether success, other errors, or final 429)
         return response
 
 
 def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None) -> list[Price]:
     """Fetch price data from cache or API."""
-    # Create a cache key that includes all parameters to ensure exact matches
-    cache_key = f"{ticker}_{start_date}_{end_date}"
-    
-    # Check cache first - simple exact match
-    if cached_data := _cache.get_prices(cache_key):
-        return [Price(**price) for price in cached_data]
+    # Cache is keyed by ticker only so that a wide prefetch range covers all
+    # narrow per-day queries in the backtest loop (fixes cache-key mismatch).
+    if cached_data := _cache.get_prices(ticker):
+        filtered = [p for p in cached_data if start_date <= p["time"][:10] <= end_date]
+        if filtered:
+            return [Price(**price) for price in filtered]
 
-    # If not in cache, fetch from API
+    # Range not in cache — fetch from API
     headers = {}
     financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
     if financial_api_key:
@@ -89,8 +97,8 @@ def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None)
     if not prices:
         return []
 
-    # Cache the results using the comprehensive cache key
-    _cache.set_prices(cache_key, [p.model_dump() for p in prices])
+    # Store under ticker key; _cache.set_prices merges by 'time' to avoid duplicates
+    _cache.set_prices(ticker, [p.model_dump() for p in prices])
     return prices
 
 
@@ -104,7 +112,7 @@ def get_financial_metrics(
     """Fetch financial metrics from cache or API."""
     # Create a cache key that includes all parameters to ensure exact matches
     cache_key = f"{ticker}_{period}_{end_date}_{limit}"
-    
+
     # Check cache first - simple exact match
     if cached_data := _cache.get_financial_metrics(cache_key):
         return [FinancialMetrics(**metric) for metric in cached_data]
@@ -143,8 +151,12 @@ def search_line_items(
     limit: int = 10,
     api_key: str = None,
 ) -> list[LineItem]:
-    """Fetch line items from API."""
-    # If not in cache or insufficient data, fetch from API
+    """Fetch line items from cache or API."""
+    items_key = "_".join(sorted(line_items))
+    cache_key = f"{ticker}_{period}_{end_date}_{limit}_{items_key}"
+    if cached_data := _cache.get_line_items(cache_key):
+        return [LineItem(**item) for item in cached_data][:limit]
+
     headers = {}
     financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
     if financial_api_key:
@@ -162,7 +174,7 @@ def search_line_items(
     response = _make_api_request(url, headers, method="POST", json_data=body)
     if response.status_code != 200:
         return []
-    
+
     try:
         data = response.json()
         response_model = LineItemResponse(**data)
@@ -172,7 +184,7 @@ def search_line_items(
     if not search_results:
         return []
 
-    # Cache the results
+    _cache.set_line_items(cache_key, [item.model_dump() for item in search_results])
     return search_results[:limit]
 
 
@@ -186,7 +198,7 @@ def get_insider_trades(
     """Fetch insider trades from cache or API."""
     # Create a cache key that includes all parameters to ensure exact matches
     cache_key = f"{ticker}_{start_date or 'none'}_{end_date}_{limit}"
-    
+
     # Check cache first - simple exact match
     if cached_data := _cache.get_insider_trades(cache_key):
         return [InsiderTrade(**trade) for trade in cached_data]
@@ -251,7 +263,7 @@ def get_company_news(
     """Fetch company news from cache or API."""
     # Create a cache key that includes all parameters to ensure exact matches
     cache_key = f"{ticker}_{start_date or 'none'}_{end_date}_{limit}"
-    
+
     # Check cache first - simple exact match
     if cached_data := _cache.get_company_news(cache_key):
         return [CompanyNews(**news) for news in cached_data]
