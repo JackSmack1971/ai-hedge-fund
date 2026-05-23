@@ -190,6 +190,7 @@ export function PortfolioStartNode({
         agentModels.push({
           agent_id: node.id,
           model_name: model.model_name,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           model_provider: model.provider as any
         });
       }

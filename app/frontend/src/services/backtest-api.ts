@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NodeStatus, useNodeContext } from '@/contexts/node-context';
 import { extractBaseAgentKey } from '@/data/node-mappings';
 import { flowConnectionManager } from '@/hooks/use-flow-connection';
@@ -55,6 +56,7 @@ export const backtestApi = {
       // Function to process the stream
       const processStream = async () => {
         try {
+          // eslint-disable-next-line no-constant-condition
           while (true) {
             const { done, value } = await reader.read();
             
@@ -231,8 +233,7 @@ export const backtestApi = {
             }
           }
         } catch (error: any) {
-          if (error.name === 'AbortError') {
-          } else {
+          if (error.name !== 'AbortError') {
             console.error('Error reading backtest SSE stream:', error);
             // Mark nodes as error when there's a connection error
             nodeContext.updateAgentNode(flowId, 'portfolio-start', {

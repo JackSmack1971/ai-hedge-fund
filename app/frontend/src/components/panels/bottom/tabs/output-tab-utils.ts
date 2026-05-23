@@ -73,7 +73,7 @@ export function getActionColor(action: string): string {
   }
 }
 
-type AgentData = { timestamp?: string | number; [key: string]: unknown };
+type AgentData = { timestamp?: string | number };
 
 // Helper function to sort agents in display order
 export function sortAgents(agents: [string, AgentData][]): [string, AgentData][] {

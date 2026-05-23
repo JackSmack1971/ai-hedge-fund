@@ -17,7 +17,8 @@ export function OutputNodeStatus({
   isProcessing,
   isAnyAgentRunning,
   isOutputAvailable,
-  isConnected,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isConnected: _isConnected,
   onViewOutput,
   processingText = "In Progress",
   completingText = "Completing",

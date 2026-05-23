@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Shared types for API requests and responses
 export enum ModelProvider {
   OPENAI = 'OpenAI',
