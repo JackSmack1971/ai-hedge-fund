@@ -63,6 +63,18 @@ jobs:
           poetry run bandit -r src/ app/backend/ -ll -x tests/
 
       # Coverage threshold enforced by pyproject.toml cov-fail-under=42 (#224)
+      - name: Run backend tests (collection gate)
+        env:
+          OPENAI_API_KEY: "test-key"
+          ANTHROPIC_API_KEY: "test-key"
+          FINANCIAL_DATASETS_API_KEY: "test-key"
+          GROQ_API_KEY: "test-key"
+          GOOGLE_API_KEY: "test-key"
+          DEEPSEEK_API_KEY: "test-key"
+        run: |
+          poetry run pytest tests/backend/ -v --no-cov
+
+      # Coverage threshold enforced by pyproject.toml cov-fail-under=42 (#224)
       - name: Run tests with coverage
         env:
           OPENAI_API_KEY: "test-key"
