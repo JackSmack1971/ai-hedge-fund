@@ -286,7 +286,8 @@ class BacktestService:
         Uses the pre-compiled graph for trading decisions.
         """
         # Pre-fetch all data at the start
-        self.prefetch_data()
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self.prefetch_data)
 
         dates = pd.date_range(self.start_date, self.end_date, freq="B")
         performance_metrics = {

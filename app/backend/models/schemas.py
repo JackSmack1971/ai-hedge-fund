@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import List, Optional, Dict, Any
 from src.llm.models import ModelProvider
 from enum import Enum
@@ -7,6 +7,7 @@ from app.backend.services.graph import extract_base_agent_key
 
 
 class FlowRunStatus(str, Enum):
+    QUEUED = "QUEUED"
     IDLE = "IDLE"
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETE = "COMPLETE"
@@ -93,6 +94,21 @@ class BacktestRequest(BaseHedgeFundRequest):
     end_date: str
     initial_capital: float = 100000.0
 
+    @field_validator("start_date", "end_date")
+    @classmethod
+    def validate_backtest_date_format(cls, value: str) -> str:
+        try:
+            datetime.strptime(value, "%Y-%m-%d")
+        except ValueError as exc:
+            raise ValueError("Date must be in YYYY-MM-DD format") from exc
+        return value
+
+    @model_validator(mode="after")
+    def validate_backtest_date_order(self):
+        if self.start_date >= self.end_date:
+            raise ValueError("start_date must be before end_date")
+        return self
+
 
 class BacktestDayResult(BaseModel):
     date: str
@@ -129,6 +145,23 @@ class HedgeFundRequest(BaseHedgeFundRequest):
     end_date: Optional[str] = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
     start_date: Optional[str] = None
     initial_cash: float = 100000.0
+
+    @field_validator("start_date", "end_date")
+    @classmethod
+    def validate_hedge_fund_date_format(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        try:
+            datetime.strptime(value, "%Y-%m-%d")
+        except ValueError as exc:
+            raise ValueError("Date must be in YYYY-MM-DD format") from exc
+        return value
+
+    @model_validator(mode="after")
+    def validate_hedge_fund_date_order(self):
+        if self.start_date and self.end_date and self.start_date >= self.end_date:
+            raise ValueError("start_date must be before end_date")
+        return self
 
     def get_start_date(self) -> str:
         """Calculate start date if not provided"""

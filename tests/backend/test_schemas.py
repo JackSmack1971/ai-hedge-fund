@@ -7,6 +7,7 @@ from app.backend.models.schemas import (
     GraphNode,
     GraphEdge,
     HedgeFundRequest,
+    BacktestRequest,
     ErrorResponse,
     FlowCreateRequest,
     FlowRunStatus,
@@ -99,6 +100,7 @@ class TestHedgeFundRequest:
 
 class TestFlowRunStatus:
     def test_status_values(self):
+        assert FlowRunStatus.QUEUED == "QUEUED"
         assert FlowRunStatus.IDLE == "IDLE"
         assert FlowRunStatus.IN_PROGRESS == "IN_PROGRESS"
         assert FlowRunStatus.COMPLETE == "COMPLETE"
@@ -117,3 +119,62 @@ class TestFlowCreateRequest:
     def test_missing_name_raises(self):
         with pytest.raises(ValidationError):
             FlowCreateRequest(nodes=[], edges=[])
+
+
+class TestBacktestRequestDates:
+    def _minimal_request(self):
+        return {
+            "tickers": ["AAPL"],
+            "graph_nodes": [{"id": "n1"}],
+            "graph_edges": [],
+            "start_date": "2024-01-01",
+            "end_date": "2024-01-02",
+            "initial_capital": 100000.0,
+        }
+
+    def test_valid_date_range(self):
+        req = BacktestRequest(**self._minimal_request())
+        assert req.start_date == "2024-01-01"
+        assert req.end_date == "2024-01-02"
+
+    def test_invalid_date_format_raises(self):
+        data = self._minimal_request()
+        data["start_date"] = "2024-13-01"
+        with pytest.raises(ValidationError):
+            BacktestRequest(**data)
+
+    def test_reversed_dates_raise(self):
+        data = self._minimal_request()
+        data["start_date"] = "2024-06-01"
+        data["end_date"] = "2024-01-01"
+        with pytest.raises(ValidationError):
+            BacktestRequest(**data)
+
+    def test_same_dates_raise(self):
+        data = self._minimal_request()
+        data["start_date"] = "2024-01-01"
+        data["end_date"] = "2024-01-01"
+        with pytest.raises(ValidationError):
+            BacktestRequest(**data)
+
+
+class TestHedgeFundRequestDates:
+    def _minimal_request(self):
+        return {
+            "tickers": ["AAPL"],
+            "graph_nodes": [{"id": "n1"}],
+            "graph_edges": [],
+        }
+
+    def test_invalid_end_date_format_raises(self):
+        data = self._minimal_request()
+        data["end_date"] = "yesterday"
+        with pytest.raises(ValidationError):
+            HedgeFundRequest(**data)
+
+    def test_start_date_must_be_before_end_date(self):
+        data = self._minimal_request()
+        data["start_date"] = "2024-06-01"
+        data["end_date"] = "2024-01-01"
+        with pytest.raises(ValidationError):
+            HedgeFundRequest(**data)
