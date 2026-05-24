@@ -13,6 +13,7 @@ from app.backend.models.schemas import (
     FlowRunStatus,
     ErrorResponse,
 )
+from app.backend.tasks.flow_run_tasks import process_flow_run_task
 
 router = APIRouter(prefix="/flows/{flow_id}/runs", tags=["flow-runs"])
 
@@ -34,9 +35,11 @@ async def create_flow_run(flow_id: int, request: FlowRunCreateRequest, db: Sessi
         if not flow:
             raise HTTPException(status_code=404, detail="Flow not found")
 
-        # Create the flow run
+        # Create and queue the flow run
         run_repo = FlowRunRepository(db)
         flow_run = run_repo.create_flow_run(flow_id=flow_id, request_data=request.request_data)
+        flow_run = run_repo.update_flow_run(run_id=flow_run.id, status=FlowRunStatus.QUEUED) or flow_run
+        process_flow_run_task.delay(flow_run.id)
         return FlowRunResponse.from_orm(flow_run)
     except HTTPException:
         raise
