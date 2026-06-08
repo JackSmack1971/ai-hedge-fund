@@ -1,25 +1,35 @@
 """Tests for src/utils/ollama.py — availability checks and model listing."""
-import pytest
+
 from unittest.mock import Mock, patch
 
-from src.utils.ollama import is_ollama_server_running, get_locally_available_models, _get_ollama_base_url, _get_ollama_endpoint
+import pytest
+
+from src.utils.ollama import (
+    _get_ollama_base_url,
+    _get_ollama_endpoint,
+    get_locally_available_models,
+    is_ollama_server_running,
+)
 
 
 class TestOllamaBaseUrl:
     def test_default_url(self):
         import os
+
         with patch.dict(os.environ, {}, clear=True):
             url = _get_ollama_base_url()
             assert "localhost" in url or "11434" in url
 
     def test_custom_url_from_env(self):
         import os
+
         with patch.dict(os.environ, {"OLLAMA_BASE_URL": "http://myhost:11434"}):
             url = _get_ollama_base_url()
             assert url == "http://myhost:11434"
 
     def test_trailing_slash_stripped(self):
         import os
+
         with patch.dict(os.environ, {"OLLAMA_BASE_URL": "http://localhost:11434/"}):
             url = _get_ollama_base_url()
             assert not url.endswith("/")
@@ -40,12 +50,14 @@ class TestIsOllamaServerRunning:
     @patch("src.utils.ollama.requests.get")
     def test_returns_false_on_connection_error(self, mock_get):
         import requests
+
         mock_get.side_effect = requests.exceptions.ConnectionError("refused")
         assert is_ollama_server_running() is False
 
     @patch("src.utils.ollama.requests.get")
     def test_returns_false_on_timeout(self, mock_get):
         import requests
+
         mock_get.side_effect = requests.exceptions.Timeout("timeout")
         assert is_ollama_server_running() is False
 
@@ -69,6 +81,7 @@ class TestGetLocallyAvailableModels:
     @patch("src.utils.ollama.requests.get")
     def test_returns_empty_on_connection_error(self, mock_get):
         import requests
+
         mock_get.side_effect = requests.exceptions.ConnectionError()
         models = get_locally_available_models()
         assert models == []

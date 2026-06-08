@@ -52,7 +52,7 @@ run.bat
 
 ### Option 2: Using npm (Alternative)
 ```bash
-cd app && npm install && npm run setup
+cd app/frontend && npm ci
 ```
 
 **That's it!** These scripts will:
@@ -86,8 +86,8 @@ If you prefer to set up each component manually or need more control:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/virattt/ai-hedge-fund.git
-cd ai-hedge-fund
+git clone https://github.com/JackSmack1971/ai-hedge-fund-forked.git
+cd ai-hedge-fund-forked
 ```
 
 2. Set up your environment variables:
@@ -121,11 +121,7 @@ poetry install
 
 6. Install backend app dependencies:
 ```bash
-# Navigate to the backend directory
-cd app/backend
-pip install -r requirements.txt  # If there's a requirements.txt file
-# OR
-poetry install  # If there's a pyproject.toml in the backend directory
+poetry install
 ```
 
 7. Install frontend app dependencies:
@@ -138,9 +134,8 @@ npm install  # or pnpm install or yarn install
 
 1. Start the backend server:
 ```bash
-# In one terminal, from the backend directory
-cd app/backend
-poetry run uvicorn main:app --reload
+# In one terminal, from the repository root
+poetry run uvicorn app.backend.main:app --reload
 ```
 
 2. Start the frontend application:
@@ -227,5 +222,5 @@ If ports 8000 or 5173 are in use:
 - **Or use different ports** by modifying the scripts
 
 ### Getting Help
-- Check the [GitHub Issues](https://github.com/virattt/ai-hedge-fund/issues)
-- Follow updates on [Twitter](https://x.com/virattt) 
+- Check the repository issues for open bugs and tasks
+- Follow updates on the project owner channel if needed

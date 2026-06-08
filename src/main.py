@@ -1,18 +1,17 @@
+import json
+
+from colorama import init
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
-from colorama import init
+
 from src.agents.portfolio_manager import portfolio_management_agent
 from src.agents.risk_manager import risk_management_agent
+from src.cli.input import parse_cli_inputs
 from src.graph.state import AgentState
-from src.utils.display import print_trading_output
 from src.utils.analysts import get_analyst_nodes
+from src.utils.display import print_trading_output
 from src.utils.progress import progress
-from src.cli.input import (
-    parse_cli_inputs,
-)
-
-import json
 
 # Load environment variables from .env file
 load_dotenv()

@@ -75,4 +75,3 @@ def test_flow_run_events_stream_reports_status(client: TestClient):
         first_chunk = next(response.iter_text())
         assert "event: status" in first_chunk
         assert '"status": "COMPLETE"' in first_chunk
-

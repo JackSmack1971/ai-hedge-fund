@@ -1,8 +1,9 @@
 """Tests for app/backend/database/models.py — ORM model constraints and relationships."""
+
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from app.backend.database.models import Base, HedgeFundFlow, HedgeFundFlowRun

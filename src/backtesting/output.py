@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import List, Mapping, Sequence
 
+from src.utils.display import format_backtest_row, print_backtest_results
+
 from .portfolio import Portfolio
 from .types import AgentOutput
-from src.utils.display import format_backtest_row, print_backtest_results
 from .valuation import compute_portfolio_summary
 
 

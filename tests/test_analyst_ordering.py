@@ -5,17 +5,15 @@ from src.utils.analysts import ANALYST_CONFIG, ANALYST_ORDER, get_agents_list
 
 def test_analyst_orders_are_unique():
     orders = [v["order"] for v in ANALYST_CONFIG.values()]
-    assert len(orders) == len(set(orders)), (
-        f"Duplicate order values found: {[o for o in orders if orders.count(o) > 1]}"
-    )
+    assert len(orders) == len(
+        set(orders)
+    ), f"Duplicate order values found: {[o for o in orders if orders.count(o) > 1]}"
 
 
 def test_analyst_orders_are_contiguous_from_zero():
     orders = sorted(v["order"] for v in ANALYST_CONFIG.values())
     expected = list(range(len(orders)))
-    assert orders == expected, (
-        f"Orders are not contiguous 0..{len(orders)-1}: {orders}"
-    )
+    assert orders == expected, f"Orders are not contiguous 0..{len(orders)-1}: {orders}"
 
 
 def test_analyst_order_list_length_matches_config():

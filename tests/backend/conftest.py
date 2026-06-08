@@ -1,11 +1,12 @@
 """Shared fixtures for backend tests."""
+
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from fastapi.testclient import TestClient
 
-from app.backend.database.models import Base
 from app.backend.database.connection import DATABASE_URL
+from app.backend.database.models import Base
 
 
 @pytest.fixture(scope="function")
@@ -26,5 +27,6 @@ def test_app():
     with patch("app.backend.database.connection.engine"):
         with patch("app.backend.database.models.Base.metadata.create_all"):
             from app.backend.main import app
+
             with TestClient(app, raise_server_exceptions=False) as client:
                 yield client

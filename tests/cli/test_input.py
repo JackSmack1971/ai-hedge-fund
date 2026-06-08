@@ -1,7 +1,8 @@
 """Tests for src/cli/input.py — argument parsing and validation."""
+
 import pytest
 
-from src.cli.input import parse_tickers, select_analysts, resolve_dates
+from src.cli.input import parse_tickers, resolve_dates, select_analysts
 
 
 class TestParseTickers:
@@ -80,12 +81,14 @@ class TestResolveDates:
 
     def test_no_end_date_defaults_to_today(self):
         from datetime import datetime
+
         fixed_now = datetime(2024, 6, 15)
         _, end = resolve_dates("2024-01-01", None, _now=fixed_now)
         assert end == "2024-06-15"
 
     def test_both_none_uses_defaults(self):
         from datetime import datetime
+
         fixed_now = datetime(2024, 6, 15)
         start, end = resolve_dates(None, None, default_months_back=1, _now=fixed_now)
         assert end == "2024-06-15"
@@ -101,6 +104,7 @@ class TestResolveDates:
 
     def test_january_month_boundary(self):
         from datetime import datetime
+
         fixed_now = datetime(2024, 1, 31)
         start, end = resolve_dates(None, "2024-01-31", default_months_back=3, _now=fixed_now)
         assert start == "2023-10-31"

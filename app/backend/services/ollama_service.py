@@ -1,17 +1,18 @@
 import asyncio
-import os
-import sys
-import platform
-import subprocess
-import time
-import re
 import json
-import queue
-import threading
-from pathlib import Path
-from typing import Dict, List, Optional, AsyncGenerator
 import logging
+import os
+import platform
+import queue
+import re
 import signal
+import subprocess
+import sys
+import threading
+import time
+from pathlib import Path
+from typing import AsyncGenerator, Dict, List, Optional
+
 import ollama
 
 logger = logging.getLogger(__name__)

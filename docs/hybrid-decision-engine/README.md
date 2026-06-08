@@ -85,3 +85,7 @@ selected ticker context
 ## Safety Rule
 
 Every new AI-generated signal must be converted into a structured intermediate output and passed through deterministic validation before affecting portfolio state.
+
+## Status
+
+This corpus is a forward-looking design spec, not a description of the current runtime surface. Use it as target-state documentation only; do not treat it as evidence of implemented behavior.

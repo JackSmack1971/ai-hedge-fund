@@ -1,7 +1,9 @@
 """Tests for src/backtesting/benchmarks.py."""
+
+from unittest.mock import patch
+
 import pandas as pd
 import pytest
-from unittest.mock import patch
 
 from src.backtesting.benchmarks import BenchmarkCalculator
 
@@ -57,6 +59,7 @@ class TestBenchmarkCalculator:
     @patch("src.backtesting.benchmarks.get_price_data")
     def test_nan_first_close_returns_none(self, mock_get_price):
         import numpy as np
+
         df = _make_price_df([100.0, 110.0])
         df.iloc[0, df.columns.get_loc("close")] = float("nan")
         mock_get_price.return_value = df

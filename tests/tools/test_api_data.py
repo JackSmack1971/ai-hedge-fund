@@ -1,4 +1,6 @@
 """Tests for API data fetching functions in src/tools/api.py."""
+
+import datetime
 import json
 import os
 from pathlib import Path
@@ -6,19 +8,17 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-import datetime
-
+from src.data.cache import Cache
+from src.data.models import Price
 from src.tools.api import (
-    get_prices,
-    get_financial_metrics,
     get_company_news,
+    get_financial_metrics,
     get_insider_trades,
     get_market_cap,
-    prices_to_df,
     get_price_data,
+    get_prices,
+    prices_to_df,
 )
-from src.data.models import Price
-from src.data.cache import Cache
 
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "api"
 
@@ -38,6 +38,7 @@ def _mock_response(status_code: int, json_data) -> Mock:
 # ──────────────────────────────────────────────────────────
 # get_prices
 # ──────────────────────────────────────────────────────────
+
 
 class TestGetPrices:
     @patch("src.tools.api._make_api_request")
@@ -76,7 +77,16 @@ class TestGetPrices:
         # Cache is keyed by ticker only; the range filter happens inside get_prices()
         fresh_cache.set_prices(
             "AAPL",
-            [{"open": 179.0, "close": 180.0, "high": 181.0, "low": 178.0, "volume": 1000000, "time": "2024-03-01T05:00:00Z"}],
+            [
+                {
+                    "open": 179.0,
+                    "close": 180.0,
+                    "high": 181.0,
+                    "low": 178.0,
+                    "volume": 1000000,
+                    "time": "2024-03-01T05:00:00Z",
+                }
+            ],
         )
         with patch("src.tools.api._cache", fresh_cache):
             with patch("src.tools.api._make_api_request") as mock_req:
@@ -88,6 +98,7 @@ class TestGetPrices:
 # ──────────────────────────────────────────────────────────
 # get_financial_metrics
 # ──────────────────────────────────────────────────────────
+
 
 class TestGetFinancialMetrics:
     @patch("src.tools.api._make_api_request")
@@ -126,6 +137,7 @@ class TestGetFinancialMetrics:
 # get_company_news
 # ──────────────────────────────────────────────────────────
 
+
 class TestGetCompanyNews:
     @patch("src.tools.api._make_api_request")
     @patch("src.tools.api._cache", new_callable=Cache)
@@ -161,6 +173,7 @@ class TestGetCompanyNews:
 # ──────────────────────────────────────────────────────────
 # get_insider_trades
 # ──────────────────────────────────────────────────────────
+
 
 class TestGetInsiderTrades:
     @patch("src.tools.api._make_api_request")
@@ -204,6 +217,7 @@ _COMPANY_FACTS_PAYLOAD = {
         "market_cap": 2_800_000_000_000.0,
     }
 }
+
 
 def _financial_metrics_payload(market_cap: float | None = 2_500_000_000_000.0) -> dict:
     """Build a valid FinancialMetricsResponse payload (all nullable fields present)."""
@@ -255,6 +269,7 @@ class TestGetMarketCap:
 # prices_to_df / get_price_data  (#200)
 # ──────────────────────────────────────────────────────────
 
+
 def _make_price(time: str = "2024-03-01T05:00:00Z", close: float = 180.0) -> Price:
     return Price(open=179.0, close=close, high=181.0, low=178.0, volume=1_000_000, time=time)
 
@@ -264,6 +279,7 @@ class TestPricesToDf:
         prices = [_make_price("2024-03-01T05:00:00Z"), _make_price("2024-03-04T05:00:00Z")]
         df = prices_to_df(prices)
         import pandas as pd
+
         assert isinstance(df.index, pd.DatetimeIndex)
 
     def test_numeric_close_column(self):
@@ -298,6 +314,7 @@ class TestGetPriceData:
 # ──────────────────────────────────────────────────────────
 # Pagination tests for get_insider_trades / get_company_news  (#202)
 # ──────────────────────────────────────────────────────────
+
 
 def _trade(filing_date: str) -> dict:
     return {

@@ -1,12 +1,13 @@
 """Tests for /flows routes using in-memory SQLite and TestClient."""
+
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
-from fastapi.testclient import TestClient
 
-from app.backend.database.models import Base
 from app.backend.database import get_db
+from app.backend.database.models import Base
 
 
 @pytest.fixture(scope="module")
@@ -27,6 +28,7 @@ def client():
             db.close()
 
     from app.backend.main import app
+
     app.dependency_overrides[get_db] = override_get_db
 
     with TestClient(app, raise_server_exceptions=False) as c:

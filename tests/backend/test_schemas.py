@@ -1,17 +1,18 @@
 """Tests for app/backend/models/schemas.py — Pydantic schema validation."""
+
 import pytest
 from pydantic import ValidationError
 
 from app.backend.models.schemas import (
-    PortfolioPosition,
-    GraphNode,
-    GraphEdge,
-    HedgeFundRequest,
+    AgentModelConfig,
     BacktestRequest,
     ErrorResponse,
     FlowCreateRequest,
     FlowRunStatus,
-    AgentModelConfig,
+    GraphEdge,
+    GraphNode,
+    HedgeFundRequest,
+    PortfolioPosition,
 )
 from src.llm.models import ModelProvider
 

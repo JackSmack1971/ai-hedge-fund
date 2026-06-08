@@ -1,8 +1,9 @@
 """Shared fixtures and helpers for agent tests."""
+
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 from langchain_core.messages import AIMessage
@@ -29,18 +30,21 @@ def _make_neutral_llm_response(model_class) -> Any:
 def _make_mock_prices():
     fixture = load_fixture("prices/AAPL_2024-03-01_2024-03-08.json")
     from src.data.models import Price
+
     return [Price(**p) for p in fixture["prices"]]
 
 
 def _make_mock_financial_metrics():
     fixture = load_fixture("financial_metrics/AAPL_2024-03-01_2024-03-08.json")
     from src.data.models import FinancialMetrics
+
     return [FinancialMetrics(**m) for m in fixture["financial_metrics"]]
 
 
 def _make_mock_insider_trades():
     fixture = load_fixture("insider_trades/AAPL_2024-03-01_2024-03-08.json")
     from src.data.models import InsiderTrade
+
     return [InsiderTrade(**t) for t in fixture["insider_trades"]]
 
 
@@ -91,6 +95,7 @@ def mock_api_calls():
 @pytest.fixture
 def mock_llm():
     """Patch call_llm to return a controlled bullish response."""
+
     def _fake_call_llm(prompt, pydantic_model, agent_name=None, state=None, max_retries=3, default_factory=None):
         return _make_bullish_llm_response(pydantic_model)
 

@@ -30,4 +30,3 @@ def process_flow_run_task(run_id: int) -> dict:
         raise
     finally:
         db.close()
-

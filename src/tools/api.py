@@ -1,25 +1,26 @@
 import datetime
 import os
 import random
+import time
+
 import pandas as pd
 import requests
-import time
 
 _REQUEST_TIMEOUT = (10, 30)  # (connect_seconds, read_seconds)
 
 from src.data.cache import get_cache
 from src.data.models import (
+    CompanyFactsResponse,
     CompanyNews,
     CompanyNewsResponse,
     FinancialMetrics,
     FinancialMetricsResponse,
-    Price,
-    PriceResponse,
-    LineItem,
-    LineItemResponse,
     InsiderTrade,
     InsiderTradeResponse,
-    CompanyFactsResponse,
+    LineItem,
+    LineItemResponse,
+    Price,
+    PriceResponse,
 )
 
 # Global cache instance

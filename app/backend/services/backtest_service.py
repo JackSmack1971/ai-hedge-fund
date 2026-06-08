@@ -1,19 +1,20 @@
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-import pandas as pd
-import numpy as np
-from typing import Callable, Dict, List, Optional, Any
 import asyncio
+from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional
 
+import numpy as np
+import pandas as pd
+from dateutil.relativedelta import relativedelta
+
+from app.backend.services.graph import parse_hedge_fund_response, run_graph_async
+from app.backend.services.portfolio import create_portfolio
 from src.tools.api import (
     get_company_news,
-    get_price_data,
-    get_prices,
     get_financial_metrics,
     get_insider_trades,
+    get_price_data,
+    get_prices,
 )
-from app.backend.services.graph import run_graph_async, parse_hedge_fund_response
-from app.backend.services.portfolio import create_portfolio
 
 
 class BacktestService:

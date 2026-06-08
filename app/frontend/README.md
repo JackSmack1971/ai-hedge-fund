@@ -1,5 +1,4 @@
-# AI Hedge Fund - Frontend [WIP] 🚧
-This project is currently a work in progress.  To track progress, please get updates [here](https://x.com/virattt).
+# AI Hedge Fund - Frontend
 
 This is the frontend application for the AI Hedge Fund project. It provides a web interface to interact with the AI Hedge Fund system, allowing you to visualize and control the hedge fund operations.
 

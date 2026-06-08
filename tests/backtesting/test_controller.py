@@ -31,6 +31,7 @@ def test_agent_controller_normalizes_and_snapshots(portfolio):
 
 def test_conflicting_signals_both_normalized(portfolio):
     """Two agents give conflicting signals — controller normalizes both independently."""
+
     def conflicting_agent(**kwargs):
         tickers = kwargs["tickers"]
         return {
@@ -63,6 +64,7 @@ def test_conflicting_signals_both_normalized(portfolio):
 
 def test_invalid_signal_falls_back_to_hold(portfolio):
     """Agent returns an invalid action string — controller coerces to hold."""
+
     def bad_action_agent(**kwargs):
         tickers = kwargs["tickers"]
         return {
@@ -86,6 +88,7 @@ def test_invalid_signal_falls_back_to_hold(portfolio):
 
 def test_all_neutral_signals(portfolio):
     """Agent returns only hold for all tickers."""
+
     def neutral_agent(**kwargs):
         tickers = kwargs["tickers"]
         return {
@@ -107,5 +110,3 @@ def test_all_neutral_signals(portfolio):
     for ticker in ["AAPL", "MSFT", "TSLA"]:
         assert out["decisions"][ticker]["action"] == "hold"
         assert out["decisions"][ticker]["quantity"] == 0.0
-
-

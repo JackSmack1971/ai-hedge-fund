@@ -1,4 +1,5 @@
 import pytest
+
 from src.data.cache import Cache
 
 
@@ -8,6 +9,7 @@ def cache():
 
 
 # --- Prices ---
+
 
 def test_prices_miss_returns_none(cache):
     assert cache.get_prices("AAPL") is None
@@ -67,6 +69,7 @@ def test_prices_different_tickers_isolated(cache):
 
 # --- Financial Metrics ---
 
+
 def test_financial_metrics_miss_returns_none(cache):
     assert cache.get_financial_metrics("AAPL") is None
 
@@ -89,6 +92,7 @@ def test_financial_metrics_deduplication(cache):
 
 # --- Insider Trades ---
 
+
 def test_insider_trades_miss_returns_none(cache):
     assert cache.get_insider_trades("AAPL") is None
 
@@ -102,7 +106,10 @@ def test_insider_trades_set_and_get(cache):
 
 def test_insider_trades_merge_deduplicates_by_filing_date(cache):
     a = [{"filing_date": "2024-01-15", "transaction_value": 50000.0}]
-    b = [{"filing_date": "2024-01-15", "transaction_value": 50000.0}, {"filing_date": "2024-02-01", "transaction_value": 10000.0}]
+    b = [
+        {"filing_date": "2024-01-15", "transaction_value": 50000.0},
+        {"filing_date": "2024-02-01", "transaction_value": 10000.0},
+    ]
     cache.set_insider_trades("AAPL", a)
     cache.set_insider_trades("AAPL", b)
     result = cache.get_insider_trades("AAPL")
@@ -110,6 +117,7 @@ def test_insider_trades_merge_deduplicates_by_filing_date(cache):
 
 
 # --- Company News ---
+
 
 def test_company_news_miss_returns_none(cache):
     assert cache.get_company_news("AAPL") is None
@@ -141,6 +149,7 @@ def test_company_news_deduplication(cache):
 
 # --- Line Items ---
 
+
 def test_line_items_miss_returns_none(cache):
     assert cache.get_line_items("AAPL") is None
 
@@ -153,6 +162,7 @@ def test_line_items_set_and_get(cache):
 
 
 # --- Merge helper ---
+
 
 def test_merge_empty_existing_returns_new_data(cache):
     new_data = [{"time": "2024-01-01", "close": 100.0}]

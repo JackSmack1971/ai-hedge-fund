@@ -28,7 +28,13 @@ async def test_run_backtest_async_prefetches_in_executor(monkeypatch):
 
     service = BacktestService(
         graph=MagicMock(),
-        portfolio={"cash": 1000.0, "margin_requirement": 0.0, "positions": {}, "realized_gains": {}, "margin_used": 0.0},
+        portfolio={
+            "cash": 1000.0,
+            "margin_requirement": 0.0,
+            "positions": {},
+            "realized_gains": {},
+            "margin_used": 0.0,
+        },
         tickers=[],
         start_date="2024-01-01",
         end_date="2024-01-02",
@@ -42,4 +48,3 @@ async def test_run_backtest_async_prefetches_in_executor(monkeypatch):
     assert fake_loop.called is True
     assert fake_loop.executor is None
     service.prefetch_data.assert_called_once()
-

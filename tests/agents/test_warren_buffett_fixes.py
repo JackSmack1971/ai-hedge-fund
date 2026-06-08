@@ -1,14 +1,15 @@
 """Regression tests for warren_buffett.py fixes — #134 (pricing power) and #135 (max_score)."""
 
 from unittest.mock import MagicMock
+
 from src.agents.warren_buffett import (
-    analyze_pricing_power,
-    analyze_fundamentals,
     analyze_consistency,
+    analyze_fundamentals,
+    analyze_pricing_power,
 )
 
-
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 def _line_item(gross_profit=None, revenue=None, net_income=None, gross_margin=None):
     m = MagicMock()
@@ -28,6 +29,7 @@ def _metric(**kwargs):
 
 
 # ── Issue #134 — pricing power always zero ───────────────────────────────────
+
 
 class TestAnalyzePricingPower:
     def test_high_gross_margin_scores_nonzero(self):
@@ -71,14 +73,17 @@ class TestAnalyzePricingPower:
 
 # ── Issue #135 — max_possible_score components ────────────────────────────────
 
+
 class TestMaxScoreKeys:
     def test_analyze_fundamentals_returns_max_score_7(self):
-        metrics = [_metric(
-            return_on_equity=0.20,
-            debt_to_equity=0.3,
-            operating_margin=0.20,
-            current_ratio=2.0,
-        )]
+        metrics = [
+            _metric(
+                return_on_equity=0.20,
+                debt_to_equity=0.3,
+                operating_margin=0.20,
+                current_ratio=2.0,
+            )
+        ]
         result = analyze_fundamentals(metrics)
         assert result.get("max_score") == 7
 
@@ -97,12 +102,14 @@ class TestMaxScoreKeys:
 
     def test_fundamentals_perfect_score_is_7(self):
         """Maximum achievable score from analyze_fundamentals is 7."""
-        metrics = [_metric(
-            return_on_equity=0.25,
-            debt_to_equity=0.2,
-            operating_margin=0.25,
-            current_ratio=2.5,
-        )]
+        metrics = [
+            _metric(
+                return_on_equity=0.25,
+                debt_to_equity=0.2,
+                operating_margin=0.25,
+                current_ratio=2.5,
+            )
+        ]
         result = analyze_fundamentals(metrics)
         assert result["score"] == 7
 

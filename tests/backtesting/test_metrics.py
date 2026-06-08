@@ -11,15 +11,17 @@ def _build_values(values: list[float]):
     start = datetime(2024, 1, 1)
     points = []
     for i, v in enumerate(values):
-        points.append({
-            "Date": start + timedelta(days=i),
-            "Portfolio Value": v,
-            "Long Exposure": 0.0,
-            "Short Exposure": 0.0,
-            "Gross Exposure": 0.0,
-            "Net Exposure": 0.0,
-            "Long/Short Ratio": np.inf,
-        })
+        points.append(
+            {
+                "Date": start + timedelta(days=i),
+                "Portfolio Value": v,
+                "Long Exposure": 0.0,
+                "Short Exposure": 0.0,
+                "Gross Exposure": 0.0,
+                "Net Exposure": 0.0,
+                "Long/Short Ratio": np.inf,
+            }
+        )
     return points
 
 
@@ -135,4 +137,3 @@ def test_max_drawdown_zero_when_strictly_increasing():
     result = calc.compute_metrics(_build_values([100.0, 110.0, 120.0, 130.0]))
     assert result["max_drawdown"] == pytest.approx(0.0, abs=1e-10)
     assert result["max_drawdown_date"] is None
-

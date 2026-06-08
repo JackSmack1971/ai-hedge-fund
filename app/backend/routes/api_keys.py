@@ -1,17 +1,18 @@
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
 from typing import List
 
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
 from app.backend.database import get_db
-from app.backend.repositories.api_key_repository import ApiKeyRepository
 from app.backend.models.schemas import (
+    ApiKeyBulkUpdateRequest,
     ApiKeyCreateRequest,
-    ApiKeyUpdateRequest,
     ApiKeyResponse,
     ApiKeySummaryResponse,
-    ApiKeyBulkUpdateRequest,
+    ApiKeyUpdateRequest,
     ErrorResponse,
 )
+from app.backend.repositories.api_key_repository import ApiKeyRepository
 
 router = APIRouter(prefix="/api-keys", tags=["api-keys"])
 

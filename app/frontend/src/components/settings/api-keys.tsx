@@ -131,7 +131,7 @@ export function ApiKeysSettings() {
         // If value is empty, delete the key
         try {
           await apiKeysService.deleteApiKey(key);
-        } catch (err) {
+        } catch {
           // Key might not exist, which is fine
           console.log(`Key ${key} not found for deletion, which is expected`);
         }

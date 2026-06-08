@@ -1,4 +1,5 @@
 """Tests for src/utils/api_key.py."""
+
 from src.utils.api_key import get_api_key_from_state
 
 

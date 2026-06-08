@@ -1,25 +1,34 @@
 import asyncio
 import json
 
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.backend.database import get_db
+from app.backend.models.events import (
+    CompleteEvent,
+    ErrorEvent,
+    ProgressUpdateEvent,
+    StartEvent,
+)
 from app.backend.models.schemas import (
-    ErrorResponse,
-    HedgeFundRequest,
-    BacktestRequest,
     BacktestDayResult,
     BacktestPerformanceMetrics,
+    BacktestRequest,
+    ErrorResponse,
+    HedgeFundRequest,
 )
-from app.backend.models.events import StartEvent, ProgressUpdateEvent, ErrorEvent, CompleteEvent
-from app.backend.services.graph import create_graph, parse_hedge_fund_response, run_graph_async
-from app.backend.services.portfolio import create_portfolio
-from app.backend.services.backtest_service import BacktestService
 from app.backend.services.api_key_service import ApiKeyService
-from src.utils.progress import progress
+from app.backend.services.backtest_service import BacktestService
+from app.backend.services.graph import (
+    create_graph,
+    parse_hedge_fund_response,
+    run_graph_async,
+)
+from app.backend.services.portfolio import create_portfolio
 from src.utils.analysts import get_agents_list
+from src.utils.progress import progress
 
 router = APIRouter(prefix="/hedge-fund")
 

@@ -1,8 +1,8 @@
-from sqlalchemy import create_engine, event
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
 import os
 from pathlib import Path
+
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Get the backend directory path
 BACKEND_DIR = Path(__file__).parent.parent

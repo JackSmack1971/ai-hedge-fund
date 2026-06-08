@@ -1,6 +1,7 @@
 """Regression tests for cache key mismatch — fixes #158 (100% cache miss rate)."""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from src.data.cache import Cache
 from src.tools.api import get_prices
 

@@ -1,15 +1,17 @@
 """Tests for src/llm/models.py — provider routing and model configuration."""
+
 import os
-import pytest
 from unittest.mock import patch
 
+import pytest
+
 from src.llm.models import (
-    ModelProvider,
-    LLMModel,
-    get_model_info,
-    get_model,
-    find_model_by_name,
     AVAILABLE_MODELS,
+    find_model_by_name,
+    get_model,
+    get_model_info,
+    LLMModel,
+    ModelProvider,
 )
 
 

@@ -1,13 +1,11 @@
-# AI Hedge Fund - Backend [WIP] 🚧
-This project is currently a work in progress.  To track progress, please get updates [here](https://x.com/virattt).
-
-This is the backend server for the AI Hedge Fund project. It provides a simple REST API to interact with the AI Hedge Fund system, allowing you to run the hedge fund through a web interface.
+# AI Hedge Fund - Backend
+This backend serves the web application and CLI workflows in this repository. It exposes REST and SSE endpoints for flows, runs, API-key storage, Ollama status, and the hedge-fund execution pipeline.
 
 ## Overview
 
 This backend project is a FastAPI application that serves as the server-side component of the AI Hedge Fund system. It exposes endpoints for running the hedge fund trading system and backtester.
 
-This backend is designed to work with a future frontend application that will allow users to interact with the AI Hedge Fund system through their browser.
+This backend is paired with the React/Vite frontend in `app/frontend/`.
 
 ## Installation
 
@@ -15,8 +13,8 @@ This backend is designed to work with a future frontend application that will al
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/virattt/ai-hedge-fund.git
-cd ai-hedge-fund
+git clone https://github.com/JackSmack1971/ai-hedge-fund-forked.git
+cd ai-hedge-fund-forked
 ```
 
 2. Install Poetry (if not already installed):
@@ -68,25 +66,19 @@ The API will be available at:
 
 ## API Endpoints
 
-- `POST /hedge-fund/run`: Run the AI Hedge Fund with specified parameters
-- `GET /ping`: Simple endpoint to test server connectivity
+- `POST /hedge-fund/run`: Run the hedge-fund workflow
+- `GET /ping`: SSE ping stream used for connectivity checks
 
 ## Project Structure
 
 ```
 app/backend/
-├── api/                      # API layer (future expansion)
-├── models/                   # Domain models
-│   ├── __init__.py
-│   └── schemas.py            # Pydantic schema definitions
-├── routes/                   # API routes
-│   ├── __init__.py           # Router registry
-│   ├── hedge_fund.py         # Hedge fund endpoints
-│   └── health.py             # Health check endpoints
-├── services/                 # Business logic
-│   ├── graph.py              # Agent graph functionality
-│   └── portfolio.py          # Portfolio management
-├── __init__.py               # Package initialization
+├── database/                 # Engine, Base, and ORM models
+├── models/                   # Pydantic schema and event models
+├── repositories/             # Database access helpers
+├── routes/                   # FastAPI routers
+├── services/                 # Business logic and orchestration
+├── tasks/                    # Celery app and async task wiring
 └── main.py                   # FastAPI application entry point
 ```
 

@@ -81,7 +81,7 @@ export function isJsonString(text: string): boolean {
     // First try standard JSON parsing
     JSON.parse(trimmedText);
     return true;
-  } catch (e) {
+  } catch {
     // If standard JSON parsing fails, try to handle JavaScript-like objects with NaN/undefined/Infinity
     try {
       // Replace JavaScript-specific values with JSON-compatible ones for validation
@@ -93,7 +93,7 @@ export function isJsonString(text: string): boolean {
       
       JSON.parse(normalizedText);
       return true;
-    } catch (e2) {
+    } catch {
       return false;
     }
   }
@@ -118,7 +118,7 @@ export function formatContent(content: string): {
       const parsedJson = JSON.parse(content);
       const formattedJson = JSON.stringify(parsedJson, null, 2);
       return { isJson: true, formattedContent: formattedJson };
-    } catch (e) {
+    } catch {
       // If standard JSON parsing fails, try to handle JavaScript-like objects with NaN/undefined/Infinity
       try {
         // Track the positions of special values before replacement
@@ -164,7 +164,7 @@ export function formatContent(content: string): {
         });
         
         return { isJson: true, formattedContent: formattedJson };
-      } catch (e2) {
+      } catch {
         // If both attempts fail, fall back to text formatting
         return { isJson: false, formattedContent: formatTextIntoParagraphs(content) };
       }
@@ -224,7 +224,7 @@ export function createHighlightedJson(jsonString: string): string {
       .replace(/,/g, '<span style="color: #d4d4d4">,</span>');
     
     return highlightedJson;
-  } catch (e) {
+  } catch {
     // If there's an error parsing/formatting, return the original string
     return jsonString
       .replace(/&/g, '&amp;')

@@ -177,23 +177,6 @@ export function Flow({ className = '' }: FlowProps) {
     return () => clearTimeout(timeoutId);
   }, [nodes, edges, takeSnapshot, isInitialized]);
 
-  // // Auto-save when nodes or edges change (debounced with longer delay)
-  // useEffect(() => {
-  //   if (!isInitialized) return;
-    
-  //   const timeoutId = setTimeout(async () => {
-  //     try {
-  //       await saveCurrentFlowWithCompleteState();
-  //       // Don't show success toast for auto-save to avoid spam
-  //     } catch (err) {
-  //       // Only show error notifications for auto-save failures
-  //       error('Auto-save failed', 'auto-save-error');
-  //     }
-  //   }, 1000); // Debounce auto-save by 1 second (longer than undo/redo)
-
-  //   return () => clearTimeout(timeoutId);
-  // }, [nodes, edges, saveCurrentFlowWithCompleteState, error, isInitialized]);
-
   // Connect keyboard shortcuts to save flow with toast
   useFlowKeyboardShortcuts(async () => {
     try {
@@ -203,7 +186,7 @@ export function Flow({ className = '' }: FlowProps) {
       } else {
         error('Failed to save flow', 'flow-save-error');
       }
-    } catch (err) {
+    } catch {
       error('Failed to save flow', 'flow-save-error');
     }
   });
@@ -305,7 +288,6 @@ export function Flow({ className = '' }: FlowProps) {
             color={gridColor}
             style={backgroundStyle}
           />
-          {/* <CustomControls onReset={resetFlow} /> */}
         </ReactFlow>
       </TooltipProvider>
     </div>

@@ -1,7 +1,9 @@
 """Tests for src/graph/state.py utility functions."""
+
 import json
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from src.graph.state import merge_dicts, show_agent_reasoning
 

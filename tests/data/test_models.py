@@ -2,14 +2,14 @@ import pytest
 from pydantic import ValidationError
 
 from src.data.models import (
-    Price,
-    PriceResponse,
     FinancialMetrics,
     FinancialMetricsResponse,
-    LineItem,
-    LineItemResponse,
     InsiderTrade,
     InsiderTradeResponse,
+    LineItem,
+    LineItemResponse,
+    Price,
+    PriceResponse,
 )
 
 
@@ -27,6 +27,7 @@ class TestPrice:
 def _make_full_metrics(**overrides) -> dict:
     """Build a complete FinancialMetrics kwargs dict with all nullable fields set to None."""
     from src.data.models import FinancialMetrics
+
     fields = FinancialMetrics.model_fields
     base = {"ticker": "AAPL", "report_period": "2024-03-31", "period": "ttm", "currency": "USD"}
     for name in fields:
@@ -72,6 +73,7 @@ class TestLineItem:
 
 def _make_full_insider_trade(**overrides) -> dict:
     from src.data.models import InsiderTrade
+
     fields = InsiderTrade.model_fields
     base = {"ticker": "AAPL", "filing_date": "2024-01-15"}
     for name in fields:
@@ -117,9 +119,7 @@ class TestPriceResponse:
     def test_valid_response(self):
         r = PriceResponse(
             ticker="AAPL",
-            prices=[
-                Price(open=100.0, close=101.0, high=102.0, low=99.0, volume=1000000, time="2024-03-01T05:00:00Z")
-            ],
+            prices=[Price(open=100.0, close=101.0, high=102.0, low=99.0, volume=1000000, time="2024-03-01T05:00:00Z")],
         )
         assert r.ticker == "AAPL"
         assert len(r.prices) == 1

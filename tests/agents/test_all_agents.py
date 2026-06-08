@@ -1,12 +1,18 @@
 """Parametrized smoke test covering all 21 analyst agents."""
+
 import json
-from typing import Any
-from unittest.mock import patch, MagicMock
 from pathlib import Path
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tests.agents.conftest import _make_empty_state, _make_mock_prices, _make_mock_financial_metrics, _make_mock_insider_trades
+from tests.agents.conftest import (
+    _make_empty_state,
+    _make_mock_financial_metrics,
+    _make_mock_insider_trades,
+    _make_mock_prices,
+)
 
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "api"
 

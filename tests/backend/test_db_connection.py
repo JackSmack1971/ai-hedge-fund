@@ -1,22 +1,24 @@
 """Tests for database connection: WAL mode (#165) and index coverage (#166)."""
-import pytest
-import tempfile
+
 import os
-from sqlalchemy import create_engine, event, text, inspect
+import tempfile
+
+import pytest
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.pool import StaticPool
 
 from app.backend.database.models import (
+    ApiKey,
     Base,
     HedgeFundFlow,
     HedgeFundFlowRun,
     HedgeFundFlowRunCycle,
-    ApiKey,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _sqlite_file_engine(path: str):
     """Create a file-based SQLite engine with WAL pragmas applied."""
@@ -39,6 +41,7 @@ def _sqlite_file_engine(path: str):
 # ---------------------------------------------------------------------------
 # WAL mode tests (#165)
 # ---------------------------------------------------------------------------
+
 
 class TestSQLiteWALMode:
     def test_wal_mode_enabled(self, tmp_path):
@@ -65,6 +68,7 @@ class TestSQLiteWALMode:
     def test_timeout_in_connect_args(self):
         """Connection args should include a 30-second busy timeout for SQLite."""
         from app.backend.database.connection import _connect_args, DATABASE_URL
+
         if DATABASE_URL.startswith("sqlite"):
             assert _connect_args.get("timeout") == 30
 
@@ -75,6 +79,7 @@ class TestSQLiteWALMode:
         Base.metadata.create_all(eng)
 
         from sqlalchemy.orm import Session
+
         with Session(eng) as s1, Session(eng) as s2:
             flow = HedgeFundFlow(name="WAL test", nodes=[], edges=[])
             s1.add(flow)
@@ -85,15 +90,18 @@ class TestSQLiteWALMode:
     def test_event_listener_is_noop_for_non_sqlite(self):
         """_set_sqlite_pragmas should not execute for non-SQLite engines."""
         from app.backend.database import connection as db_conn
+
         # The guard is: if not _is_sqlite: return
         # Simulate by temporarily patching _is_sqlite to False and checking
         # the function returns before executing cursor commands.
         original = db_conn._is_sqlite
         db_conn._is_sqlite = False
         try:
+
             class FakeCursor:
                 def execute(self, sql):
                     raise AssertionError(f"Should not execute SQL for non-SQLite: {sql}")
+
                 def close(self):
                     pass
 
@@ -110,6 +118,7 @@ class TestSQLiteWALMode:
 # ---------------------------------------------------------------------------
 # Index coverage tests (#166)
 # ---------------------------------------------------------------------------
+
 
 class TestModelIndices:
     """Verify index=True is set on all filter columns."""
@@ -165,6 +174,5 @@ class TestModelIndices:
             actual = {idx["name"] for idx in inspector.get_indexes(table_name)}
             for idx_name in index_names:
                 assert idx_name in actual, (
-                    f"Expected index '{idx_name}' not found in table '{table_name}'. "
-                    f"Found: {actual}"
+                    f"Expected index '{idx_name}' not found in table '{table_name}'. " f"Found: {actual}"
                 )

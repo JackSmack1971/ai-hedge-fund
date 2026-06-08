@@ -110,4 +110,3 @@ def test_insufficient_cash_executes_partial():
     qty = ex.execute_trade("AAPL", "buy", 100, 150.0, p)
     assert qty < 100
     assert p.get_cash() < 500.0
-

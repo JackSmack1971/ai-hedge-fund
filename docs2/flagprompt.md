@@ -1,5 +1,5 @@
 <!-- TIER: REFERENCE MANUAL — navigate via jump table below, not linearly.
-     AGENTS.md is the compressed operational subset of this document.
+     AGENTS.md contains repository build, test, and formatting guidelines.
      In any conflict: this document is authoritative.
      Do NOT read cover-to-cover on routine turns. -->
 

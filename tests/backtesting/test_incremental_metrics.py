@@ -1,4 +1,5 @@
 """Regression tests for #159 — incremental O(1) metrics via add_value()."""
+
 import math
 from datetime import datetime, timedelta
 
@@ -23,11 +24,17 @@ def _batch(values: list[float]) -> dict:
     """Compute metrics via the full batch path."""
     calc = PerformanceMetricsCalculator(annual_trading_days=252, annual_rf_rate=0.0)
     from datetime import datetime, timedelta
+
     points = [
-        {"Date": datetime(2024, 1, 1) + timedelta(days=i),
-         "Portfolio Value": v,
-         "Long Exposure": 0.0, "Short Exposure": 0.0,
-         "Gross Exposure": 0.0, "Net Exposure": 0.0, "Long/Short Ratio": 0.0}
+        {
+            "Date": datetime(2024, 1, 1) + timedelta(days=i),
+            "Portfolio Value": v,
+            "Long Exposure": 0.0,
+            "Short Exposure": 0.0,
+            "Gross Exposure": 0.0,
+            "Net Exposure": 0.0,
+            "Long/Short Ratio": 0.0,
+        }
         for i, v in enumerate(values)
     ]
     return calc.compute_metrics(points)
@@ -111,35 +118,42 @@ class TestIncrementalMatchesBatch:
         if rf != 0.0:
             calc_b = PerformanceMetricsCalculator(annual_trading_days=252, annual_rf_rate=rf)
             from datetime import datetime, timedelta
+
             points = [
-                {"Date": datetime(2024, 1, 1) + timedelta(days=i),
-                 "Portfolio Value": v,
-                 "Long Exposure": 0.0, "Short Exposure": 0.0,
-                 "Gross Exposure": 0.0, "Net Exposure": 0.0, "Long/Short Ratio": 0.0}
+                {
+                    "Date": datetime(2024, 1, 1) + timedelta(days=i),
+                    "Portfolio Value": v,
+                    "Long Exposure": 0.0,
+                    "Short Exposure": 0.0,
+                    "Gross Exposure": 0.0,
+                    "Net Exposure": 0.0,
+                    "Long/Short Ratio": 0.0,
+                }
                 for i, v in enumerate(values)
             ]
             batch = calc_b.compute_metrics(points)
-        assert self._close(incremental["sharpe_ratio"], batch["sharpe_ratio"]), (
-            f"Sharpe mismatch: incremental={incremental['sharpe_ratio']}, batch={batch['sharpe_ratio']}"
-        )
-        assert self._close(incremental["max_drawdown"], batch["max_drawdown"]), (
-            f"MaxDD mismatch: incremental={incremental['max_drawdown']}, batch={batch['max_drawdown']}"
-        )
+        assert self._close(
+            incremental["sharpe_ratio"], batch["sharpe_ratio"]
+        ), f"Sharpe mismatch: incremental={incremental['sharpe_ratio']}, batch={batch['sharpe_ratio']}"
+        assert self._close(
+            incremental["max_drawdown"], batch["max_drawdown"]
+        ), f"MaxDD mismatch: incremental={incremental['max_drawdown']}, batch={batch['max_drawdown']}"
 
     def test_parity_up_down(self):
         self._check_parity([100.0, 110.0, 99.0, 105.0, 95.0])
 
     def test_parity_monotone_increase(self):
-        self._check_parity([100.0 * (1.01 ** i) for i in range(20)])
+        self._check_parity([100.0 * (1.01**i) for i in range(20)])
 
     def test_parity_monotone_decrease(self):
-        self._check_parity([100.0 * (0.99 ** i) for i in range(20)])
+        self._check_parity([100.0 * (0.99**i) for i in range(20)])
 
     def test_parity_flat(self):
         self._check_parity([100.0] * 10)
 
     def test_parity_volatile(self):
         import random
+
         random.seed(42)
         vals = [100_000.0]
         for _ in range(50):

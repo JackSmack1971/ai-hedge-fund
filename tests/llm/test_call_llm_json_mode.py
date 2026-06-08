@@ -1,9 +1,11 @@
 """Regression tests for call_llm use_json_mode logic — fixes #155."""
 
 from unittest.mock import MagicMock, patch
+
 from pydantic import BaseModel
-from src.utils.llm import call_llm
+
 from src.llm.models import LLMModel
+from src.utils.llm import call_llm
 
 
 class _Signal(BaseModel):
