@@ -36,7 +36,7 @@ def debate_agent(state: AgentState, agent_id: str = "debate_agent"):
     data = state["data"]
 
     if not data.get("hybrid_mode", False):
-        return {"messages": state["messages"], "data": {}}
+        return {"messages": [], "data": {}}
 
     tickers = data["tickers"]
     analyst_signals = data.get("analyst_signals", {})
@@ -112,6 +112,6 @@ def debate_agent(state: AgentState, agent_id: str = "debate_agent"):
 
     message = HumanMessage(content=json.dumps(debate_outputs, default=str), name=agent_id)
     return {
-        "messages": state["messages"] + [message],
+        "messages": [message],
         "data": {"debate_outputs": debate_outputs},
     }

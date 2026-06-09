@@ -2,8 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from tests.agents.conftest import _make_empty_state
 
 

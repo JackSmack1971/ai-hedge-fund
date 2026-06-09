@@ -33,7 +33,7 @@ def meta_labeler_agent(state: AgentState, agent_id: str = "meta_labeler_agent"):
     data = state["data"]
 
     if not data.get("hybrid_mode", False):
-        return {"messages": state["messages"], "data": {}}
+        return {"messages": [], "data": {}}
 
     tickers = data["tickers"]
     guardrail_outputs = data.get("guardrail_outputs", {})
@@ -102,6 +102,6 @@ def meta_labeler_agent(state: AgentState, agent_id: str = "meta_labeler_agent"):
 
     message = HumanMessage(content=json.dumps(meta_label_outputs), name=agent_id)
     return {
-        "messages": state["messages"] + [message],
+        "messages": [message],
         "data": {"meta_label_outputs": meta_label_outputs},
     }

@@ -26,12 +26,18 @@ class ConsensusReport(BaseModel):
     summary: str
 
 
+class _ConsensusSummaryOnly(BaseModel):
+    """Narrow model for LLM call — only narrative fields the LLM should provide."""
+    unresolved_conflicts: List[str]
+    summary: str
+
+
 def consensus_agent(state: AgentState, agent_id: str = "consensus_agent"):
     """Aggregate analyst signals into a structured consensus report per ticker."""
     data = state["data"]
 
     if not data.get("hybrid_mode", False):
-        return {"messages": state["messages"], "data": {}}
+        return {"messages": [], "data": {}}
 
     tickers = data["tickers"]
     analyst_signals = data.get("analyst_signals", {})
@@ -66,8 +72,10 @@ def consensus_agent(state: AgentState, agent_id: str = "consensus_agent"):
             ).model_dump()
             continue
 
-        dominant_stance = max(votes, key=lambda k: votes[k])
-        dominant_count = votes[dominant_stance]
+        max_count = max(votes.values())
+        leaders = [s for s, c in votes.items() if c == max_count]
+        dominant_stance = leaders[0] if len(leaders) == 1 else "neutral"
+        dominant_count = votes[dominant_stance] if dominant_stance != "neutral" else max_count
         minority_stances = [s for s, c in votes.items() if c > 0 and s != dominant_stance]
         dom_confidences = confidences_by_stance[dominant_stance]
         consensus_confidence = int(sum(dom_confidences) / len(dom_confidences)) if dom_confidences else 50
@@ -88,11 +96,18 @@ def consensus_agent(state: AgentState, agent_id: str = "consensus_agent"):
                 dominant_count=dominant_count, total=total,
                 minority_stances=minority_stances, consensus_confidence=consensus_confidence,
             ),
-            pydantic_model=ConsensusReport,
+            pydantic_model=_ConsensusSummaryOnly,
             agent_name=agent_id,
             state=state,
         )
-        consensus_output[ticker] = result.model_dump()
+        consensus_output[ticker] = ConsensusReport(
+            dominant_stance=dominant_stance,
+            dominant_count=dominant_count,
+            minority_stances=minority_stances,
+            consensus_confidence=consensus_confidence,
+            unresolved_conflicts=result.unresolved_conflicts,
+            summary=result.summary,
+        ).model_dump()
 
         progress.update_status(agent_id, ticker, f"Consensus: {dominant_stance} ({dominant_count}/{total})")
 
@@ -101,6 +116,6 @@ def consensus_agent(state: AgentState, agent_id: str = "consensus_agent"):
 
     message = HumanMessage(content=json.dumps(consensus_output), name=agent_id)
     return {
-        "messages": state["messages"] + [message],
+        "messages": [message],
         "data": {"consensus_output": consensus_output},
     }

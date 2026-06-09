@@ -2,8 +2,6 @@
 
 from unittest.mock import patch
 
-import pytest
-
 from tests.agents.conftest import _make_empty_state
 from src.agents.consensus import consensus_agent, ConsensusReport
 

@@ -2,8 +2,6 @@
 
 from unittest.mock import patch, MagicMock
 
-import pytest
-
 from tests.agents.conftest import _make_empty_state
 from src.agents.psychological_guardrail import (
     psychological_guardrail_agent,

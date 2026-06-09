@@ -30,7 +30,7 @@ def psychological_guardrail_agent(state: AgentState, agent_id: str = "psychologi
     data = state["data"]
 
     if not data.get("hybrid_mode", False):
-        return {"messages": state["messages"], "data": {}}
+        return {"messages": [], "data": {}}
 
     tickers = data["tickers"]
     analyst_signals = data.get("analyst_signals", {})
@@ -142,6 +142,6 @@ def psychological_guardrail_agent(state: AgentState, agent_id: str = "psychologi
 
     message = HumanMessage(content=json.dumps(guardrail_outputs), name=agent_id)
     return {
-        "messages": state["messages"] + [message],
+        "messages": [message],
         "data": {"guardrail_outputs": guardrail_outputs},
     }
