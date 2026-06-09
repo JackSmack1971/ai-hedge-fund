@@ -65,10 +65,13 @@ Plans:
   3. The end-to-end flow runs successfully with hybrid mode enabled.
 
 **Plans**: 2 plans
-
 Plans:
+**Wave 1**
 
 - [ ] 03-01-PLAN.md — Risk Manager multiplier chaining (INT-01): apply disagreement_multiplier and meta_size_multiplier to position_limit; wire hybrid_layer composite node into LangGraph DAG; thread hybrid_mode/debate_mode into run_hedge_fund initial state
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 03-02-PLAN.md — Portfolio Manager meta-label filtering (INT-02): enforce suppress/hold_only/reduce/allow per D-32 to D-37; add max_shares floor guard for suppress with existing positions
 
 ### Phase 4: Adaptive Routing & Reflection
