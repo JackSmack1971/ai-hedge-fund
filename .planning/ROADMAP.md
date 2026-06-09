@@ -25,8 +25,8 @@ Upgrades the static analyst model of the AI Hedge Fund into an adaptive, debate-
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Shared Schemas implementation & verification.
-- [ ] 01-02: Pure python disagreement, drawdown, and Kelly helpers implementation.
+- [ ] 01-01-PLAN.md — Patch src/schemas/hybrid.py: ConfigDict(extra="ignore") on all 7 models, add timestamp and reasoning_summary to HybridDecisionTrace, add D-12/D-13 test coverage
+- [ ] 01-02-PLAN.md — Create src/risk package: disagreement score (RISK-01), CPPI drawdown multiplier (RISK-02), fractional Kelly helper (RISK-03) with full test coverage
 
 ### Phase 2: Hybrid Agents & Meta-Labeler
 **Goal**: Calibrated confidence, consensus aggregation, debate layer, and meta-label permissions.
@@ -81,7 +81,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Schemas | 0/2 | Not started | - |
+| 1. Foundation & Schemas | 0/2 | Planned | - |
 | 2. Hybrid Agents & Meta-Labeler | 0/2 | Not started | - |
 | 3. Sizing & Execution Integrations | 0/2 | Not started | - |
 | 4. Adaptive Routing & Reflection | 0/2 | Not started | - |
