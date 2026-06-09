@@ -86,8 +86,8 @@ If you prefer to set up each component manually or need more control:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/JackSmack1971/ai-hedge-fund-forked.git
-cd ai-hedge-fund-forked
+git clone https://github.com/JackSmack1971/ai-hedge-fund.git
+cd ai-hedge-fund
 ```
 
 2. Set up your environment variables:
