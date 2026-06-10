@@ -5,8 +5,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from app.backend.database.connection import DATABASE_URL
 from app.backend.database.models import Base
+
+
+@pytest.fixture(autouse=True)
+def _database_encryption_key(monkeypatch):
+    """Stored-API-key writes fail closed without DATABASE_ENCRYPTION_KEY; provide one for tests."""
+    monkeypatch.setenv("DATABASE_ENCRYPTION_KEY", "backend-test-encryption-key")
 
 
 @pytest.fixture(scope="function")
@@ -22,7 +27,7 @@ def db_session():
 @pytest.fixture(scope="module")
 def test_app():
     """FastAPI TestClient with startup events skipped."""
-    from unittest.mock import AsyncMock, patch
+    from unittest.mock import patch
 
     with patch("app.backend.database.connection.engine"):
         with patch("app.backend.database.models.Base.metadata.create_all"):

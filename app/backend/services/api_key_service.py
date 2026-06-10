@@ -2,6 +2,7 @@ from typing import Dict, Optional
 
 from sqlalchemy.orm import Session
 
+from app.backend.encryption import decrypt_value
 from app.backend.repositories.api_key_repository import ApiKeyRepository
 
 
@@ -13,13 +14,13 @@ class ApiKeyService:
 
     def get_api_keys_dict(self) -> Dict[str, str]:
         """
-        Load all active API keys from database and return as a dictionary
-        suitable for injecting into requests
+        Load all active API keys from database, decrypt them, and return as a
+        dictionary suitable for injecting into requests
         """
         api_keys = self.repository.get_all_api_keys(include_inactive=False)
-        return {key.provider: key.key_value for key in api_keys}
+        return {key.provider: decrypt_value(key.key_value) for key in api_keys}
 
     def get_api_key(self, provider: str) -> Optional[str]:
-        """Get a specific API key by provider"""
+        """Get a specific API key by provider, decrypted"""
         api_key = self.repository.get_api_key_by_provider(provider)
-        return api_key.key_value if api_key else None
+        return decrypt_value(api_key.key_value) if api_key else None

@@ -118,7 +118,7 @@ class ApiKey(Base):
 
     # API key details
     provider = Column(String(100), nullable=False, unique=True, index=True)  # e.g., "ANTHROPIC_API_KEY"
-    key_value = Column(Text, nullable=False)  # The actual API key (encrypted in production)
+    key_value = Column(Text, nullable=False)  # Fernet-encrypted at rest (see app/backend/encryption.py)
     is_active = Column(Boolean, default=True, index=True)  # Enable/disable without deletion
 
     # Optional metadata

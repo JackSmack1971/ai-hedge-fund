@@ -5,10 +5,16 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.backend.database.models import ApiKey
+from app.backend.encryption import encrypt_value, is_encrypted
 
 
 class ApiKeyRepository:
-    """Repository for API key database operations"""
+    """Repository for API key database operations.
+
+    Secret values are encrypted before they touch the database (see
+    app.backend.encryption); reads return ciphertext — use ApiKeyService
+    to obtain decrypted values.
+    """
 
     def __init__(self, db: Session):
         self.db = db
@@ -22,7 +28,7 @@ class ApiKeyRepository:
 
         if existing_key:
             # Update existing key
-            existing_key.key_value = key_value
+            existing_key.key_value = encrypt_value(key_value)
             existing_key.description = description
             existing_key.is_active = is_active
             existing_key.updated_at = func.now()
@@ -31,7 +37,9 @@ class ApiKeyRepository:
             return existing_key
         else:
             # Create new key
-            api_key = ApiKey(provider=provider, key_value=key_value, description=description, is_active=is_active)
+            api_key = ApiKey(
+                provider=provider, key_value=encrypt_value(key_value), description=description, is_active=is_active
+            )
             self.db.add(api_key)
             self.db.commit()
             self.db.refresh(api_key)
@@ -57,7 +65,7 @@ class ApiKeyRepository:
             return None
 
         if key_value is not None:
-            api_key.key_value = key_value
+            api_key.key_value = encrypt_value(key_value)
         if description is not None:
             api_key.description = description
         if is_active is not None:
@@ -98,6 +106,18 @@ class ApiKeyRepository:
         api_key.last_used = func.now()
         self.db.commit()
         return True
+
+    def reencrypt_plaintext_keys(self) -> int:
+        """Migrate legacy plaintext rows to encrypted storage. Returns rows migrated."""
+        migrated = 0
+        for api_key in self.db.query(ApiKey).all():
+            if not is_encrypted(api_key.key_value):
+                api_key.key_value = encrypt_value(api_key.key_value)
+                api_key.updated_at = func.now()
+                migrated += 1
+        if migrated:
+            self.db.commit()
+        return migrated
 
     def bulk_create_or_update(self, api_keys_data: List[dict]) -> List[ApiKey]:
         """Bulk create or update multiple API keys"""
