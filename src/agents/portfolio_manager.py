@@ -50,7 +50,7 @@ def portfolio_management_agent(state: AgentState, agent_id: str = "portfolio_man
 
         # Calculate maximum shares allowed based on position limit and price
         if current_prices[ticker] > 0:
-            max_shares[ticker] = int(position_limits[ticker] // current_prices[ticker])
+            max_shares[ticker] = max(0, int(position_limits[ticker] // current_prices[ticker]))
         else:
             max_shares[ticker] = 0
 
@@ -63,6 +63,19 @@ def portfolio_management_agent(state: AgentState, agent_id: str = "portfolio_man
                 if sig is not None and conf is not None:
                     ticker_signals[agent] = {"sig": sig, "conf": conf}
         signals_by_ticker[ticker] = ticker_signals
+
+    # Place 1: scale max_shares for reduce/allow meta-labels before compute_allowed_actions (D-34, D-35, D-37)
+    data = state["data"]
+    if data.get("hybrid_mode", False):
+        meta_label_outputs = data.get("meta_label_outputs", {})
+        for ticker in tickers:
+            if ticker not in meta_label_outputs:
+                continue
+            meta = meta_label_outputs[ticker]
+            label = meta.get("label")
+            size_mult = max(0.0, min(1.0, float(meta.get("size_multiplier", 1.0))))
+            if label in ("reduce", "allow"):
+                max_shares[ticker] = max(0, int(max_shares[ticker] * size_mult))
 
     state["data"]["current_prices"] = current_prices
 
@@ -189,6 +202,20 @@ def generate_trading_decision(
 
     # Deterministic constraints
     allowed_actions_full = compute_allowed_actions(tickers, current_prices, max_shares, portfolio)
+
+    # Place 2: post-filter allowed_actions for suppress and hold_only meta-labels (D-32, D-33, D-37)
+    _data = state.get("data", {}) if state else {}
+    if _data.get("hybrid_mode", False):
+        _meta_outputs = _data.get("meta_label_outputs", {})
+        for _ticker in list(allowed_actions_full.keys()):
+            _meta = _meta_outputs.get(_ticker, {})
+            _allow_trade = _meta.get("allow_trade", True)
+            _label = _meta.get("label")
+            if not _allow_trade:
+                allowed_actions_full[_ticker] = {"hold": 0}
+            elif _label == "hold_only":
+                for _k in ("buy", "short"):
+                    allowed_actions_full[_ticker].pop(_k, None)
 
     # Pre-fill pure holds to avoid sending them to the LLM at all
     prefilled_decisions: dict[str, PortfolioDecision] = {}

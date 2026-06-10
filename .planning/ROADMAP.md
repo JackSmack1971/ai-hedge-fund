@@ -8,8 +8,8 @@ Upgrades the static analyst model of the AI Hedge Fund into an adaptive, debate-
 
 - [x] **Phase 1: Foundation & Schemas** - Preserved baseline verification, shared hybrid schemas, and pure math risk utilities.
 - [x] **Phase 2: Hybrid Agents & Meta-Labeler** - Calibrated confidence, consensus aggregation, debate layer, and meta-label permissions. (completed 2026-06-09)
-- [ ] **Phase 3: Sizing & Execution Integrations** - Consume multipliers and suppressions in Risk and Portfolio Managers.
-- [ ] **Phase 4: Adaptive Routing & Reflection** - Dynamic analyst selector and JSONL trace recorder.
+- [x] **Phase 3: Sizing & Execution Integrations** - Consume multipliers and suppressions in Risk and Portfolio Managers. (completed 2026-06-09)
+- [x] **Phase 4: Adaptive Routing & Reflection** - Dynamic analyst selector and JSONL trace recorder. (completed 2026-06-09)
 
 ## Phase Details
 
@@ -68,11 +68,11 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Risk Manager multiplier chaining (INT-01): apply disagreement_multiplier and meta_size_multiplier to position_limit; wire hybrid_layer composite node into LangGraph DAG; thread hybrid_mode/debate_mode into run_hedge_fund initial state
+- [x] 03-01-PLAN.md — Risk Manager multiplier chaining (INT-01): apply disagreement_multiplier and meta_size_multiplier to position_limit; wire hybrid_layer composite node into LangGraph DAG; thread hybrid_mode/debate_mode into run_hedge_fund initial state
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Portfolio Manager meta-label filtering (INT-02): enforce suppress/hold_only/reduce/allow per D-32 to D-37; add max_shares floor guard for suppress with existing positions
+- [x] 03-02-PLAN.md — Portfolio Manager meta-label filtering (INT-02): enforce suppress/hold_only/reduce/allow per D-32 to D-37; add max_shares floor guard for suppress with existing positions
 
 ### Phase 4: Adaptive Routing & Reflection
 
@@ -90,8 +90,8 @@ Plans:
 
 Plans:
 
-- [ ] 04-01: Regime Classifier and Adaptive Selector.
-- [ ] 04-02: Backtest Reflection Recorder and Metrics.
+- [x] 04-01: Regime Classifier and Adaptive Selector.
+- [x] 04-02: Backtest Reflection Recorder and Metrics.
 
 ## Progress
 
@@ -102,5 +102,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Schemas | 2/2 | Complete | 2026-06-09 |
 | 2. Hybrid Agents & Meta-Labeler | 2/2 | Complete    | 2026-06-09 |
-| 3. Sizing & Execution Integrations | 0/2 | Not started | - |
-| 4. Adaptive Routing & Reflection | 0/2 | Not started | - |
+| 3. Sizing & Execution Integrations | 2/2 | Complete | 2026-06-09 |
+| 4. Adaptive Routing & Reflection | 2/2 | Complete | 2026-06-09 |

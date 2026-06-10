@@ -1,4 +1,5 @@
 import json
+import math
 
 import numpy as np
 import pandas as pd
@@ -163,6 +164,19 @@ def risk_management_agent(state: AgentState, agent_id: str = "risk_management_ag
         # Convert to dollar position limit
         position_limit = total_portfolio_value * combined_limit_pct
 
+        # Apply hybrid multipliers when hybrid_mode is enabled (D-26 to D-31)
+        if data.get("hybrid_mode", False):
+            guardrail = data.get("guardrail_outputs", {}).get(ticker, {})
+            raw_dm = guardrail.get("confidence_multiplier", 1.0)
+            disagreement_multiplier = max(0.0, min(1.0, float(raw_dm) if math.isfinite(float(raw_dm)) else 1.0))
+            meta = data.get("meta_label_outputs", {}).get(ticker, {})
+            raw_ms = meta.get("size_multiplier", 1.0)
+            meta_size_multiplier = max(0.0, min(1.0, float(raw_ms) if math.isfinite(float(raw_ms)) else 1.0))
+            position_limit = position_limit * disagreement_multiplier * meta_size_multiplier
+        else:
+            disagreement_multiplier = 1.0
+            meta_size_multiplier = 1.0
+
         # Calculate remaining limit for this position
         remaining_position_limit = position_limit - current_position_value
 
@@ -188,7 +202,16 @@ def risk_management_agent(state: AgentState, agent_id: str = "risk_management_ag
                 "position_limit": float(position_limit),
                 "remaining_limit": float(remaining_position_limit),
                 "available_cash": float(portfolio.get("cash", 0)),
-                "risk_adjustment": f"Volatility x Correlation adjusted: {combined_limit_pct:.1%} (base {vol_adjusted_limit_pct:.1%})",
+                "risk_adjustment": (
+                    f"Volatility x Correlation adjusted: {combined_limit_pct:.1%} (base {vol_adjusted_limit_pct:.1%})"
+                    + (
+                        f" x disagreement({disagreement_multiplier:.2f}) x meta_size({meta_size_multiplier:.2f})"
+                        if data.get("hybrid_mode", False)
+                        else ""
+                    )
+                ),
+                "disagreement_multiplier": float(disagreement_multiplier),
+                "meta_size_multiplier": float(meta_size_multiplier),
             },
         }
 
