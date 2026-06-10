@@ -1,8 +1,6 @@
 """Regression tests for #161 — search_line_items caching."""
 
-from unittest.mock import call, Mock, patch
-
-import pytest
+from unittest.mock import Mock, patch
 
 
 class TestSearchLineItemsCache:

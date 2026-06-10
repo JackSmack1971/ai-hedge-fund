@@ -1,16 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-export interface ApiKey {
-  id: number;
-  provider: string;
-  key_value: string;
-  is_active: boolean;
-  description?: string;
-  created_at: string;
-  updated_at?: string;
-  last_used?: string;
-}
-
+// The backend never returns stored secret values; all responses use the summary shape.
 export interface ApiKeySummary {
   id: number;
   provider: string;
@@ -55,7 +45,7 @@ class ApiKeysService {
     return response.json();
   }
 
-  async getApiKey(provider: string): Promise<ApiKey> {
+  async getApiKey(provider: string): Promise<ApiKeySummary> {
     const response = await fetch(`${this.baseUrl}/${encodeURIComponent(provider)}`);
     if (!response.ok) {
       if (response.status === 404) {
@@ -66,7 +56,7 @@ class ApiKeysService {
     return response.json();
   }
 
-  async createOrUpdateApiKey(request: ApiKeyCreateRequest): Promise<ApiKey> {
+  async createOrUpdateApiKey(request: ApiKeyCreateRequest): Promise<ApiKeySummary> {
     const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: {
@@ -81,7 +71,7 @@ class ApiKeysService {
     return response.json();
   }
 
-  async updateApiKey(provider: string, request: ApiKeyUpdateRequest): Promise<ApiKey> {
+  async updateApiKey(provider: string, request: ApiKeyUpdateRequest): Promise<ApiKeySummary> {
     const response = await fetch(`${this.baseUrl}/${encodeURIComponent(provider)}`, {
       method: 'PUT',
       headers: {
@@ -126,7 +116,7 @@ class ApiKeysService {
     return response.json();
   }
 
-  async bulkUpdateApiKeys(request: ApiKeyBulkUpdateRequest): Promise<ApiKey[]> {
+  async bulkUpdateApiKeys(request: ApiKeyBulkUpdateRequest): Promise<ApiKeySummary[]> {
     const response = await fetch(`${this.baseUrl}/bulk`, {
       method: 'POST',
       headers: {

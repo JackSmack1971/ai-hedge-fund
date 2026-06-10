@@ -1,6 +1,7 @@
-import asyncio
 import logging
 import os
+from contextlib import asynccontextmanager
+from importlib.metadata import PackageNotFoundError, version
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,30 +15,19 @@ from app.backend.services.ollama_service import ollama_service
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="AI Hedge Fund API", description="Backend API for AI Hedge Fund", version="0.1.0")
-
-# Initialize database tables (this is safe to run multiple times)
-Base.metadata.create_all(bind=engine)
-
-# Configure CORS — override via CORS_ORIGINS env var (comma-separated) for non-local deployments
-_default_origins = "http://localhost:5173,http://127.0.0.1:5173"
-_cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", _default_origins).split(",") if o.strip()]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Include all routes
-app.include_router(api_router)
+# Single source of truth for the version is pyproject.toml ([tool.poetry] version)
+try:
+    APP_VERSION = version("ai-hedge-fund")
+except PackageNotFoundError:  # running from source without an installed package
+    APP_VERSION = "0.0.0+unknown"
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Startup event to check Ollama availability."""
+def _auto_create_tables_enabled() -> bool:
+    return os.environ.get("AUTO_CREATE_TABLES", "true").strip().lower() in {"1", "true", "yes"}
+
+
+async def _log_ollama_status() -> None:
+    """Check Ollama availability and log the result."""
     try:
         logger.info("Checking Ollama availability...")
         status = await ollama_service.check_ollama_status()
@@ -59,3 +49,34 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"Could not check Ollama status: {e}")
         logger.info("ℹ Ollama integration is available if you install it later")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Dev/test bootstrap only: Alembic migrations (alembic upgrade head) are the
+    # authoritative schema mechanism. Set AUTO_CREATE_TABLES=false in deployments
+    # that run migrations, since create_all never applies column/index changes.
+    if _auto_create_tables_enabled():
+        Base.metadata.create_all(bind=engine)
+    await _log_ollama_status()
+    yield
+
+
+app = FastAPI(
+    title="AI Hedge Fund API", description="Backend API for AI Hedge Fund", version=APP_VERSION, lifespan=lifespan
+)
+
+# Configure CORS — override via CORS_ORIGINS env var (comma-separated) for non-local deployments
+_default_origins = "http://localhost:5173,http://127.0.0.1:5173"
+_cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", _default_origins).split(",") if o.strip()]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include all routes
+app.include_router(api_router)

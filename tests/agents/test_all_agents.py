@@ -1,8 +1,6 @@
 """Parametrized smoke test covering all 21 analyst agents."""
 
-import json
-from pathlib import Path
-from typing import Any
+from contextlib import ExitStack
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,8 +11,6 @@ from tests.agents.conftest import (
     _make_mock_insider_trades,
     _make_mock_prices,
 )
-
-FIXTURES = Path(__file__).parent.parent / "fixtures" / "api"
 
 # Map of agent module → agent function for all 21 agents
 AGENT_REGISTRY = [
@@ -76,6 +72,34 @@ def _build_bullish_llm(pydantic_model, **kwargs):
         return MagicMock(spec=pydantic_model)
 
 
+def _enter_api_patches(stack: ExitStack, module_path: str, empty_data: bool = False) -> None:
+    """Patch API helpers where they are defined and where agents import them."""
+    if empty_data:
+        api_patches = {
+            "get_prices": [],
+            "get_financial_metrics": [],
+            "get_insider_trades": [],
+            "get_company_news": [],
+            "get_market_cap": None,
+            "search_line_items": [],
+            "get_price_data": __import__("pandas").DataFrame(),
+        }
+    else:
+        api_patches = {
+            "get_prices": _make_mock_prices(),
+            "get_financial_metrics": _make_mock_financial_metrics(),
+            "get_insider_trades": _make_mock_insider_trades(),
+            "get_company_news": [],
+            "get_market_cap": 2_500_000_000_000.0,
+            "search_line_items": [],
+            "get_price_data": __import__("pandas").DataFrame(),
+        }
+
+    for api_function, return_value in api_patches.items():
+        stack.enter_context(patch(f"src.tools.api.{api_function}", return_value=return_value))
+        stack.enter_context(patch(f"{module_path}.{api_function}", return_value=return_value, create=True))
+
+
 def _make_mock_state_for_agent(agent_fn_name: str) -> dict:
     """Build agent-specific state if needed; default state works for most."""
     state = _make_empty_state()
@@ -97,8 +121,12 @@ def test_agent_smoke(module_path, fn_name, mock_api_calls):
 
     state = _make_mock_state_for_agent(fn_name)
 
-    # Patch call_llm in the agent's own module (create=True handles agents without call_llm)
-    with patch(f"{module_path}.call_llm", side_effect=_build_bullish_llm, create=True):
+    # Some agents import API helpers directly, so patch both src.tools.api and
+    # the agent module namespace to prevent real network requests in smoke tests.
+    with ExitStack() as stack:
+        _enter_api_patches(stack, module_path)
+        stack.enter_context(patch(f"{module_path}.call_llm", side_effect=_build_bullish_llm, create=True))
+
         try:
             result = agent_fn(state)
         except SystemExit:
@@ -120,16 +148,9 @@ def test_agent_empty_data_does_not_crash(module_path, fn_name):
 
     state = _make_mock_state_for_agent(fn_name)
 
-    with (
-        patch("src.tools.api.get_prices", return_value=[]),
-        patch("src.tools.api.get_financial_metrics", return_value=[]),
-        patch("src.tools.api.get_insider_trades", return_value=[]),
-        patch("src.tools.api.get_company_news", return_value=[]),
-        patch("src.tools.api.get_market_cap", return_value=None),
-        patch("src.tools.api.search_line_items", return_value=[]),
-        patch("src.tools.api.get_price_data", return_value=__import__("pandas").DataFrame()),
-        patch(f"{module_path}.call_llm", side_effect=_build_bullish_llm, create=True),
-    ):
+    with ExitStack() as stack:
+        _enter_api_patches(stack, module_path, empty_data=True)
+        stack.enter_context(patch(f"{module_path}.call_llm", side_effect=_build_bullish_llm, create=True))
         try:
             result = agent_fn(state)
         except SystemExit:
