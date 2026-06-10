@@ -67,3 +67,9 @@ outputs/
 app/backend/alembic/versions/__pycache__/htmlcov/
 .coverage
 coverage.xml
+
+.claude/
+.planning/
+app/backend/AGENTS.md
+app/frontend/AGENTS.md
+src/AGENTS.md
