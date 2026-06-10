@@ -2,11 +2,9 @@
 
 import datetime
 import json
-import os
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import pytest
 
 from src.data.cache import Cache
 from src.data.models import Price
