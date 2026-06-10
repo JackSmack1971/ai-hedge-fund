@@ -1,10 +1,12 @@
 import datetime
+import logging
 import os
 import random
 import time
 
 import pandas as pd
 import requests
+from pydantic import ValidationError
 
 _REQUEST_TIMEOUT = (10, 30)  # (connect_seconds, read_seconds)
 
@@ -25,6 +27,35 @@ from src.data.models import (
 
 # Global cache instance
 _cache = get_cache()
+
+logger = logging.getLogger(__name__)
+
+
+def _response_snippet(response: requests.Response, limit: int = 200) -> str:
+    try:
+        return response.text[:limit]
+    except Exception:
+        return "<unreadable response body>"
+
+
+def _log_http_error(endpoint: str, ticker: str, response: requests.Response) -> None:
+    logger.error(
+        "Error fetching %s for %s: HTTP %s — %s",
+        endpoint,
+        ticker,
+        response.status_code,
+        _response_snippet(response),
+    )
+
+
+def _log_parse_error(endpoint: str, ticker: str, exc: Exception, response: requests.Response) -> None:
+    logger.error(
+        "Failed to parse %s response for %s: %s — payload snippet: %s",
+        endpoint,
+        ticker,
+        exc,
+        _response_snippet(response),
+    )
 
 
 def _make_api_request(
@@ -60,7 +91,9 @@ def _make_api_request(
             else:
                 cap = min(60.0, 1.0 * (2**attempt))
                 delay = random.uniform(0, cap)
-            print(f"Rate limited (429). Attempt {attempt + 1}/{max_retries + 1}. Retrying in {delay:.1f}s...")
+            logger.warning(
+                "Rate limited (429). Attempt %s/%s. Retrying in %.1fs...", attempt + 1, max_retries + 1, delay
+            )
             time.sleep(delay)
             continue
 
@@ -86,13 +119,15 @@ def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None)
     url = f"https://api.financialdatasets.ai/prices/?ticker={ticker}&interval=day&interval_multiplier=1&start_date={start_date}&end_date={end_date}"
     response = _make_api_request(url, headers)
     if response.status_code != 200:
+        _log_http_error("prices", ticker, response)
         return []
 
     # Parse response with Pydantic model
     try:
         price_response = PriceResponse(**response.json())
         prices = price_response.prices
-    except Exception:
+    except (ValidationError, ValueError, requests.RequestException) as e:
+        _log_parse_error("prices", ticker, e, response)
         return []
 
     if not prices:
@@ -127,13 +162,15 @@ def get_financial_metrics(
     url = f"https://api.financialdatasets.ai/financial-metrics/?ticker={ticker}&report_period_lte={end_date}&limit={limit}&period={period}"
     response = _make_api_request(url, headers)
     if response.status_code != 200:
+        _log_http_error("financial metrics", ticker, response)
         return []
 
     # Parse response with Pydantic model
     try:
         metrics_response = FinancialMetricsResponse(**response.json())
         financial_metrics = metrics_response.financial_metrics
-    except Exception:
+    except (ValidationError, ValueError, requests.RequestException) as e:
+        _log_parse_error("financial metrics", ticker, e, response)
         return []
 
     if not financial_metrics:
@@ -174,13 +211,15 @@ def search_line_items(
     }
     response = _make_api_request(url, headers, method="POST", json_data=body)
     if response.status_code != 200:
+        _log_http_error("line items", ticker, response)
         return []
 
     try:
         data = response.json()
         response_model = LineItemResponse(**data)
         search_results = response_model.search_results
-    except Exception:
+    except (ValidationError, ValueError, requests.RequestException) as e:
+        _log_parse_error("line items", ticker, e, response)
         return []
     if not search_results:
         return []
@@ -221,13 +260,15 @@ def get_insider_trades(
 
         response = _make_api_request(url, headers)
         if response.status_code != 200:
+            _log_http_error("insider trades", ticker, response)
             break
 
         try:
             data = response.json()
             response_model = InsiderTradeResponse(**data)
             insider_trades = response_model.insider_trades
-        except Exception:
+        except (ValidationError, ValueError, requests.RequestException) as e:
+            _log_parse_error("insider trades", ticker, e, response)
             break  # Parsing error, exit loop
 
         if not insider_trades:
@@ -286,13 +327,15 @@ def get_company_news(
 
         response = _make_api_request(url, headers)
         if response.status_code != 200:
+            _log_http_error("company news", ticker, response)
             break
 
         try:
             data = response.json()
             response_model = CompanyNewsResponse(**data)
             company_news = response_model.news
-        except Exception:
+        except (ValidationError, ValueError, requests.RequestException) as e:
+            _log_parse_error("company news", ticker, e, response)
             break  # Parsing error, exit loop
 
         if not company_news:
@@ -336,12 +379,16 @@ def get_market_cap(
         url = f"https://api.financialdatasets.ai/company/facts/?ticker={ticker}"
         response = _make_api_request(url, headers)
         if response.status_code != 200:
-            print(f"Error fetching company facts: {ticker} - {response.status_code}")
+            _log_http_error("company facts", ticker, response)
             return None
 
-        data = response.json()
-        response_model = CompanyFactsResponse(**data)
-        return response_model.company_facts.market_cap
+        try:
+            data = response.json()
+            response_model = CompanyFactsResponse(**data)
+            return response_model.company_facts.market_cap
+        except (ValidationError, ValueError, requests.RequestException) as e:
+            _log_parse_error("company facts", ticker, e, response)
+            return None
 
     financial_metrics = get_financial_metrics(ticker, end_date, api_key=api_key)
     if not financial_metrics:
