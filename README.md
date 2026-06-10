@@ -56,7 +56,7 @@ Before you can run the AI Hedge Fund, you'll need to install it and set up your 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/JackSmack1971/ai-hedge-fund-forked.git
+git clone https://github.com/JackSmack1971/ai-hedge-fund.git
 cd ai-hedge-fund-forked
 ```
 
