@@ -2,7 +2,7 @@
 name = "ai-hedge-fund"
 version = "1.0.0"
 description = "An AI-powered hedge fund that uses multiple agents to make trading decisions"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["JackSmack1971 <bret821@gmail.com>"]
 readme = "README.md"
 packages = [
     { include = "src", from = "." },
@@ -29,7 +29,7 @@ rich = "^13.9.4"
 langchain-google-genai = "^2.0.11"
 # Backend dependencies
 fastapi = {extras = ["standard"], version = "^0.104.0"}
-fastapi-cli = "^0.0.7"
+fastapi-cli = "^0.0.24"
 pydantic = "^2.4.2"
 httpx = "^0.27.0"
 sqlalchemy = "^2.0.22"
@@ -41,7 +41,7 @@ celery = {extras = ["redis"], version = "^5.4.0"}
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
 pytest-cov = ">=4.0"
-pytest-asyncio = ">=0.21"
+pytest-asyncio = ">=1.4.0"
 httpx = "^0.27.0"
 black = "^24.0"
 isort = "^5.12.0"

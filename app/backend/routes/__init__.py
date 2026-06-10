@@ -1,5 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.backend.auth import verify_backend_token
 from app.backend.routes.api_keys import router as api_keys_router
 from app.backend.routes.flow_runs import router as flow_runs_router
 from app.backend.routes.flows import router as flows_router
@@ -13,13 +14,16 @@ from app.backend.routes.websocket import router as websocket_router
 # Main API router
 api_router = APIRouter()
 
-# Include sub-routers
+# Health/liveness endpoints stay unauthenticated for monitoring
 api_router.include_router(health_router, tags=["health"])
-api_router.include_router(hedge_fund_router, tags=["hedge-fund"])
-api_router.include_router(storage_router, tags=["storage"])
-api_router.include_router(flows_router, tags=["flows"])
-api_router.include_router(flow_runs_router, tags=["flow-runs"])
-api_router.include_router(ollama_router, tags=["ollama"])
-api_router.include_router(language_models_router, tags=["language-models"])
-api_router.include_router(api_keys_router, tags=["api-keys"])
-api_router.include_router(websocket_router, tags=["flow-run-events"])
+
+# Everything else requires the BACKEND_API_TOKEN bearer token (see app.backend.auth)
+_protected = [Depends(verify_backend_token)]
+api_router.include_router(hedge_fund_router, tags=["hedge-fund"], dependencies=_protected)
+api_router.include_router(storage_router, tags=["storage"], dependencies=_protected)
+api_router.include_router(flows_router, tags=["flows"], dependencies=_protected)
+api_router.include_router(flow_runs_router, tags=["flow-runs"], dependencies=_protected)
+api_router.include_router(ollama_router, tags=["ollama"], dependencies=_protected)
+api_router.include_router(language_models_router, tags=["language-models"], dependencies=_protected)
+api_router.include_router(api_keys_router, tags=["api-keys"], dependencies=_protected)
+api_router.include_router(websocket_router, tags=["flow-run-events"], dependencies=_protected)
