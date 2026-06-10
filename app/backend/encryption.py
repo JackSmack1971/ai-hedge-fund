@@ -20,13 +20,17 @@ import binascii
 import hashlib
 import os
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 CIPHERTEXT_PREFIX = "fernet:"
 
 
 class EncryptionKeyMissingError(RuntimeError):
     """Raised when DATABASE_ENCRYPTION_KEY is required but not configured."""
+
+
+class DecryptionError(RuntimeError):
+    """Raised when a stored secret cannot be decrypted with the configured key."""
 
 
 def _build_fernet() -> Fernet:
@@ -54,7 +58,13 @@ def decrypt_value(stored: str) -> str:
     if not stored.startswith(CIPHERTEXT_PREFIX):
         return stored
     token = stored.removeprefix(CIPHERTEXT_PREFIX)
-    return _build_fernet().decrypt(token.encode()).decode()
+    try:
+        return _build_fernet().decrypt(token.encode()).decode()
+    except InvalidToken as exc:
+        raise DecryptionError(
+            "Failed to decrypt a stored API key: DATABASE_ENCRYPTION_KEY does not match the key "
+            "that encrypted it. Restore the original key, or delete and re-save the stored API keys."
+        ) from exc
 
 
 def is_encrypted(stored: str) -> bool:

@@ -7,6 +7,7 @@ from app.backend.database.models import ApiKey
 from app.backend.encryption import (
     CIPHERTEXT_PREFIX,
     decrypt_value,
+    DecryptionError,
     encrypt_value,
     EncryptionKeyMissingError,
     is_encrypted,
@@ -46,6 +47,12 @@ class TestEncryptionModule:
     def test_missing_key_still_reads_legacy_plaintext(self, monkeypatch):
         monkeypatch.delenv("DATABASE_ENCRYPTION_KEY", raising=False)
         assert decrypt_value("legacy-plaintext") == "legacy-plaintext"
+
+    def test_rotated_key_raises_descriptive_error(self, monkeypatch):
+        ciphertext = encrypt_value(SECRET)
+        monkeypatch.setenv("DATABASE_ENCRYPTION_KEY", "a-different-passphrase")
+        with pytest.raises(DecryptionError, match="DATABASE_ENCRYPTION_KEY"):
+            decrypt_value(ciphertext)
 
 
 class TestRepositoryEncryption:
