@@ -13,6 +13,9 @@ interface ApiKey {
   placeholder: string;
 }
 
+// Placeholder shown for keys that exist server-side; the real value is never sent to the browser.
+const MASKED_KEY_VALUE = '••••••••••••••••';
+
 const FINANCIAL_API_KEYS: ApiKey[] = [
   {
     key: 'FINANCIAL_DATASETS_API_KEY',
@@ -77,6 +80,7 @@ const LLM_API_KEYS: ApiKey[] = [
 
 export function ApiKeysSettings() {
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
+  const [savedProviders, setSavedProviders] = useState<Set<string>>(new Set());
   const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,19 +95,19 @@ export function ApiKeysSettings() {
       setLoading(true);
       setError(null);
       const apiKeysSummary = await apiKeysService.getAllApiKeys();
-      
-      // Load actual key values for existing keys
+
+      // The backend never returns stored secret values; show a mask for saved keys.
       const keysData: Record<string, string> = {};
+      const saved = new Set<string>();
       for (const summary of apiKeysSummary) {
-        try {
-          const fullKey = await apiKeysService.getApiKey(summary.provider);
-          keysData[summary.provider] = fullKey.key_value;
-        } catch (err) {
-          console.warn(`Failed to load key for ${summary.provider}:`, err);
+        if (summary.has_key) {
+          keysData[summary.provider] = MASKED_KEY_VALUE;
+          saved.add(summary.provider);
         }
       }
-      
+
       setApiKeys(keysData);
+      setSavedProviders(saved);
     } catch (err) {
       console.error('Failed to load API keys:', err);
       setError('Failed to load API keys. Please try again.');
@@ -112,7 +116,32 @@ export function ApiKeysSettings() {
     }
   };
 
+  const handleKeyFocus = (key: string) => {
+    // Clear the mask so editing starts from an empty field instead of mask characters
+    if (apiKeys[key] === MASKED_KEY_VALUE) {
+      setApiKeys(prev => ({
+        ...prev,
+        [key]: ''
+      }));
+    }
+  };
+
+  const handleKeyBlur = (key: string) => {
+    // If the field was left empty but a key is still saved server-side, restore the mask
+    if (!apiKeys[key] && savedProviders.has(key)) {
+      setApiKeys(prev => ({
+        ...prev,
+        [key]: MASKED_KEY_VALUE
+      }));
+    }
+  };
+
   const handleKeyChange = async (key: string, value: string) => {
+    // Never persist the display mask as a key value
+    if (value === MASKED_KEY_VALUE) {
+      return;
+    }
+
     // Update local state immediately for responsive UI
     setApiKeys(prev => ({
       ...prev,
@@ -127,6 +156,7 @@ export function ApiKeysSettings() {
           key_value: value.trim(),
           is_active: true
         });
+        setSavedProviders(prev => new Set(prev).add(key));
       } else {
         // If value is empty, delete the key
         try {
@@ -135,6 +165,11 @@ export function ApiKeysSettings() {
           // Key might not exist, which is fine
           console.log(`Key ${key} not found for deletion, which is expected`);
         }
+        setSavedProviders(prev => {
+          const next = new Set(prev);
+          next.delete(key);
+          return next;
+        });
       }
     } catch (err) {
       console.error(`Failed to save API key ${key}:`, err);
@@ -156,6 +191,11 @@ export function ApiKeysSettings() {
         const newKeys = { ...prev };
         delete newKeys[key];
         return newKeys;
+      });
+      setSavedProviders(prev => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
       });
     } catch (err) {
       console.error(`Failed to delete API key ${key}:`, err);
@@ -187,6 +227,8 @@ export function ApiKeysSettings() {
                 placeholder={apiKey.placeholder}
                 value={apiKeys[apiKey.key] || ''}
                 onChange={(e) => handleKeyChange(apiKey.key, e.target.value)}
+                onFocus={() => handleKeyFocus(apiKey.key)}
+                onBlur={() => handleKeyBlur(apiKey.key)}
                 className="pr-20"
               />
               <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
