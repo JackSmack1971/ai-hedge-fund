@@ -1,7 +1,7 @@
 """Add HedgeFundFlow table
 
 Revision ID: 5274886e5bee
-Revises: 
+Revises:
 Create Date: 2025-06-20 14:50:24.736989
 
 """
