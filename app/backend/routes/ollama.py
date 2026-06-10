@@ -189,14 +189,14 @@ async def download_model_with_progress(request: ModelRequest):
             raise HTTPException(status_code=400, detail="Ollama server is not running. Please start it first.")
 
         # Return Server-Sent Events stream
+        # CORS is governed by the app-wide CORSMiddleware (CORS_ORIGINS env var);
+        # never hardcode Access-Control-* headers on individual routes.
         return StreamingResponse(
             ollama_service.download_model_with_progress(request.model_name),
             media_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "*",
             },
         )
     except HTTPException:
