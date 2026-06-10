@@ -1,0 +1,49 @@
+# Normalize commit author aliases so repository contributor graphs show only
+# the intended project identities: JackSmack1971 and Claude.
+#
+# Format: Canonical Name <canonical@email> Alias Name <alias@email>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Aaron Sung <aaronsung@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Aiden Ahn <seungwonan.me@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Akash Tiwari <132299371+ak4631@users.noreply.github.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Akash Tiwari <efgh37716@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Alok Saboo <arsaboo@gmx.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Amol Derick Soans <amoldericksoans@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Andor Kesselman <andor@andor.us>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Archit Jain <architjn93@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Axel Rothing <axelrothing@icloud.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> bhavna3 <113972221+bhavna3@users.noreply.github.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> bhavna3 <bhavanamothkur2003@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> chadtzeo <77866758+chadtzeo@users.noreply.github.com>
+Claude <noreply@anthropic.com> Claude <noreply@anthropic.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Codex <codex@openai.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> guanyuwang1234 <guanyuwang2003@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Hein de Wilde <hp.dewilde@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Jazzy96 <jazzy.zheyu@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> JFullex <jordy26@me.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Jose Maldonado <mahldonado@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Kashif Razzaqui <kashif.razzaqui@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Kayvan Sylvan <KayvanSylvan@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Kayvan Sylvan <kayvansylvan@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Kit <50354903+ksaisaard@users.noreply.github.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Konstantin Krestnikov <rai220@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> LuRaCaVez <liuca@rocketmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Marat Salimzianov <salemgolemugoo@users.noreply.github.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Nathanael DEMACON <quantumsheep@users.noreply.github.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Pragyan <85186756+PragyanTiwari@users.noreply.github.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Roberto Paredes <rdparedessalazar@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Romamo <romamo@yandex.ru>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Ruben <rubencidlara@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Scott Brenner <scott@scottbrenner.me>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> seungwonme <seungwonan.me@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> SimonLiu <simonliu423@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Sorin Peste <sorin.peste@microsoft.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Spiros Raptis <heptapod@posteo.eu>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Swapnil Sharma <swapnil@hippocraticai.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Test User <test@example.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Timothy Byrne <trbyrne.11@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Tobias <tobias@wecode.dk>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Virat Singh <virat.dot@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> virattt <virat.dot@gmail.com>
+JackSmack1971 <128181597+JackSmack1971@users.noreply.github.com> Yash Arora <73465642+yashar1908@users.noreply.github.com>
