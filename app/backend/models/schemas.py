@@ -291,23 +291,8 @@ class ApiKeyUpdateRequest(BaseModel):
     is_active: Optional[bool] = None
 
 
-class ApiKeyResponse(BaseModel):
-    """Complete API key response"""
-
-    id: int
-    provider: str
-    key_value: str
-    is_active: bool
-    description: Optional[str]
-    created_at: datetime
-    updated_at: Optional[datetime]
-    last_used: Optional[datetime]
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class ApiKeySummaryResponse(BaseModel):
-    """API key response without the actual key value"""
+    """API key response without the actual key value (secrets never leave the server)"""
 
     id: int
     provider: str

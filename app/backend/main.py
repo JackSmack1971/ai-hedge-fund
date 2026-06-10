@@ -1,6 +1,7 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from importlib.metadata import PackageNotFoundError, version
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,12 @@ from app.backend.services.ollama_service import ollama_service
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Single source of truth for the version is pyproject.toml ([tool.poetry] version)
+try:
+    APP_VERSION = version("ai-hedge-fund")
+except PackageNotFoundError:  # running from source without an installed package
+    APP_VERSION = "0.0.0+unknown"
 
 
 def _auto_create_tables_enabled() -> bool:
@@ -56,7 +63,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="AI Hedge Fund API", description="Backend API for AI Hedge Fund", version="0.1.0", lifespan=lifespan
+    title="AI Hedge Fund API", description="Backend API for AI Hedge Fund", version=APP_VERSION, lifespan=lifespan
 )
 
 # Configure CORS — override via CORS_ORIGINS env var (comma-separated) for non-local deployments
