@@ -21,9 +21,9 @@ Upgrades the static analyst model of the AI Hedge Fund into an adaptive, debate-
 **Requirements**: SCHM-01, RISK-01, RISK-02, RISK-03
 **Success Criteria**:
 
-  1. The existing CLI and backtester execute without regression when hybrid mode is disabled.
-  2. All hybrid Pydantic models in `src/schemas/hybrid.py` import and serialize to JSON.
-  3. Deterministic disagreement and drawdown formulas calculate correct multipliers under test.
+1. The existing CLI and backtester execute without regression when hybrid mode is disabled.
+2. All hybrid Pydantic models in `src/schemas/hybrid.py` import and serialize to JSON.
+3. Deterministic disagreement and drawdown formulas calculate correct multipliers under test.
 
 **Plans**: 2 plans
 
@@ -34,16 +34,18 @@ Plans:
 
 ### Phase 2: Hybrid Agents & Meta-Labeler
 
-**Goal**: Calibrated confidence, consensus aggregation, debate layer, and meta-label permissions.
+  **Goal**: As a developer running hybrid analysis, I want calibrated confidence, consensus
+  aggregation, debate, and meta-labeling, so that trade signals reflect analyst agreement and
+  psychological biases.
 **Mode**: mvp
 **Depends on**: Phase 1
 **Requirements**: PSY-01, DEBT-01, DEBT-02, META-01
 **Success Criteria**:
 
-  1. The psychological guardrail calibrates raw confidence based on dispersion and herding.
-  2. The consensus agent aggregates opposing stances into a structured output.
-  3. The debate layer runs sequential bull/bear/red-team agents under the `debate_mode` flag.
-  4. The meta-labeler assigns correct permission labels and sizing scalars.
+1. The psychological guardrail calibrates raw confidence based on dispersion and herding.
+2. The consensus agent aggregates opposing stances into a structured output.
+3. The debate layer runs sequential bull/bear/red-team agents under the `debate_mode` flag.
+4. The meta-labeler assigns correct permission labels and sizing scalars.
 
 **Plans**: 2 plans
 
@@ -60,9 +62,9 @@ Plans:
 **Requirements**: INT-01, INT-02
 **Success Criteria**:
 
-  1. Risk Manager applies disagreement and meta-label multipliers to remaining limits (CPPI deferred to Phase 4).
-  2. Portfolio Manager constrains allowed actions and quantities based on meta-labels.
-  3. The end-to-end flow runs successfully with hybrid mode enabled.
+1. Risk Manager applies disagreement and meta-label multipliers to remaining limits (CPPI deferred to Phase 4).
+2. Portfolio Manager constrains allowed actions and quantities based on meta-labels.
+3. The end-to-end flow runs successfully with hybrid mode enabled.
 
 **Plans**: 2 plans
 Plans:
@@ -82,9 +84,9 @@ Plans:
 **Requirements**: ROUT-01, ROUT-02, ROUT-03
 **Success Criteria**:
 
-  1. Regime classifier determines volatility/trend states deterministically.
-  2. Selector chooses relevant analysts dynamically per ticker based on regime.
-  3. Reflection recorder logs full decision traces to JSONL for evaluation.
+1. Regime classifier determines volatility/trend states deterministically.
+2. Selector chooses relevant analysts dynamically per ticker based on regime.
+3. Reflection recorder logs full decision traces to JSONL for evaluation.
 
 **Plans**: 2 plans
 
@@ -98,9 +100,9 @@ Plans:
 **Execution Order:**
 Phases execute in numeric order: 1 → 2 → 3 → 4
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Foundation & Schemas | 2/2 | Complete | 2026-06-09 |
-| 2. Hybrid Agents & Meta-Labeler | 2/2 | Complete    | 2026-06-09 |
-| 3. Sizing & Execution Integrations | 2/2 | Complete | 2026-06-09 |
-| 4. Adaptive Routing & Reflection | 2/2 | Complete | 2026-06-09 |
+| Phase                              | Plans Complete | Status   | Completed  |
+| ---------------------------------- | -------------- | -------- | ---------- |
+| 1. Foundation & Schemas            | 2/2            | Complete | 2026-06-09 |
+| 2. Hybrid Agents & Meta-Labeler    | 2/2            | Complete | 2026-06-09 |
+| 3. Sizing & Execution Integrations | 2/2            | Complete | 2026-06-09 |
+| 4. Adaptive Routing & Reflection   | 2/2            | Complete | 2026-06-09 |
