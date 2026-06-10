@@ -1,6 +1,6 @@
-import asyncio
 import logging
 import os
+from importlib.metadata import PackageNotFoundError, version
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +14,13 @@ from app.backend.services.ollama_service import ollama_service
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="AI Hedge Fund API", description="Backend API for AI Hedge Fund", version="0.1.0")
+# Single source of truth for the version is pyproject.toml ([tool.poetry] version)
+try:
+    APP_VERSION = version("ai-hedge-fund")
+except PackageNotFoundError:  # running from source without an installed package
+    APP_VERSION = "0.0.0+unknown"
+
+app = FastAPI(title="AI Hedge Fund API", description="Backend API for AI Hedge Fund", version=APP_VERSION)
 
 # Initialize database tables (this is safe to run multiple times)
 Base.metadata.create_all(bind=engine)
