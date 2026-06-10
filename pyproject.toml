@@ -84,6 +84,8 @@ python_version = "3.11"
 strict = false
 ignore_missing_imports = true
 no_strict_optional = true
+namespace_packages = true
+explicit_package_bases = true
 
 [tool.bandit]
 exclude_dirs = ["tests"]
