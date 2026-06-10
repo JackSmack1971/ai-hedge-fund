@@ -41,7 +41,7 @@ async def create_flow_run(flow_id: int, request: FlowRunCreateRequest, db: Sessi
         flow_run = run_repo.create_flow_run(flow_id=flow_id, request_data=request.request_data)
         flow_run = run_repo.update_flow_run(run_id=flow_run.id, status=FlowRunStatus.QUEUED) or flow_run
         process_flow_run_task.delay(flow_run.id)
-        return FlowRunResponse.from_orm(flow_run)
+        return FlowRunResponse.model_validate(flow_run)
     except HTTPException:
         raise
     except Exception as e:
@@ -73,7 +73,7 @@ async def get_flow_runs(
         # Get flow runs
         run_repo = FlowRunRepository(db)
         flow_runs = run_repo.get_flow_runs_by_flow_id(flow_id, limit=limit, offset=offset)
-        return [FlowRunSummaryResponse.from_orm(run) for run in flow_runs]
+        return [FlowRunSummaryResponse.model_validate(run) for run in flow_runs]
     except HTTPException:
         raise
     except Exception as e:
@@ -100,7 +100,7 @@ async def get_active_flow_run(flow_id: int, db: Session = Depends(get_db)):
         # Get active flow run
         run_repo = FlowRunRepository(db)
         active_run = run_repo.get_active_flow_run(flow_id)
-        return FlowRunResponse.from_orm(active_run) if active_run else None
+        return FlowRunResponse.model_validate(active_run) if active_run else None
     except HTTPException:
         raise
     except Exception as e:
@@ -127,7 +127,7 @@ async def get_latest_flow_run(flow_id: int, db: Session = Depends(get_db)):
         # Get latest flow run
         run_repo = FlowRunRepository(db)
         latest_run = run_repo.get_latest_flow_run(flow_id)
-        return FlowRunResponse.from_orm(latest_run) if latest_run else None
+        return FlowRunResponse.model_validate(latest_run) if latest_run else None
     except HTTPException:
         raise
     except Exception as e:
@@ -157,7 +157,7 @@ async def get_flow_run(flow_id: int, run_id: int, db: Session = Depends(get_db))
         if not flow_run or flow_run.flow_id != flow_id:
             raise HTTPException(status_code=404, detail="Flow run not found")
 
-        return FlowRunResponse.from_orm(flow_run)
+        return FlowRunResponse.model_validate(flow_run)
     except HTTPException:
         raise
     except Exception as e:
@@ -195,7 +195,7 @@ async def update_flow_run(flow_id: int, run_id: int, request: FlowRunUpdateReque
         if not flow_run:
             raise HTTPException(status_code=404, detail="Flow run not found")
 
-        return FlowRunResponse.from_orm(flow_run)
+        return FlowRunResponse.model_validate(flow_run)
     except HTTPException:
         raise
     except Exception as e:

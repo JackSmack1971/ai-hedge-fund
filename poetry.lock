@@ -2315,19 +2315,19 @@ pydantic = ">=2,<3"
 
 [[package]]
 name = "langchain-groq"
-version = "0.2.5"
+version = "0.3.8"
 description = "An integration package connecting Groq and LangChain"
 optional = false
-python-versions = "<4.0,>=3.9"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "langchain_groq-0.2.5-py3-none-any.whl", hash = "sha256:1d1635a8274228654c440a9115a32d51c4d99944f36ac3180a7c27076694036c"},
-    {file = "langchain_groq-0.2.5.tar.gz", hash = "sha256:7f194c77bffbbaf3cf4f038d46927043e4364cca97f406a939a69be3b34ce595"},
+    {file = "langchain_groq-0.3.8-py3-none-any.whl", hash = "sha256:d7ef98c23f1f4fc9e9e21cddd4e155f3dc989fbe1ff6fefeb52c49c870876219"},
+    {file = "langchain_groq-0.3.8.tar.gz", hash = "sha256:468d1045f9ca9815f55976535dd082a8d08a21068458f0efe0bb364a1a460779"},
 ]
 
 [package.dependencies]
-groq = ">=0.4.1,<1"
-langchain-core = ">=0.3.42,<1.0.0"
+groq = ">=0.30.0,<1"
+langchain-core = ">=0.3.75,<1.0.0"
 
 [[package]]
 name = "langchain-ollama"
@@ -5929,4 +5929,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "b66d1363cd70995c23678228be522266541de9baefaf4739b7dc25f5ffdcb71d"
+content-hash = "4e9d2fb476f6328d7760a8f1e1de70e95f81829a754fd036182c0eb67c9e489a"

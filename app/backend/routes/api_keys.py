@@ -51,7 +51,7 @@ async def get_api_keys(include_inactive: bool = False, db: Session = Depends(get
     try:
         repo = ApiKeyRepository(db)
         api_keys = repo.get_all_api_keys(include_inactive=include_inactive)
-        return [ApiKeySummaryResponse.from_orm(key) for key in api_keys]
+        return [ApiKeySummaryResponse.model_validate(key) for key in api_keys]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve API keys: {str(e)}")
 
@@ -142,7 +142,7 @@ async def deactivate_api_key(provider: str, db: Session = Depends(get_db)):
 
         # Return the updated key
         api_key = repo.get_api_key_by_provider(provider)
-        return ApiKeySummaryResponse.from_orm(api_key)
+        return ApiKeySummaryResponse.model_validate(api_key)
     except HTTPException:
         raise
     except Exception as e:

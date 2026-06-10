@@ -13,7 +13,7 @@ packages = [
 python = "^3.11"
 langchain = "^0.3.7"
 langchain-anthropic = "^0.3.5"
-langchain-groq = "^0.2.3"
+langchain-groq = "^0.3.8"
 langchain-openai = "^0.3.5"
 langchain-deepseek = "^0.1.2"
 langchain-ollama = "^0.3.6"
@@ -84,6 +84,8 @@ python_version = "3.11"
 strict = false
 ignore_missing_imports = true
 no_strict_optional = true
+namespace_packages = true
+explicit_package_bases = true
 
 [tool.bandit]
 exclude_dirs = ["tests"]
