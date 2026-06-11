@@ -1,3 +1,4 @@
+import logging
 import asyncio
 import json
 import re
@@ -11,6 +12,8 @@ from src.agents.risk_manager import risk_management_agent
 from src.graph.state import AgentState
 from src.main import start
 from src.utils.analysts import ANALYST_CONFIG
+
+logger = logging.getLogger(__name__)
 
 
 def extract_base_agent_key(unique_id: str) -> str:
@@ -187,11 +190,11 @@ def parse_hedge_fund_response(response):
     try:
         return json.loads(response)
     except json.JSONDecodeError as e:
-        print(f"JSON decoding error: {e}\nResponse: {repr(response)}")
+        logger.exception("JSON decoding error while parsing LLM response: %r", response)
         return None
     except TypeError as e:
-        print(f"Invalid response type (expected string, got {type(response).__name__}): {e}")
+        logger.exception("Invalid response type while parsing LLM response: %s", type(response).__name__)
         return None
     except Exception as e:
-        print(f"Unexpected error while parsing response: {e}\nResponse: {repr(response)}")
+        logger.exception("Unexpected error while parsing LLM response: %r", response)
         return None
