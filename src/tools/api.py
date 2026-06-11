@@ -61,7 +61,12 @@ def _log_parse_error(endpoint: str, ticker: str, exc: Exception, response: reque
 
 
 def _make_api_request(
-    url: str, headers: dict, method: str = "GET", json_data: dict = None, max_retries: int = 3
+    url: str,
+    headers: dict,
+    method: str = "GET",
+    json_data: dict = None,
+    params: dict = None,
+    max_retries: int = 3,
 ) -> requests.Response:
     """
     Make an API request with rate limiting handling and moderate backoff.
@@ -71,6 +76,7 @@ def _make_api_request(
         headers: Headers to include in the request
         method: HTTP method (GET or POST)
         json_data: JSON data for POST requests
+        params: Query parameters for GET/POST requests
         max_retries: Maximum number of retries (default: 3)
 
     Returns:
@@ -80,10 +86,14 @@ def _make_api_request(
         Exception: If the request fails with a non-429 error
     """
     for attempt in range(max_retries + 1):  # +1 for initial attempt
+        request_kwargs = {"headers": headers, "timeout": _REQUEST_TIMEOUT}
+        if params is not None:
+            request_kwargs["params"] = params
+
         if method.upper() == "POST":
-            response = requests.post(url, headers=headers, json=json_data, timeout=_REQUEST_TIMEOUT)
+            response = requests.post(url, json=json_data, **request_kwargs)
         else:
-            response = requests.get(url, headers=headers, timeout=_REQUEST_TIMEOUT)
+            response = requests.get(url, **request_kwargs)
 
         if response.status_code == 429 and attempt < max_retries:
             # Honour Retry-After header when present; otherwise full-jitter exponential backoff
@@ -144,8 +154,15 @@ def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None)
     if financial_api_key:
         headers["X-API-KEY"] = financial_api_key
 
-    url = f"https://api.financialdatasets.ai/prices/?ticker={ticker}&interval=day&interval_multiplier=1&start_date={start_date}&end_date={end_date}"
-    response = _make_api_request(url, headers)
+    url = "https://api.financialdatasets.ai/prices/"
+    params = {
+        "ticker": ticker,
+        "interval": "day",
+        "interval_multiplier": 1,
+        "start_date": start_date,
+        "end_date": end_date,
+    }
+    response = _make_api_request(url, headers, params=params)
     if response.status_code != 200:
         _log_http_error("prices", ticker, response)
         return []
@@ -189,11 +206,14 @@ def get_financial_metrics(
     if financial_api_key:
         headers["X-API-KEY"] = financial_api_key
 
-    url = (
-        "https://api.financialdatasets.ai/financial-metrics/"
-        f"?ticker={ticker}&report_period_lte={end_date}&limit={cache_limit}&period={period}"
-    )
-    response = _make_api_request(url, headers)
+    url = "https://api.financialdatasets.ai/financial-metrics/"
+    params = {
+        "ticker": ticker,
+        "report_period_lte": end_date,
+        "limit": cache_limit,
+        "period": period,
+    }
+    response = _make_api_request(url, headers, params=params)
     if response.status_code != 200:
         _log_http_error("financial metrics", ticker, response)
         return []
@@ -292,12 +312,16 @@ def get_insider_trades(
         if _pagination_guard_hit("insider trades", ticker, page_count, session_started_at):
             break
 
-        url = f"https://api.financialdatasets.ai/insider-trades/?ticker={ticker}&filing_date_lte={current_end_date}"
+        url = "https://api.financialdatasets.ai/insider-trades/"
+        params = {
+            "ticker": ticker,
+            "filing_date_lte": current_end_date,
+            "limit": limit,
+        }
         if start_date:
-            url += f"&filing_date_gte={start_date}"
-        url += f"&limit={limit}"
+            params["filing_date_gte"] = start_date
 
-        response = _make_api_request(url, headers)
+        response = _make_api_request(url, headers, params=params)
         if response.status_code != 200:
             _log_http_error("insider trades", ticker, response)
             break
@@ -365,12 +389,16 @@ def get_company_news(
         if _pagination_guard_hit("company news", ticker, page_count, session_started_at):
             break
 
-        url = f"https://api.financialdatasets.ai/news/?ticker={ticker}&end_date={current_end_date}"
+        url = "https://api.financialdatasets.ai/news/"
+        params = {
+            "ticker": ticker,
+            "end_date": current_end_date,
+            "limit": limit,
+        }
         if start_date:
-            url += f"&start_date={start_date}"
-        url += f"&limit={limit}"
+            params["start_date"] = start_date
 
-        response = _make_api_request(url, headers)
+        response = _make_api_request(url, headers, params=params)
         if response.status_code != 200:
             _log_http_error("company news", ticker, response)
             break
@@ -422,8 +450,9 @@ def get_market_cap(
         if financial_api_key:
             headers["X-API-KEY"] = financial_api_key
 
-        url = f"https://api.financialdatasets.ai/company/facts/?ticker={ticker}"
-        response = _make_api_request(url, headers)
+        url = "https://api.financialdatasets.ai/company/facts/"
+        params = {"ticker": ticker}
+        response = _make_api_request(url, headers, params=params)
         if response.status_code != 200:
             _log_http_error("company facts", ticker, response)
             return None
