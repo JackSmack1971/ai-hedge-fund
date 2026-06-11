@@ -7,7 +7,9 @@ import pytest
 
 from src.llm.models import (
     AVAILABLE_MODELS,
+    _MODEL_CACHE,
     find_model_by_name,
+    clear_model_cache,
     get_model,
     get_model_info,
     LLMModel,
@@ -87,6 +89,9 @@ class TestFindModelByName:
 
 
 class TestGetModel:
+    def setup_method(self):
+        clear_model_cache()
+
     def test_missing_openai_key_raises(self):
         with patch.dict(os.environ, {}, clear=True):
             with pytest.raises(ValueError, match="OpenAI"):
@@ -133,3 +138,29 @@ class TestGetModel:
             get_model("gpt-4o", ModelProvider.OPENAI, api_keys={"OPENAI_API_KEY": "dict-key"})
         call_kwargs = mock_chat_openai.call_args[1]
         assert call_kwargs.get("api_key") == "dict-key"
+
+    @patch("src.llm.models.ChatOpenAI")
+    def test_cache_key_omits_plaintext_api_keys(self, mock_chat_openai):
+        mock_chat_openai.return_value = "client"
+        secret = "super-secret-key"
+
+        with patch.dict(os.environ, {"OPENAI_API_KEY": secret}):
+            get_model("gpt-4o", ModelProvider.OPENAI, api_keys={"OPENAI_API_KEY": secret})
+
+        cache_key = next(iter(_MODEL_CACHE.keys()))
+        assert cache_key[2] is not None
+        hashed_key = dict(cache_key[2])["OPENAI_API_KEY"]
+        assert hashed_key != secret
+        assert len(hashed_key) == 64
+
+    @patch("src.llm.models.ChatOpenAI")
+    def test_key_rotation_bypasses_previous_cache_entry(self, mock_chat_openai):
+        mock_chat_openai.return_value = "client"
+
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "key-one"}):
+            get_model("gpt-4o", ModelProvider.OPENAI, api_keys={"OPENAI_API_KEY": "key-one"})
+
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "key-two"}):
+            get_model("gpt-4o", ModelProvider.OPENAI, api_keys={"OPENAI_API_KEY": "key-two"})
+
+        assert mock_chat_openai.call_count == 2
