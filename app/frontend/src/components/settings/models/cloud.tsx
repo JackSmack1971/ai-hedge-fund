@@ -61,12 +61,12 @@ export function CloudModels({ className }: CloudModelsProps) {
     <div className={cn("space-y-6", className)}>
 
       {error && (
-        <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <Cloud className="h-5 w-5 text-red-500 mt-0.5" />
+            <Cloud className="h-5 w-5 text-destructive mt-0.5" />
             <div>
-              <h4 className="font-medium text-red-300">Error</h4>
-              <p className="text-sm text-red-500 mt-1">{error}</p>
+              <h4 className="font-medium text-destructive">Error</h4>
+              <p className="text-sm text-destructive mt-1">{error}</p>
             </div>
           </div>
         </div>
@@ -123,4 +123,4 @@ export function CloudModels({ className }: CloudModelsProps) {
       </div>
     </div>
   );
-} 
+}

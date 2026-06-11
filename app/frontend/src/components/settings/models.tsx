@@ -65,10 +65,10 @@ export function Models({ className }: ModelsProps) {
               key={section.id}
               onClick={() => !isDisabled && setSelectedSection(section.id)}
               disabled={isDisabled}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-colors",
-                isSelected 
-                  ? "active-bg text-blue-500 shadow-sm" 
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-colors",
+                  isSelected
+                  ? "active-bg text-info shadow-sm"
                   : isDisabled
                   ? "text-muted-foreground cursor-not-allowed"
                   : "text-primary hover:text-primary hover-bg"
@@ -92,4 +92,4 @@ export function Models({ className }: ModelsProps) {
       </div>
     </div>
   );
-} 
+}

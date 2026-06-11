@@ -119,7 +119,7 @@ function AnalysisResultsSection({ outputData }: { outputData: any }) {
               <TabsTrigger 
                 key={ticker} 
                 value={ticker} 
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-colors data-[state=active]:active-bg data-[state=active]:text-blue-500 data-[state=active]:shadow-sm text-primary hover:text-primary hover-bg"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-colors data-[state=active]:active-bg data-[state=active]:text-info data-[state=active]:shadow-sm text-primary hover:text-primary hover-bg"
               >
                 {ticker}
               </TabsTrigger>
@@ -231,4 +231,4 @@ export function RegularOutput({
       <AnalysisResultsSection outputData={outputData} />
     </>
   );
-} 
+}

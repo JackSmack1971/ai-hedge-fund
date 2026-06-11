@@ -246,7 +246,7 @@ export function ApiKeysSettings() {
           <div key={apiKey.key} className="space-y-2">
             <div className="flex items-center justify-between gap-2">
                          <button
-               className="text-sm font-medium text-primary hover:text-blue-500 cursor-pointer transition-colors text-left"
+               className="text-sm font-medium text-primary hover:text-info cursor-pointer transition-colors text-left"
                onClick={() => window.open(apiKey.url, '_blank')}
              >
                {apiKey.label}
@@ -276,7 +276,7 @@ export function ApiKeysSettings() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-red-500/10 hover:text-red-500"
+                    className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => clearKey(apiKey.key)}
                   >
                     <Trash2 className="h-3 w-3" />
@@ -334,12 +334,12 @@ export function ApiKeysSettings() {
 
       {/* Error Message */}
       {error && (
-        <Card className="bg-red-500/5 border-red-500/20">
+        <Card className="bg-destructive/10 border-destructive/20">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <Key className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <Key className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-red-500">Error</h4>
+                <h4 className="text-sm font-medium text-destructive">Error</h4>
                 <p className="text-xs text-muted-foreground">{error}</p>
                 <Button
                   variant="ghost"
@@ -348,7 +348,7 @@ export function ApiKeysSettings() {
                     setError(null);
                     loadApiKeys();
                   }}
-                  className="text-xs mt-2 p-0 h-auto text-red-500 hover:text-red-400"
+                  className="text-xs mt-2 p-0 h-auto text-destructive hover:text-destructive/80"
                 >
                   Try again
                 </Button>
