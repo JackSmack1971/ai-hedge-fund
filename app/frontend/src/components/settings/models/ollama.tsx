@@ -61,6 +61,7 @@ export function OllamaSettings() {
     modelName: '',
     displayName: ''
   });
+  const [downloadAnnouncement, setDownloadAnnouncement] = useState('');
 
   const fetchOllamaStatus = async () => {
     try {
@@ -134,12 +135,14 @@ export function OllamaSettings() {
   };
 
   const downloadModelWithProgress = async (modelName: string) => {
+    const displayName = recommendedModels.find(m => m.model_name === modelName)?.display_name || modelName;
     setError(null);
     setActiveDownloads(prev => new Set(prev).add(modelName));
     setDownloadProgress(prev => ({
       ...prev,
       [modelName]: { status: 'starting', percentage: 0, message: 'Initializing download...' }
     }));
+    announceDownload(`Downloading ${displayName}`);
 
     try {
       // Make a POST request to the progress endpoint which returns a streaming response
@@ -195,6 +198,7 @@ export function OllamaSettings() {
                         newSet.delete(modelName);
                         return newSet;
                       });
+                      announceDownload(`Download complete for ${displayName}`);
                       // Immediately clean up progress display for completed downloads
                       setDownloadProgress(prev => {
                         const newProgress = { ...prev };
@@ -234,6 +238,11 @@ export function OllamaSettings() {
                         newSet.delete(modelName);
                         return newSet;
                       });
+                      announceDownload(
+                        data.status === 'error'
+                          ? `Download failed for ${displayName}`
+                          : `Download cancelled for ${displayName}`
+                      );
                       if (data.status === 'error') {
                         setError(`Download failed for ${modelName}: ${data.message || data.error}`);
                       }
@@ -261,6 +270,7 @@ export function OllamaSettings() {
     } catch (error) {
       console.error('Failed to download model with progress:', error);
       setError(`Failed to download ${modelName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      announceDownload(`Download failed for ${displayName}`);
       setActiveDownloads(prev => {
         const newSet = new Set(prev);
         newSet.delete(modelName);
@@ -270,6 +280,7 @@ export function OllamaSettings() {
   };
 
   const performCancelDownload = async (modelName: string) => {
+    const displayName = recommendedModels.find(m => m.model_name === modelName)?.display_name || modelName;
     setError(null);
     setCancellingDownloads(prev => new Set(prev).add(modelName));
     
@@ -307,6 +318,7 @@ export function OllamaSettings() {
       newSet.delete(modelName);
       return newSet;
     });
+    announceDownload(`Download cancelled for ${displayName}`);
     
     console.log(`Cancelled download tracking for ${modelName}`);
   };
@@ -360,6 +372,13 @@ export function OllamaSettings() {
     setCancelConfirmation({ isOpen: false, modelName: '', displayName: '' });
   };
 
+  const announceDownload = (message: string) => {
+    setDownloadAnnouncement('');
+    window.setTimeout(() => {
+      setDownloadAnnouncement(message);
+    }, 0);
+  };
+
   const refreshStatus = async () => {
     setLoading(true);
     setError(null);
@@ -401,6 +420,7 @@ export function OllamaSettings() {
   };
 
   const reconnectToDownload = async (modelName: string) => {
+    const displayName = recommendedModels.find(m => m.model_name === modelName)?.display_name || modelName;
     // Don't reconnect if we're already tracking this download
     if (activeDownloads.has(modelName)) {
       console.debug(`Already tracking download for ${modelName}`);
@@ -431,6 +451,7 @@ export function OllamaSettings() {
                 newSet.delete(modelName);
                 return newSet;
               });
+              announceDownload(`Download complete for ${displayName}`);
               // Immediately clean up progress display for completed downloads
               setDownloadProgress(prev => {
                 const newProgress = { ...prev };
@@ -470,6 +491,11 @@ export function OllamaSettings() {
                 newSet.delete(modelName);
                 return newSet;
               });
+              announceDownload(
+                progress.status === 'error'
+                  ? `Download failed for ${displayName}`
+                  : `Download cancelled for ${displayName}`
+              );
               if (progress.status === 'error') {
                 setError(`Download failed for ${modelName}: ${progress.message || progress.error}`);
               }
@@ -614,6 +640,10 @@ export function OllamaSettings() {
 
   return (
     <div className="space-y-6">
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {downloadAnnouncement}
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-primary mb-2">Ollama</h3>
@@ -726,11 +756,15 @@ export function OllamaSettings() {
           
           {/* Show active downloads */}
           {Object.entries(downloadProgress).map(([modelName, progress]) => (
+            (() => {
+              const displayName = recommendedModels.find(m => m.model_name === modelName)?.display_name || modelName;
+
+              return (
             <div key={`download-${modelName}`} className="bg-muted rounded-md px-3 py-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm text-primary">
-                    {recommendedModels.find(m => m.model_name === modelName)?.display_name || modelName}
+                    {displayName}
                   </span>
                   <Badge className={cn(
                     "text-xs border",
@@ -769,7 +803,17 @@ export function OllamaSettings() {
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div 
+<<<<<<< HEAD
                     className="bg-info h-2 rounded-full transition-all duration-300"
+=======
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    role="progressbar"
+                    aria-label={`Download progress for ${displayName}`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(progress.percentage || 0)}
+                    aria-valuetext={progress.percentage ? `${progress.percentage.toFixed(1)}%` : '0%'}
+>>>>>>> ab65861 (feat(frontend): announce async progress for assistive tech)
                     style={{ width: `${progress.percentage || 0}%` }}
                   />
                 </div>
@@ -783,6 +827,8 @@ export function OllamaSettings() {
                 )}
               </div>
             </div>
+              );
+            })()
           ))}
           
           {allModels.length > 0 ? (

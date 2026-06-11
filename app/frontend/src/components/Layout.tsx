@@ -7,6 +7,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { FlowProvider, useFlowContext } from '@/contexts/flow-context';
 import { LayoutProvider, useLayoutContext } from '@/contexts/layout-context';
 import { TabsProvider, useTabsContext } from '@/contexts/tabs-context';
+import { useFlowConnectionState } from '@/hooks/use-flow-connection';
 import { useLayoutKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { cn } from '@/lib/utils';
 import { SidebarStorageService } from '@/services/sidebar-storage';
@@ -18,9 +19,12 @@ import { TopBar } from './layout/top-bar';
 
 // Create a LayoutContent component to access the FlowContext, TabsContext, and LayoutContext
 function LayoutContent() {
-  const { reactFlowInstance } = useFlowContext();
+  const { reactFlowInstance, currentFlowId } = useFlowContext();
   const { openTab } = useTabsContext();
   const { isBottomCollapsed, expandBottomPanel, collapseBottomPanel, toggleBottomPanel } = useLayoutContext();
+  const currentConnection = useFlowConnectionState(currentFlowId?.toString() ?? null);
+  const [liveMessage, setLiveMessage] = useState('');
+  const announcementVersionRef = useRef(0);
   
   // Initialize sidebar states from storage service
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(() => 
@@ -41,6 +45,24 @@ function LayoutContent() {
     const tabData = TabService.createSettingsTab();
     openTab(tabData);
   };
+
+  useEffect(() => {
+    const announcement = currentConnection?.announcement;
+    const announcementVersion = currentConnection?.announcementVersion ?? 0;
+
+    if (!announcement || announcementVersion === announcementVersionRef.current) {
+      return;
+    }
+
+    announcementVersionRef.current = announcementVersion;
+    setLiveMessage('');
+
+    const timeoutId = window.setTimeout(() => {
+      setLiveMessage(announcement);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [currentConnection?.announcement, currentConnection?.announcementVersion]);
 
   // Add keyboard shortcuts for toggling sidebars and fit view
   useLayoutKeyboardShortcuts(
@@ -85,6 +107,10 @@ function LayoutContent() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden relative bg-background">
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {liveMessage}
+      </div>
+
       {/* VSCode-style Top Bar */}
       <TopBar
         isLeftCollapsed={isLeftCollapsed}

@@ -178,15 +178,16 @@ export const backtestApi = {
                         flowConnectionManager.setConnection(flowId, {
                           state: 'completed',
                           abortController: null,
+                          announcement: 'Analysis complete',
                         });
 
                         // Auto-cleanup completed connections after a delay
                         setTimeout(() => {
                           const currentConnection = flowConnectionManager.getConnection(flowId);
                           if (currentConnection.state === 'completed') {
-                            flowConnectionManager.setConnection(flowId, {
-                              state: 'idle',
-                            });
+                        flowConnectionManager.setConnection(flowId, {
+                          state: 'idle',
+                        });
                           }
                         }, 30000); // 30 seconds
                       }
@@ -205,6 +206,7 @@ export const backtestApi = {
                           state: 'error',
                           error: eventData.message || 'Unknown error occurred',
                           abortController: null,
+                          announcement: `Analysis failed: ${eventData.message || 'Unknown error occurred'}`,
                         });
                       }
                       break;
@@ -226,6 +228,7 @@ export const backtestApi = {
               flowConnectionManager.setConnection(flowId, {
                 state: 'completed',
                 abortController: null,
+                announcement: 'Analysis complete',
               });
             }
           }
@@ -244,6 +247,7 @@ export const backtestApi = {
                 state: 'error',
                 error: error.message || 'Connection error',
                 abortController: null,
+                announcement: `Analysis failed: ${error.message || 'Connection error'}`,
               });
             }
           }
@@ -263,11 +267,12 @@ export const backtestApi = {
       
       // Update flow connection state to error
       if (flowId) {
-        flowConnectionManager.setConnection(flowId, {
-          state: 'error',
-          error: error.message || 'Connection failed',
-          abortController: null,
-        });
+      flowConnectionManager.setConnection(flowId, {
+        state: 'error',
+        error: error.message || 'Connection failed',
+        abortController: null,
+        announcement: `Analysis failed: ${error.message || 'Connection failed'}`,
+      });
       }
     });
 
@@ -279,6 +284,7 @@ export const backtestApi = {
         flowConnectionManager.setConnection(flowId, {
           state: 'idle',
           abortController: null,
+          announcement: 'Run cancelled',
         });
       }
     };
