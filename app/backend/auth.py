@@ -11,11 +11,12 @@ against the ``BACKEND_API_TOKEN`` environment variable:
 """
 
 import logging
-import os
 import secrets
 
 from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from app.backend.config import backend_settings
 
 logger = logging.getLogger(__name__)
 
@@ -25,14 +26,14 @@ _PRODUCTION_ENVIRONMENTS = {"production", "prod"}
 
 
 def _is_production() -> bool:
-    return os.environ.get("ENVIRONMENT", "development").strip().lower() in _PRODUCTION_ENVIRONMENTS
+    return backend_settings.is_production()
 
 
 async def verify_backend_token(
     credentials: HTTPAuthorizationCredentials | None = Security(_bearer_scheme),
 ) -> None:
     """FastAPI dependency enforcing the BACKEND_API_TOKEN bearer token."""
-    expected = os.environ.get("BACKEND_API_TOKEN")
+    expected = backend_settings.backend_api_token
 
     if not expected:
         if _is_production():

@@ -1,5 +1,4 @@
 import json
-import os
 
 from colorama import init
 from dotenv import load_dotenv
@@ -20,6 +19,7 @@ from src.regime.classifier import classify_regime
 from src.regime.selector import select_analysts_for_regime
 from src.schemas.hybrid import RegimeClassification
 from src.tools.api import get_prices, prices_to_df
+from src.config import src_settings
 from src.utils.analysts import get_analyst_nodes
 from src.utils.display import print_trading_output
 from src.utils.progress import progress
@@ -148,7 +148,7 @@ def _apply_adaptive_routing(
     Returns (effective_analysts, regime_classification_by_ticker, regime_selection_by_ticker).
     Falls back gracefully on API errors — returns original selected_analysts unchanged.
     """
-    api_key = os.getenv("FINANCIAL_DATASETS_API_KEY", "")
+    api_key = src_settings.financial_datasets_api_key or ""
     analyst_nodes = get_analyst_nodes()
     all_analysts = list(analyst_nodes.keys())
     available = selected_analysts if selected_analysts is not None else all_analysts

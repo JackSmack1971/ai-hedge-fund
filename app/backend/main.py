@@ -1,5 +1,4 @@
 import logging
-import os
 from contextlib import asynccontextmanager
 from importlib.metadata import PackageNotFoundError, version
 
@@ -8,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.backend.database.connection import engine
 from app.backend.database.models import Base
+from app.backend.config import backend_settings
 from app.backend.routes import api_router
 from app.backend.services.ollama_service import ollama_service
 
@@ -23,7 +23,7 @@ except PackageNotFoundError:  # running from source without an installed package
 
 
 def _auto_create_tables_enabled() -> bool:
-    return os.environ.get("AUTO_CREATE_TABLES", "true").strip().lower() in {"1", "true", "yes"}
+    return backend_settings.auto_create_tables
 
 
 async def _log_ollama_status() -> None:
@@ -67,8 +67,7 @@ app = FastAPI(
 )
 
 # Configure CORS — override via CORS_ORIGINS env var (comma-separated) for non-local deployments
-_default_origins = "http://localhost:5173,http://127.0.0.1:5173"
-_cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", _default_origins).split(",") if o.strip()]
+_cors_origins = backend_settings.get_cors_origins()
 
 app.add_middleware(
     CORSMiddleware,
