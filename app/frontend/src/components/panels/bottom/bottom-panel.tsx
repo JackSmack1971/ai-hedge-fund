@@ -14,12 +14,16 @@ interface BottomPanelProps {
   onExpand: () => void;
   onToggleCollapse: () => void;
   onHeightChange?: (height: number) => void;
+  isMobile?: boolean;
+  maxHeight?: number;
 }
 
 export function BottomPanel({
   isCollapsed,
   onToggleCollapse,
   onHeightChange,
+  isMobile = false,
+  maxHeight = window.innerHeight,
 }: BottomPanelProps) {
   const { currentBottomTab, setBottomPanelTab } = useLayoutContext();
   
@@ -27,14 +31,15 @@ export function BottomPanel({
   const { height, isDragging, elementRef, startResize } = useResizable({
     defaultHeight: 300,
     minHeight: 200,
-    maxHeight: window.innerHeight,
+    maxHeight,
     side: 'bottom',
   });
+  const panelHeight = Math.min(height, maxHeight);
   
   // Notify parent component of height changes
   useEffect(() => {
-    onHeightChange?.(height);
-  }, [height, onHeightChange]);
+    onHeightChange?.(panelHeight);
+  }, [panelHeight, onHeightChange]);
 
   if (isCollapsed) {
     return null;
@@ -48,14 +53,17 @@ export function BottomPanel({
         isDragging ? "select-none" : ""
       )}
       style={{ 
-        height: `${height}px`,
+        height: `${panelHeight}px`,
       }}
     >
       {/* Resize handle - on the top for bottom panel */}
       {!isDragging && (
         <div 
-          className="absolute top-0 left-0 right-0 h-1 cursor-ns-resize transition-all duration-150 z-10 hover-bg"
-          onMouseDown={startResize}
+          className={cn(
+            "absolute top-0 left-0 right-0 cursor-ns-resize transition-all duration-150 z-10 hover-bg touch-none",
+            isMobile ? "h-3 -translate-y-1" : "h-1"
+          )}
+          onPointerDown={startResize}
         />
       )}
 
@@ -96,4 +104,4 @@ export function BottomPanel({
       </div>
     </div>
   );
-} 
+}

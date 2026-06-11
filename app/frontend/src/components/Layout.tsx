@@ -3,11 +3,13 @@ import { LeftSidebar } from '@/components/panels/left/left-sidebar';
 import { RightSidebar } from '@/components/panels/right/right-sidebar';
 import { TabBar } from '@/components/tabs/tab-bar';
 import { TabContent } from '@/components/tabs/tab-content';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { FlowProvider, useFlowContext } from '@/contexts/flow-context';
 import { LayoutProvider, useLayoutContext } from '@/contexts/layout-context';
 import { TabsProvider, useTabsContext } from '@/contexts/tabs-context';
 import { useLayoutKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { SidebarStorageService } from '@/services/sidebar-storage';
 import { TabService } from '@/services/tab-service';
@@ -21,6 +23,7 @@ function LayoutContent() {
   const { reactFlowInstance } = useFlowContext();
   const { openTab } = useTabsContext();
   const { isBottomCollapsed, expandBottomPanel, collapseBottomPanel, toggleBottomPanel } = useLayoutContext();
+  const isMobile = useIsMobile();
   
   // Initialize sidebar states from storage service
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(() => 
@@ -64,8 +67,42 @@ function LayoutContent() {
     SidebarStorageService.saveRightSidebarState(isRightCollapsed);
   }, [isRightCollapsed]);
 
+  useEffect(() => {
+    if (isMobile) {
+      setIsLeftCollapsed(true);
+      setIsRightCollapsed(true);
+    }
+  }, [isMobile]);
+
+  const handleToggleLeft = () => {
+    setIsLeftCollapsed((current) => {
+      const nextCollapsed = !current;
+      if (isMobile && !nextCollapsed) {
+        setIsRightCollapsed(true);
+      }
+      return nextCollapsed;
+    });
+  };
+
+  const handleToggleRight = () => {
+    setIsRightCollapsed((current) => {
+      const nextCollapsed = !current;
+      if (isMobile && !nextCollapsed) {
+        setIsLeftCollapsed(true);
+      }
+      return nextCollapsed;
+    });
+  };
+
   // Calculate tab bar and bottom panel positioning based on actual sidebar widths
   const getSidebarBasedStyle = () => {
+    if (isMobile) {
+      return {
+        left: '0px',
+        right: '0px',
+      };
+    }
+
     let left = 0;
     let right = 0;
     
@@ -114,8 +151,8 @@ function LayoutContent() {
       <main 
         className="absolute inset-0 overflow-hidden" 
         style={{
-          left: !isLeftCollapsed ? `${leftSidebarWidth}px` : '0px',
-          right: !isRightCollapsed ? `${rightSidebarWidth}px` : '0px',
+          left: !isMobile && !isLeftCollapsed ? `${leftSidebarWidth}px` : '0px',
+          right: !isMobile && !isRightCollapsed ? `${rightSidebarWidth}px` : '0px',
           top: '40px', // Tab bar height
           bottom: !isBottomCollapsed ? `${bottomPanelHeight}px` : '0px',
         }}
@@ -124,30 +161,78 @@ function LayoutContent() {
       </main>
 
       {/* Floating left sidebar */}
-      <div className={cn(
-        "absolute top-0 left-0 z-30 h-full transition-transform",
-        isLeftCollapsed && "transform -translate-x-full opacity-0"
-      )}>
-        <LeftSidebar
-          isCollapsed={isLeftCollapsed}
-          onCollapse={() => setIsLeftCollapsed(true)}
-          onExpand={() => setIsLeftCollapsed(false)}
-          onWidthChange={setLeftSidebarWidth}
-        />
-      </div>
+      {isMobile ? (
+        <Sheet
+          open={!isLeftCollapsed}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsLeftCollapsed(true);
+              return;
+            }
+
+            setIsRightCollapsed(true);
+            setIsLeftCollapsed(false);
+          }}
+        >
+          <SheetContent side="left" className="w-[85vw] max-w-sm p-0 bg-transparent border-0 shadow-none">
+            <LeftSidebar
+              isCollapsed={isLeftCollapsed}
+              onCollapse={() => setIsLeftCollapsed(true)}
+              onExpand={() => setIsLeftCollapsed(false)}
+              onWidthChange={setLeftSidebarWidth}
+            />
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <div className={cn(
+          "absolute top-0 left-0 z-30 h-full transition-transform",
+          isLeftCollapsed && "transform -translate-x-full opacity-0"
+        )}>
+          <LeftSidebar
+            isCollapsed={isLeftCollapsed}
+            onCollapse={() => setIsLeftCollapsed(true)}
+            onExpand={() => setIsLeftCollapsed(false)}
+            onWidthChange={setLeftSidebarWidth}
+          />
+        </div>
+      )}
 
       {/* Floating right sidebar */}
-      <div className={cn(
-        "absolute top-0 right-0 z-30 h-full transition-transform",
-        isRightCollapsed && "transform translate-x-full opacity-0"
-      )}>
-        <RightSidebar
-          isCollapsed={isRightCollapsed}
-          onCollapse={() => setIsRightCollapsed(true)}
-          onExpand={() => setIsRightCollapsed(false)}
-          onWidthChange={setRightSidebarWidth}
-        />
-      </div>
+      {isMobile ? (
+        <Sheet
+          open={!isRightCollapsed}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsRightCollapsed(true);
+              return;
+            }
+
+            setIsLeftCollapsed(true);
+            setIsRightCollapsed(false);
+          }}
+        >
+          <SheetContent side="right" className="w-[85vw] max-w-sm p-0 bg-transparent border-0 shadow-none">
+            <RightSidebar
+              isCollapsed={isRightCollapsed}
+              onCollapse={() => setIsRightCollapsed(true)}
+              onExpand={() => setIsRightCollapsed(false)}
+              onWidthChange={setRightSidebarWidth}
+            />
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <div className={cn(
+          "absolute top-0 right-0 z-30 h-full transition-transform",
+          isRightCollapsed && "transform translate-x-full opacity-0"
+        )}>
+          <RightSidebar
+            isCollapsed={isRightCollapsed}
+            onCollapse={() => setIsRightCollapsed(true)}
+            onExpand={() => setIsRightCollapsed(false)}
+            onWidthChange={setRightSidebarWidth}
+          />
+        </div>
+      )}
 
       {/* Bottom panel */}
       <div 
@@ -163,6 +248,8 @@ function LayoutContent() {
           onExpand={expandBottomPanel}
           onToggleCollapse={toggleBottomPanel}
           onHeightChange={setBottomPanelHeight}
+          isMobile={isMobile}
+          maxHeight={isMobile ? Math.floor(window.innerHeight * 0.5) : window.innerHeight}
         />
       </div>
     </div>

@@ -26,17 +26,18 @@ export function useResizable({
   // Add a ref for tracking dragging state - updates synchronously unlike state
   const isDraggingRef = useRef(false);
 
-  // Handle manual resizing with mouse
-  const startResize = (e: React.MouseEvent) => {
+  // Handle manual resizing with pointer events so mouse and touch both work.
+  const startResize = (e: React.PointerEvent) => {
     e.preventDefault();
     // Set both the ref (for immediate use in mousemove) and state (for rendering)
     isDraggingRef.current = true;
     setIsDragging(true);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', stopResize);
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', stopResize);
+    document.addEventListener('pointercancel', stopResize);
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handlePointerMove = (e: PointerEvent) => {
     // Use the ref value instead of state for checking
     if (!isDraggingRef.current) return;
     
@@ -71,15 +72,17 @@ export function useResizable({
     // Update both ref and state
     isDraggingRef.current = false;
     setIsDragging(false);
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', stopResize);
+    document.removeEventListener('pointermove', handlePointerMove);
+    document.removeEventListener('pointerup', stopResize);
+    document.removeEventListener('pointercancel', stopResize);
   };
 
   // Clean up event listeners when component unmounts
   useEffect(() => {
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', stopResize);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', stopResize);
+      document.removeEventListener('pointercancel', stopResize);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -91,4 +94,4 @@ export function useResizable({
     elementRef,
     startResize
   };
-} 
+}
