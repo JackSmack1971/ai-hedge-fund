@@ -3,8 +3,9 @@ import os
 from contextlib import asynccontextmanager
 from importlib.metadata import PackageNotFoundError, version
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.backend.database.connection import engine
 from app.backend.database.models import Base
@@ -65,6 +66,21 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AI Hedge Fund API", description="Backend API for AI Hedge Fund", version=APP_VERSION, lifespan=lifespan
 )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code >= 500:
+        logger.exception("Unexpected HTTPException in %s", request.url.path)
+        return JSONResponse(status_code=500, content={"detail": "An internal error occurred"})
+
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail}, headers=exc.headers)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled exception in %s", request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "An internal error occurred"})
 
 # Configure CORS — override via CORS_ORIGINS env var (comma-separated) for non-local deployments
 _default_origins = "http://localhost:5173,http://127.0.0.1:5173"
