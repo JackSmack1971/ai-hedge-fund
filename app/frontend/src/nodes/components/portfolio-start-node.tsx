@@ -71,6 +71,7 @@ export function PortfolioStartNode({
   const {
     isConnecting,
     isConnected,
+    isCancelling,
     isProcessing,
     canRun,
     runFlow,
@@ -251,7 +252,7 @@ export function PortfolioStartNode({
   };
 
   // Determine if we're processing (connecting, connected, or any agents running)
-  const showAsProcessing = isConnecting || isConnected || isProcessing;
+  const showAsProcessing = isConnecting || isConnected || isProcessing || isCancelling;
 
   return (
     <TooltipProvider>

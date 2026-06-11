@@ -6,6 +6,12 @@ import { extractBaseAgentKey } from '@/data/node-mappings';
 import { flowConnectionManager } from '@/hooks/use-flow-connection';
 import { backendFetch, backendJsonHeaders } from '@/services/http';
 import {
+  buildActionableHttpErrorMessage,
+  buildActionableNetworkErrorMessage,
+  showRunErrorToast,
+  showRunWarningToast,
+} from '@/services/run-feedback';
+import {
   HedgeFundRequest
 } from '@/services/types';
 
@@ -110,9 +116,25 @@ export const api = {
       body: JSON.stringify(backendParams),
       signal,
     })
-    .then(response => {
+    .then(async response => {
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const message = await buildActionableHttpErrorMessage(response, {
+          authMessage: 'Backend authentication failed - check your API token settings',
+          serverMessage: 'Backend error - check that the server is running',
+          fallbackMessage: 'Run request failed',
+        });
+
+        if (flowId) {
+          showRunErrorToast('flow', flowId, message);
+          nodeContext.updateAgentNodes(flowId, getAgentIds(), 'ERROR');
+          flowConnectionManager.setConnection(flowId, {
+            state: 'error',
+            error: message,
+            abortController: null,
+          });
+        }
+
+        return;
       }
             
       // Process the response as a stream of SSE events
@@ -206,6 +228,7 @@ export const api = {
                         flowConnectionManager.setConnection(flowId, {
                           state: 'completed',
                           abortController: null,
+                          error: undefined,
                         });
 
                         // Optional: Auto-cleanup completed connections after a delay
@@ -247,8 +270,10 @@ export const api = {
           if (flowId) {
             const currentConnection = flowConnectionManager.getConnection(flowId);
             if (currentConnection.state === 'connected') {
+              showRunWarningToast('flow', flowId, 'The backend stopped streaming before sending a completion event.');
               flowConnectionManager.setConnection(flowId, {
-                state: 'completed',
+                state: 'completed-with-warning',
+                error: 'The backend stopped streaming before sending a completion event.',
                 abortController: null,
               });
             }
@@ -261,9 +286,11 @@ export const api = {
             
             // Update flow connection state to error
             if (flowId) {
+              const message = buildActionableNetworkErrorMessage(error, 'Backend error - check that the server is running');
+              showRunErrorToast('flow', flowId, message);
               flowConnectionManager.setConnection(flowId, {
                 state: 'error',
-                error: error.message || 'Connection error',
+                error: message,
                 abortController: null,
               });
             }
@@ -282,9 +309,11 @@ export const api = {
         
         // Update flow connection state to error
         if (flowId) {
+          const message = buildActionableNetworkErrorMessage(error, 'Backend error - check that the server is running');
+          showRunErrorToast('flow', flowId, message);
           flowConnectionManager.setConnection(flowId, {
             state: 'error',
-            error: error.message || 'Connection failed',
+            error: message,
             abortController: null,
           });
         }
@@ -299,6 +328,7 @@ export const api = {
         flowConnectionManager.setConnection(flowId, {
           state: 'idle',
           abortController: null,
+          error: undefined,
         });
       }
     };
