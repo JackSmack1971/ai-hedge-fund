@@ -1,12 +1,12 @@
 """Regression tests for graph construction and graph execution guards."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from langgraph.graph import END
 
 from app.backend.models.schemas import GraphEdge, GraphNode
-from app.backend.services.graph import create_graph, run_graph
+from app.backend.services.graph import GRAPH_EXECUTOR, create_graph, run_graph, run_graph_async
 
 
 def test_create_graph_rejects_self_loop():
@@ -63,3 +63,26 @@ class TestCreateGraphTerminalEdges:
         edge_targets = {edge.target for edge in graph_view.edges if edge.source == "warren_buffett_abc123"}
 
         assert END in edge_targets
+
+
+@pytest.mark.asyncio
+async def test_run_graph_async_uses_dedicated_executor():
+    class DummyLoop:
+        def __init__(self):
+            self.executor = None
+            self.callback = None
+
+        async def run_in_executor(self, executor, callback):
+            self.executor = executor
+            self.callback = callback
+            return callback()
+
+    dummy_loop = DummyLoop()
+
+    with patch("app.backend.services.graph.asyncio.get_running_loop", return_value=dummy_loop):
+        with patch("app.backend.services.graph.run_graph", return_value={"ok": True}) as mock_run_graph:
+            result = await run_graph_async("graph", {}, [], "2024-01-01", "2024-01-02", "model", "provider")
+
+    assert result == {"ok": True}
+    assert dummy_loop.executor is GRAPH_EXECUTOR
+    mock_run_graph.assert_called_once()
