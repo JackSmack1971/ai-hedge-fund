@@ -18,7 +18,7 @@ class Sentiment(BaseModel):
     """Represents the sentiment of a news article."""
 
     sentiment: Literal["positive", "negative", "neutral"]
-    confidence: int = Field(description="Confidence 0-100")
+    confidence: int = Field(ge=0, le=100, description="Confidence 0-100")
 
 
 def news_sentiment_agent(state: AgentState, agent_id: str = "news_sentiment_agent"):
