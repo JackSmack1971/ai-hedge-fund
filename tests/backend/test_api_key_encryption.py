@@ -124,3 +124,18 @@ class TestServiceDecryption:
 
         service = ApiKeyService(db_session)
         assert service.get_api_key("LEGACY_KEY") == "legacy-plaintext"
+
+        row = db_session.query(ApiKey).filter(ApiKey.provider == "LEGACY_KEY").one()
+        assert is_encrypted(row.key_value)
+        assert decrypt_value(row.key_value) == "legacy-plaintext"
+
+    def test_service_dict_reads_legacy_plaintext(self, db_session):
+        db_session.add(ApiKey(provider="LEGACY_DICT_KEY", key_value="legacy-dict-plaintext", is_active=True))
+        db_session.commit()
+
+        service = ApiKeyService(db_session)
+        assert service.get_api_keys_dict() == {"LEGACY_DICT_KEY": "legacy-dict-plaintext"}
+
+        row = db_session.query(ApiKey).filter(ApiKey.provider == "LEGACY_DICT_KEY").one()
+        assert is_encrypted(row.key_value)
+        assert decrypt_value(row.key_value) == "legacy-dict-plaintext"
