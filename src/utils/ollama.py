@@ -1,6 +1,5 @@
 """Utilities for working with Ollama models"""
 
-import os
 import platform
 import subprocess
 import time
@@ -10,6 +9,8 @@ import questionary
 import requests
 from colorama import Fore, Style
 
+from src.config import src_settings
+
 from . import docker
 
 # Constants
@@ -18,7 +19,7 @@ DEFAULT_OLLAMA_SERVER_URL = "http://localhost:11434"
 
 def _get_ollama_base_url() -> str:
     """Return the configured Ollama base URL, trimming any trailing slash."""
-    url = os.environ.get("OLLAMA_BASE_URL", DEFAULT_OLLAMA_SERVER_URL)
+    url = src_settings.ollama_base_url or DEFAULT_OLLAMA_SERVER_URL
     if not url:
         url = DEFAULT_OLLAMA_SERVER_URL
     return url.rstrip("/")
@@ -349,7 +350,7 @@ def download_model(model_name: str) -> bool:
 def ensure_ollama_and_model(model_name: str) -> bool:
     """Ensure Ollama is installed, running, and the requested model is available."""
     ollama_url = _get_ollama_base_url()
-    env_override = os.environ.get("OLLAMA_BASE_URL")
+    env_override = src_settings.ollama_base_url
 
     # If an explicit base URL is provided (including Docker defaults), use the remote workflow
     if env_override or ollama_url.startswith("http://ollama:") or ollama_url.startswith("http://host.docker.internal:"):
@@ -400,13 +401,14 @@ def ensure_ollama_and_model(model_name: str) -> bool:
 def delete_model(model_name: str) -> bool:
     """Delete a locally downloaded Ollama model."""
     # Check if we're running in Docker
-    in_docker = os.environ.get("OLLAMA_BASE_URL", "").startswith("http://ollama:") or os.environ.get(
-        "OLLAMA_BASE_URL", ""
-    ).startswith("http://host.docker.internal:")
+    ollama_base_url = src_settings.ollama_base_url or ""
+    in_docker = ollama_base_url.startswith("http://ollama:") or ollama_base_url.startswith(
+        "http://host.docker.internal:"
+    )
 
     # In Docker environment, delegate to docker module
     if in_docker:
-        ollama_url = os.environ.get("OLLAMA_BASE_URL", "http://ollama:11434")
+        ollama_url = src_settings.ollama_base_url or "http://ollama:11434"
         return docker.delete_model(model_name, ollama_url)
 
     # Non-Docker environment

@@ -1,6 +1,5 @@
 import json
 import hashlib
-import os
 from enum import Enum
 from collections import OrderedDict
 from pathlib import Path
@@ -15,6 +14,8 @@ from langchain_ollama import ChatOllama
 from langchain_openai import AzureChatOpenAI, ChatOpenAI
 from langchain_xai import ChatXAI
 from pydantic import BaseModel
+
+from src.config import src_settings
 
 
 class ModelProvider(str, Enum):
@@ -140,7 +141,7 @@ def _build_model(
     model_name: str, model_provider: ModelProvider, api_keys: dict = None
 ) -> ChatOpenAI | ChatGroq | ChatOllama | GigaChat | None:  # noqa: E501
     if model_provider == ModelProvider.GROQ:
-        api_key = (api_keys or {}).get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+        api_key = src_settings.get_provider_api_key("GROQ", api_keys)
         if not api_key:
             # Print error to console
             print("API Key Error: Please make sure GROQ_API_KEY is set in your .env file or provided via API keys.")
@@ -150,8 +151,8 @@ def _build_model(
         return ChatGroq(model=model_name, api_key=api_key)
     elif model_provider == ModelProvider.OPENAI:
         # Get and validate API key
-        api_key = (api_keys or {}).get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
-        base_url = os.getenv("OPENAI_API_BASE")
+        api_key = src_settings.get_provider_api_key("OPENAI", api_keys)
+        base_url = src_settings.openai_api_base
         if not api_key:
             # Print error to console
             print("API Key Error: Please make sure OPENAI_API_KEY is set in your .env file or provided via API keys.")
@@ -160,7 +161,7 @@ def _build_model(
             )
         return ChatOpenAI(model=model_name, api_key=api_key, base_url=base_url)
     elif model_provider == ModelProvider.ANTHROPIC:
-        api_key = (api_keys or {}).get("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+        api_key = src_settings.get_provider_api_key("ANTHROPIC", api_keys)
         if not api_key:
             print(
                 "API Key Error: Please make sure ANTHROPIC_API_KEY is set in your .env file or provided via API keys."
@@ -170,7 +171,7 @@ def _build_model(
             )
         return ChatAnthropic(model=model_name, api_key=api_key)
     elif model_provider == ModelProvider.DEEPSEEK:
-        api_key = (api_keys or {}).get("DEEPSEEK_API_KEY") or os.getenv("DEEPSEEK_API_KEY")
+        api_key = src_settings.get_provider_api_key("DEEPSEEK", api_keys)
         if not api_key:
             print("API Key Error: Please make sure DEEPSEEK_API_KEY is set in your .env file or provided via API keys.")
             raise ValueError(
@@ -178,7 +179,7 @@ def _build_model(
             )
         return ChatDeepSeek(model=model_name, api_key=api_key)
     elif model_provider == ModelProvider.GOOGLE:
-        api_key = (api_keys or {}).get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        api_key = src_settings.get_provider_api_key("GOOGLE", api_keys)
         if not api_key:
             print("API Key Error: Please make sure GOOGLE_API_KEY is set in your .env file or provided via API keys.")
             raise ValueError(
@@ -188,14 +189,13 @@ def _build_model(
     elif model_provider == ModelProvider.OLLAMA:
         # For Ollama, we use a base URL instead of an API key
         # Check if OLLAMA_HOST is set (for Docker on macOS)
-        ollama_host = os.getenv("OLLAMA_HOST", "localhost")
-        base_url = os.getenv("OLLAMA_BASE_URL", f"http://{ollama_host}:11434")
+        base_url = src_settings.get_ollama_base_url()
         return ChatOllama(
             model=model_name,
             base_url=base_url,
         )
     elif model_provider == ModelProvider.OPENROUTER:
-        api_key = (api_keys or {}).get("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY")
+        api_key = src_settings.get_provider_api_key("OPENROUTER", api_keys)
         if not api_key:
             print(
                 "API Key Error: Please make sure OPENROUTER_API_KEY is set in your .env file or provided via API keys."
@@ -205,8 +205,8 @@ def _build_model(
             )
 
         # Get optional site URL and name for headers
-        site_url = os.getenv("YOUR_SITE_URL", "https://github.com/virattt/ai-hedge-fund")
-        site_name = os.getenv("YOUR_SITE_NAME", "AI Hedge Fund")
+        site_url = src_settings.your_site_url
+        site_name = src_settings.your_site_name
 
         return ChatOpenAI(
             model=model_name,
@@ -220,7 +220,7 @@ def _build_model(
             },
         )
     elif model_provider == ModelProvider.XAI:
-        api_key = (api_keys or {}).get("XAI_API_KEY") or os.getenv("XAI_API_KEY")
+        api_key = src_settings.get_provider_api_key("XAI", api_keys)
         if not api_key:
             print("API Key Error: Please make sure XAI_API_KEY is set in your .env file or provided via API keys.")
             raise ValueError(
@@ -228,13 +228,13 @@ def _build_model(
             )
         return ChatXAI(model=model_name, api_key=api_key)
     elif model_provider == ModelProvider.GIGACHAT:
-        if os.getenv("GIGACHAT_USER") or os.getenv("GIGACHAT_PASSWORD"):
+        if src_settings.gigachat_user or src_settings.gigachat_password:
             return GigaChat(model=model_name)
         else:
             api_key = (
                 (api_keys or {}).get("GIGACHAT_API_KEY")
-                or os.getenv("GIGACHAT_API_KEY")
-                or os.getenv("GIGACHAT_CREDENTIALS")
+                or src_settings.gigachat_api_key
+                or src_settings.gigachat_credentials
             )
             if not api_key:
                 print("API Key Error: Please make sure api_keys is set in your .env file or provided via API keys.")
@@ -245,7 +245,7 @@ def _build_model(
             return GigaChat(credentials=api_key, model=model_name)
     elif model_provider == ModelProvider.AZURE_OPENAI:
         # Get and validate API key
-        api_key = os.getenv("AZURE_OPENAI_API_KEY")
+        api_key = src_settings.azure_openai_api_key
         if not api_key:
             # Print error to console
             print("API Key Error: Please make sure AZURE_OPENAI_API_KEY is set in your .env file.")
@@ -253,7 +253,7 @@ def _build_model(
                 "Azure OpenAI API key not found.  Please make sure AZURE_OPENAI_API_KEY is set in your .env file."
             )
         # Get and validate Azure Endpoint
-        azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        azure_endpoint = src_settings.azure_openai_endpoint
         if not azure_endpoint:
             # Print error to console
             print("Azure Endpoint Error: Please make sure AZURE_OPENAI_ENDPOINT is set in your .env file.")
@@ -261,7 +261,7 @@ def _build_model(
                 "Azure OpenAI endpoint not found.  Please make sure AZURE_OPENAI_ENDPOINT is set in your .env file."
             )
         # get and validate deployment name
-        azure_deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+        azure_deployment_name = src_settings.azure_openai_deployment_name
         if not azure_deployment_name:
             # Print error to console
             print(

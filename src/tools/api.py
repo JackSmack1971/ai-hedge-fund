@@ -1,12 +1,13 @@
 import datetime
 import logging
-import os
 import random
 import time
 
 import pandas as pd
 import requests
 from pydantic import ValidationError
+
+from src.config import src_settings
 
 _REQUEST_TIMEOUT = (10, 30)  # (connect_seconds, read_seconds)
 _MAX_PAGINATION_PAGES = 100
@@ -140,7 +141,7 @@ def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None)
 
     # Range not in cache — fetch from API
     headers = {}
-    financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
+    financial_api_key = api_key or src_settings.financial_datasets_api_key
     if financial_api_key:
         headers["X-API-KEY"] = financial_api_key
 
@@ -185,7 +186,7 @@ def get_financial_metrics(
 
     # If not in cache, fetch from API
     headers = {}
-    financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
+    financial_api_key = api_key or src_settings.financial_datasets_api_key
     if financial_api_key:
         headers["X-API-KEY"] = financial_api_key
 
@@ -230,7 +231,7 @@ def search_line_items(
         return [LineItem(**item) for item in cached_data][:limit]
 
     headers = {}
-    financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
+    financial_api_key = api_key or src_settings.financial_datasets_api_key
     if financial_api_key:
         headers["X-API-KEY"] = financial_api_key
 
@@ -279,7 +280,7 @@ def get_insider_trades(
 
     # If not in cache, fetch from API
     headers = {}
-    financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
+    financial_api_key = api_key or src_settings.financial_datasets_api_key
     if financial_api_key:
         headers["X-API-KEY"] = financial_api_key
 
@@ -352,7 +353,7 @@ def get_company_news(
 
     # If not in cache, fetch from API
     headers = {}
-    financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
+    financial_api_key = api_key or src_settings.financial_datasets_api_key
     if financial_api_key:
         headers["X-API-KEY"] = financial_api_key
 
@@ -418,7 +419,7 @@ def get_market_cap(
     if end_date == datetime.datetime.now().strftime("%Y-%m-%d"):
         # Get the market cap from company facts API
         headers = {}
-        financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
+        financial_api_key = api_key or src_settings.financial_datasets_api_key
         if financial_api_key:
             headers["X-API-KEY"] = financial_api_key
 
