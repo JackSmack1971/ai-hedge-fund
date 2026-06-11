@@ -1,4 +1,6 @@
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 import json
 import re
 
@@ -11,6 +13,8 @@ from src.agents.risk_manager import risk_management_agent
 from src.graph.state import AgentState
 from src.main import start
 from src.utils.analysts import ANALYST_CONFIG
+
+GRAPH_EXECUTOR = ThreadPoolExecutor(max_workers=32, thread_name_prefix="graph")
 
 
 def extract_base_agent_key(unique_id: str) -> str:
@@ -134,13 +138,9 @@ def create_graph(graph_nodes: list, graph_edges: list) -> StateGraph:
 
 async def run_graph_async(graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request=None):
     """Async wrapper for run_graph to work with asyncio."""
-    # Use run_in_executor to run the synchronous function in a separate thread
-    # so it doesn't block the event loop
     loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(
-        None, lambda: run_graph(graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request)
-    )  # Use default executor
-    return result
+    run_graph_call = partial(run_graph, graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request)
+    return await loop.run_in_executor(GRAPH_EXECUTOR, run_graph_call)
 
 
 def run_graph(
