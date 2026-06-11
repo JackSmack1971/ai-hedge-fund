@@ -1,10 +1,14 @@
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
+from collections import defaultdict, deque
 from importlib.metadata import PackageNotFoundError, version
+from threading import Lock
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.backend.database.connection import engine
 from app.backend.database.models import Base
@@ -16,6 +20,9 @@ from app.backend.services.ollama_service import ollama_service
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+_hedge_fund_run_request_times: dict[str, deque[float]] = defaultdict(deque)
+_hedge_fund_run_lock = Lock()
+_rate_limit_window_seconds = 60
 
 # Single source of truth for the version is pyproject.toml ([tool.poetry] version)
 try:
@@ -26,6 +33,14 @@ except PackageNotFoundError:  # running from source without an installed package
 
 def _auto_create_tables_enabled() -> bool:
     return os.environ.get("AUTO_CREATE_TABLES", "true").strip().lower() in {"1", "true", "yes"}
+
+
+def _hedge_fund_run_rate_limit() -> int:
+    raw_value = os.environ.get("HEDGE_FUND_RUN_RATE_LIMIT_PER_MINUTE", "5").strip()
+    try:
+        return max(1, int(raw_value))
+    except ValueError:
+        return 5
 
 
 async def _log_ollama_status() -> None:
@@ -84,6 +99,24 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AI Hedge Fund API", description="Backend API for AI Hedge Fund", version=APP_VERSION, lifespan=lifespan
 )
+
+
+@app.middleware("http")
+async def rate_limit_hedge_fund_run(request: Request, call_next):
+    if request.method == "POST" and request.url.path == "/hedge-fund/run":
+        client_host = request.client.host if request.client else "unknown"
+        now = time.monotonic()
+        limit = _hedge_fund_run_rate_limit()
+
+        with _hedge_fund_run_lock:
+            request_times = _hedge_fund_run_request_times[client_host]
+            while request_times and now - request_times[0] >= _rate_limit_window_seconds:
+                request_times.popleft()
+            if len(request_times) >= limit:
+                return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
+            request_times.append(now)
+
+    return await call_next(request)
 
 # Configure CORS — override via CORS_ORIGINS env var (comma-separated) for non-local deployments
 _default_origins = "http://localhost:5173,http://127.0.0.1:5173"
