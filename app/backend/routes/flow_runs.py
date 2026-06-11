@@ -15,6 +15,7 @@ from app.backend.models.schemas import (
 from app.backend.repositories.flow_repository import FlowRepository
 from app.backend.repositories.flow_run_repository import FlowRunRepository
 from app.backend.tasks.flow_run_tasks import process_flow_run_task
+from app.backend.services.graph import sanitize_request_payload
 
 router = APIRouter(prefix="/flows/{flow_id}/runs", tags=["flow-runs"])
 
@@ -38,7 +39,7 @@ async def create_flow_run(flow_id: int, request: FlowRunCreateRequest, db: Sessi
 
         # Create and queue the flow run
         run_repo = FlowRunRepository(db)
-        flow_run = run_repo.create_flow_run(flow_id=flow_id, request_data=request.request_data)
+        flow_run = run_repo.create_flow_run(flow_id=flow_id, request_data=sanitize_request_payload(request.request_data))
         flow_run = run_repo.update_flow_run(run_id=flow_run.id, status=FlowRunStatus.QUEUED) or flow_run
         process_flow_run_task.delay(flow_run.id)
         return FlowRunResponse.model_validate(flow_run)

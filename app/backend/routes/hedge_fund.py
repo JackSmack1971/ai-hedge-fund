@@ -24,11 +24,13 @@ from app.backend.services.backtest_service import BacktestService
 from app.backend.services.graph import (
     create_graph,
     parse_hedge_fund_response,
+    sanitize_request_payload,
     run_graph_async,
 )
 from app.backend.services.portfolio import create_portfolio
 from src.utils.analysts import get_agents_list
 from src.utils.progress import progress
+from src.utils.llm import reset_request_api_keys, set_request_api_keys
 
 router = APIRouter(prefix="/hedge-fund")
 
@@ -47,6 +49,8 @@ async def run(request_data: HedgeFundRequest, request: Request, db: Session = De
         if not request_data.api_keys:
             api_key_service = ApiKeyService(db)
             request_data.api_keys = api_key_service.get_api_keys_dict()
+        request_api_keys = request_data.api_keys or {}
+        request_data = sanitize_request_payload(request_data)
         db.close()  # release connection before the long-running streaming response
 
         # Create the portfolio
@@ -86,6 +90,7 @@ async def run(request_data: HedgeFundRequest, request: Request, db: Session = De
             progress_queue = asyncio.Queue()
             run_task = None
             disconnect_task = None
+            api_keys_token = set_request_api_keys(request_api_keys)
 
             # Simple handler to add updates to the queue
             def progress_handler(agent_name, ticker, status, analysis, timestamp):
@@ -108,7 +113,7 @@ async def run(request_data: HedgeFundRequest, request: Request, db: Session = De
                         end_date=request_data.end_date,
                         model_name=request_data.model_name,
                         model_provider=model_provider,
-                        request=request_data,  # Pass the full request for agent-specific model access
+                        request=request_data,
                     )
                 )
 
@@ -173,6 +178,7 @@ async def run(request_data: HedgeFundRequest, request: Request, db: Session = De
                         pass
                 if disconnect_task and not disconnect_task.done():
                     disconnect_task.cancel()
+                reset_request_api_keys(api_keys_token)
 
         # Return a streaming response
         return StreamingResponse(event_generator(), media_type="text/event-stream")
@@ -198,6 +204,8 @@ async def backtest(request_data: BacktestRequest, request: Request, db: Session 
         if not request_data.api_keys:
             api_key_service = ApiKeyService(db)
             request_data.api_keys = api_key_service.get_api_keys_dict()
+        request_api_keys = request_data.api_keys or {}
+        request_data = sanitize_request_payload(request_data)
         db.close()  # release connection before the long-running streaming response
 
         # Convert model_provider to string if it's an enum
@@ -227,7 +235,8 @@ async def backtest(request_data: BacktestRequest, request: Request, db: Session 
             initial_capital=request_data.initial_capital,
             model_name=request_data.model_name,
             model_provider=model_provider,
-            request=request_data,  # Pass the full request for agent-specific model access
+            request=request_data,
+            api_keys=request_api_keys,
         )
 
         # Function to detect client disconnection
@@ -246,6 +255,7 @@ async def backtest(request_data: BacktestRequest, request: Request, db: Session 
             progress_queue = asyncio.Queue()
             backtest_task = None
             disconnect_task = None
+            api_keys_token = set_request_api_keys(request_api_keys)
 
             # Global progress handler to capture individual agent updates during backtest
             def progress_handler(agent_name, ticker, status, analysis, timestamp):
@@ -352,6 +362,7 @@ async def backtest(request_data: BacktestRequest, request: Request, db: Session 
                         pass
                 if disconnect_task and not disconnect_task.done():
                     disconnect_task.cancel()
+                reset_request_api_keys(api_keys_token)
 
         # Return a streaming response
         return StreamingResponse(event_generator(), media_type="text/event-stream")

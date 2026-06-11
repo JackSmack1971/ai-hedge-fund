@@ -34,6 +34,7 @@ class BacktestService:
         model_name: str = "gpt-4.1",
         model_provider: str = "OpenAI",
         request: dict = {},
+        api_keys: dict | None = None,
     ):
         """
         Initialize the backtest service.
@@ -47,6 +48,7 @@ class BacktestService:
         :param model_name: Which LLM model name to use.
         :param model_provider: Which LLM provider.
         :param request: Request object containing API keys and other metadata.
+        :param api_keys: Request-scoped API keys used for market data and LLM access.
         """
         self.graph = graph
         self.portfolio = portfolio
@@ -57,6 +59,7 @@ class BacktestService:
         self.model_name = model_name
         self.model_provider = model_provider
         self.request = request
+        self.api_keys = api_keys or {}
         self.portfolio_values = []
 
     def execute_trade(self, ticker: str, action: str, quantity: float, current_price: float) -> int:
@@ -226,7 +229,7 @@ class BacktestService:
         end_date_dt = datetime.strptime(self.end_date, "%Y-%m-%d")
         start_date_dt = end_date_dt - relativedelta(years=1)
         start_date_str = start_date_dt.strftime("%Y-%m-%d")
-        api_key = self.request.api_keys.get("FINANCIAL_DATASETS_API_KEY")
+        api_key = self.api_keys.get("FINANCIAL_DATASETS_API_KEY")
 
         for ticker in self.tickers:
             get_prices(ticker, start_date_str, self.end_date, api_key=api_key)
