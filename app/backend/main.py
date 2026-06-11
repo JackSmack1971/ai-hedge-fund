@@ -3,7 +3,7 @@ import os
 from contextlib import asynccontextmanager
 from importlib.metadata import PackageNotFoundError, version
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.backend.database.connection import engine
@@ -65,6 +65,18 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AI Hedge Fund API", description="Backend API for AI Hedge Fund", version=APP_VERSION, lifespan=lifespan
 )
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("Cache-Control", "no-store")
+    if response.headers.get("content-type", "").startswith("text/event-stream"):
+        response.headers.setdefault("X-Accel-Buffering", "no")
+    return response
 
 # Configure CORS — override via CORS_ORIGINS env var (comma-separated) for non-local deployments
 _default_origins = "http://localhost:5173,http://127.0.0.1:5173"
