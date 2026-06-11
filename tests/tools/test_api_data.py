@@ -466,3 +466,31 @@ class TestCompanyNewsPagination:
         result = get_company_news("AAPL", "2024-03-08", start_date="2024-01-10", limit=2)
         assert len(result) == 2
         assert mock_request.call_count == 1
+
+
+class TestPaginationGuards:
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_insider_trades_max_pages_guard(self, mock_cache, mock_request, caplog):
+        page = _mock_response(200, {"insider_trades": [_trade("2024-03-05"), _trade("2024-02-10")]})
+        mock_request.return_value = page
+
+        with caplog.at_level("WARNING"):
+            result = get_insider_trades("AAPL", "2024-03-08", start_date="2024-01-01", limit=2)
+
+        assert len(result) == 200
+        assert mock_request.call_count == 100
+        assert "max_pages=100" in caplog.text
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_company_news_max_pages_guard(self, mock_cache, mock_request, caplog):
+        page = _mock_response(200, {"news": [_news("2024-03-05"), _news("2024-02-10")]})
+        mock_request.return_value = page
+
+        with caplog.at_level("WARNING"):
+            result = get_company_news("AAPL", "2024-03-08", start_date="2024-01-01", limit=2)
+
+        assert len(result) == 200
+        assert mock_request.call_count == 100
+        assert "max_pages=100" in caplog.text
