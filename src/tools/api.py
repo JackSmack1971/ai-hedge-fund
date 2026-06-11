@@ -9,6 +9,8 @@ import requests
 from pydantic import ValidationError
 
 _REQUEST_TIMEOUT = (10, 30)  # (connect_seconds, read_seconds)
+_MAX_PAGINATION_PAGES = 100
+_MAX_PAGINATION_SECONDS = 60.0
 
 from src.data.cache import get_cache
 from src.data.models import (
@@ -99,6 +101,32 @@ def _make_api_request(
 
         # Return the response (whether success, other errors, or final 429)
         return response
+
+
+def _pagination_guard_hit(endpoint: str, ticker: str, page_count: int, session_started_at: float) -> bool:
+    """Stop runaway pagination if the API keeps returning full pages or stalls."""
+    if page_count >= _MAX_PAGINATION_PAGES:
+        logger.warning(
+            "Stopping %s pagination for %s after %s pages (max_pages=%s)",
+            endpoint,
+            ticker,
+            page_count,
+            _MAX_PAGINATION_PAGES,
+        )
+        return True
+
+    elapsed = time.monotonic() - session_started_at
+    if elapsed >= _MAX_PAGINATION_SECONDS:
+        logger.warning(
+            "Stopping %s pagination for %s after %.1fs (max_seconds=%.1f)",
+            endpoint,
+            ticker,
+            elapsed,
+            _MAX_PAGINATION_SECONDS,
+        )
+        return True
+
+    return False
 
 
 def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None) -> list[Price]:
@@ -251,8 +279,13 @@ def get_insider_trades(
 
     all_trades = []
     current_end_date = end_date
+    page_count = 0
+    session_started_at = time.monotonic()
 
     while True:
+        if _pagination_guard_hit("insider trades", ticker, page_count, session_started_at):
+            break
+
         url = f"https://api.financialdatasets.ai/insider-trades/?ticker={ticker}&filing_date_lte={current_end_date}"
         if start_date:
             url += f"&filing_date_gte={start_date}"
@@ -275,6 +308,7 @@ def get_insider_trades(
             break
 
         all_trades.extend(insider_trades)
+        page_count += 1
 
         # Only continue pagination if we have a start_date and got a full page
         if not start_date or len(insider_trades) < limit:
@@ -318,8 +352,13 @@ def get_company_news(
 
     all_news = []
     current_end_date = end_date
+    page_count = 0
+    session_started_at = time.monotonic()
 
     while True:
+        if _pagination_guard_hit("company news", ticker, page_count, session_started_at):
+            break
+
         url = f"https://api.financialdatasets.ai/news/?ticker={ticker}&end_date={current_end_date}"
         if start_date:
             url += f"&start_date={start_date}"
@@ -342,6 +381,7 @@ def get_company_news(
             break
 
         all_news.extend(company_news)
+        page_count += 1
 
         # Only continue pagination if we have a start_date and got a full page
         if not start_date or len(company_news) < limit:
