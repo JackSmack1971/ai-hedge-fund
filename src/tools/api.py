@@ -146,12 +146,14 @@ def get_financial_metrics(
     api_key: str = None,
 ) -> list[FinancialMetrics]:
     """Fetch financial metrics from cache or API."""
-    # Create a cache key that includes all parameters to ensure exact matches
-    cache_key = f"{ticker}_{period}_{end_date}_{limit}"
+    # Normalize to the maximum cache granularity used by current callers so
+    # different per-agent limits collapse onto a single upstream fetch.
+    cache_limit = max(limit, 12)
+    cache_key = f"{ticker}_{period}_{end_date}_{cache_limit}"
 
-    # Check cache first - simple exact match
+    # Check cache first - exact match after normalization
     if cached_data := _cache.get_financial_metrics(cache_key):
-        return [FinancialMetrics(**metric) for metric in cached_data]
+        return [FinancialMetrics(**metric) for metric in cached_data][:limit]
 
     # If not in cache, fetch from API
     headers = {}
@@ -159,7 +161,10 @@ def get_financial_metrics(
     if financial_api_key:
         headers["X-API-KEY"] = financial_api_key
 
-    url = f"https://api.financialdatasets.ai/financial-metrics/?ticker={ticker}&report_period_lte={end_date}&limit={limit}&period={period}"
+    url = (
+        "https://api.financialdatasets.ai/financial-metrics/"
+        f"?ticker={ticker}&report_period_lte={end_date}&limit={cache_limit}&period={period}"
+    )
     response = _make_api_request(url, headers)
     if response.status_code != 200:
         _log_http_error("financial metrics", ticker, response)
@@ -176,9 +181,9 @@ def get_financial_metrics(
     if not financial_metrics:
         return []
 
-    # Cache the results as dicts using the comprehensive cache key
+    # Cache the results as dicts using the normalized cache key
     _cache.set_financial_metrics(cache_key, [m.model_dump() for m in financial_metrics])
-    return financial_metrics
+    return financial_metrics[:limit]
 
 
 def search_line_items(
@@ -191,7 +196,8 @@ def search_line_items(
 ) -> list[LineItem]:
     """Fetch line items from cache or API."""
     items_key = "_".join(sorted(line_items))
-    cache_key = f"{ticker}_{period}_{end_date}_{limit}_{items_key}"
+    cache_limit = max(limit, 12)
+    cache_key = f"{ticker}_{period}_{end_date}_{cache_limit}_{items_key}"
     if cached_data := _cache.get_line_items(cache_key):
         return [LineItem(**item) for item in cached_data][:limit]
 
@@ -207,7 +213,7 @@ def search_line_items(
         "line_items": line_items,
         "end_date": end_date,
         "period": period,
-        "limit": limit,
+        "limit": cache_limit,
     }
     response = _make_api_request(url, headers, method="POST", json_data=body)
     if response.status_code != 200:
