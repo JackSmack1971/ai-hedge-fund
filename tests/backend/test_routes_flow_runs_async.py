@@ -48,7 +48,7 @@ def _create_flow(client: TestClient) -> int:
 def test_create_flow_run_enqueues_background_task(client: TestClient):
     flow_id = _create_flow(client)
 
-    with patch("app.backend.routes.flow_runs.process_flow_run_task.delay") as mock_delay:
+    with patch("app.backend.services.flow_run_service.process_flow_run_task.delay") as mock_delay:
         response = client.post(f"/flows/{flow_id}/runs/", json={"request_data": {"mode": "test"}})
 
     assert response.status_code == 200, response.text
@@ -59,7 +59,7 @@ def test_create_flow_run_enqueues_background_task(client: TestClient):
 
 def test_flow_run_events_stream_reports_status(client: TestClient):
     flow_id = _create_flow(client)
-    with patch("app.backend.routes.flow_runs.process_flow_run_task.delay"):
+    with patch("app.backend.services.flow_run_service.process_flow_run_task.delay"):
         create_response = client.post(f"/flows/{flow_id}/runs/", json={"request_data": {"mode": "test"}})
     assert create_response.status_code == 200, create_response.text
     run_id = create_response.json()["id"]
