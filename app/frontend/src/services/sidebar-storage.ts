@@ -1,3 +1,5 @@
+import { debugLog } from '@/lib/debug';
+
 export interface SidebarStates {
   leftCollapsed: boolean;
   rightCollapsed: boolean;
@@ -191,7 +193,7 @@ export class SidebarStorageService {
       const cleared = this.clearSidebarStates();
       
       if (cleared) {
-        console.log('Successfully reset sidebar states to defaults');
+        debugLog('Successfully reset sidebar states to defaults');
       }
       
       return cleared;
@@ -234,4 +236,4 @@ export class SidebarStorageService {
       right: this.hasRightSidebarState(),
     };
   }
-} 
+}

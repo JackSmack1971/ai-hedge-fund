@@ -102,7 +102,7 @@ export const backtestApi = {
                   const eventType = eventTypeMatch[1];
                   const eventData = JSON.parse(dataMatch[1]);
                   
-                  console.log(`Parsed backtest ${eventType} event:`, eventData);
+                  debugLog(`Parsed backtest ${eventType} event:`, eventData);
                   
                   // Process based on event type
                   switch (eventType) {
