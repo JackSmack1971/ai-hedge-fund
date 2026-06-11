@@ -14,7 +14,7 @@ from src.utils.progress import progress
 
 class WarrenBuffettSignal(BaseModel):
     signal: Literal["bullish", "bearish", "neutral"]
-    confidence: int = Field(description="Confidence 0-100")
+    confidence: int = Field(ge=0, le=100, description="Confidence 0-100")
     reasoning: str = Field(description="Reasoning for the decision")
 
 
