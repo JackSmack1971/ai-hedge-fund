@@ -1,3 +1,4 @@
+import logging
 import json
 import time
 
@@ -9,6 +10,8 @@ from typing_extensions import Literal
 from src.graph.state import AgentState, show_agent_reasoning
 from src.utils.llm import call_llm
 from src.utils.progress import progress
+
+logger = logging.getLogger(__name__)
 
 
 class PortfolioDecision(BaseModel):
@@ -58,8 +61,17 @@ def portfolio_management_agent(state: AgentState, agent_id: str = "portfolio_man
         ticker_signals = {}
         for agent, signals in analyst_signals.items():
             if not agent.startswith("risk_management_agent") and ticker in signals:
-                sig = signals[ticker].get("signal")
-                conf = signals[ticker].get("confidence")
+                payload = signals[ticker]
+                if payload.get("error"):
+                    logger.warning(
+                        "Skipping analyst signal from %s for %s because it failed: %s",
+                        agent,
+                        ticker,
+                        payload["error"],
+                    )
+                    continue
+                sig = payload.get("signal")
+                conf = payload.get("confidence")
                 if sig is not None and conf is not None:
                     ticker_signals[agent] = {"sig": sig, "conf": conf}
         signals_by_ticker[ticker] = ticker_signals
