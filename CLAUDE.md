@@ -89,11 +89,11 @@ START → start_node → [analyst agents in parallel] → risk_management_agent 
 
 ### Web app (`app/`)
 
-**Backend** — FastAPI in `app/backend/main.py`. Schema is owned by Alembic migrations (`app/backend/alembic/`; run `alembic upgrade head` on deploy). As a dev/test convenience the lifespan handler also runs `Base.metadata.create_all()` unless `AUTO_CREATE_TABLES=false`; `create_all` only adds missing tables and never applies column/index changes. Key routes:
+**Backend** — FastAPI in `app/backend/main.py`. Schema is owned by Alembic migrations (`app/backend/alembic/`; run `alembic upgrade head` on deploy). The lifespan handler only runs `Base.metadata.create_all()` when `AUTO_CREATE_TABLES=true` for local/dev bootstrap; production deployments should leave it disabled and rely on migrations. Key routes:
 
 #### Backend (`app/backend/`)
 
-FastAPI in `app/backend/main.py`. Uses `Base.metadata.create_all()` at startup (Alembic migrations also present but both are active — do not add new tables without a migration).
+FastAPI in `app/backend/main.py`. Uses `Base.metadata.create_all()` only when `AUTO_CREATE_TABLES=true`; deploy schema changes through Alembic migrations and run `alembic upgrade head` before starting the app.
 
 Key routes (all under `app/backend/routes/`):
 
