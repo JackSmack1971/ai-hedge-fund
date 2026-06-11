@@ -19,7 +19,7 @@ import { TopBar } from './layout/top-bar';
 // Create a LayoutContent component to access the FlowContext, TabsContext, and LayoutContext
 function LayoutContent() {
   const { reactFlowInstance } = useFlowContext();
-  const { openTab } = useTabsContext();
+  const { tabs, openTab } = useTabsContext();
   const { isBottomCollapsed, expandBottomPanel, collapseBottomPanel, toggleBottomPanel } = useLayoutContext();
   
   // Initialize sidebar states from storage service
@@ -36,6 +36,20 @@ function LayoutContent() {
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(280);
   const [rightSidebarWidth, setRightSidebarWidth] = useState(280);
   const [bottomPanelHeight, setBottomPanelHeight] = useState(300);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!tabs.some(tab => tab.isDirty)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [tabs]);
 
   const handleSettingsClick = () => {
     const tabData = TabService.createSettingsTab();
