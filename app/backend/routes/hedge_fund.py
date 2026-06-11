@@ -58,7 +58,10 @@ async def run(request_data: HedgeFundRequest, request: Request, db: Session = De
         )
 
         # Construct agent graph using the React Flow graph structure
-        graph = create_graph(graph_nodes=request_data.graph_nodes, graph_edges=request_data.graph_edges)
+        try:
+            graph = create_graph(graph_nodes=request_data.graph_nodes, graph_edges=request_data.graph_edges)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
         graph = graph.compile()
 
         # Log a test progress update for debugging
@@ -214,7 +217,10 @@ async def backtest(request_data: BacktestRequest, request: Request, db: Session 
         )
 
         # Construct agent graph using the React Flow graph structure (same as /run endpoint)
-        graph = create_graph(graph_nodes=request_data.graph_nodes, graph_edges=request_data.graph_edges)
+        try:
+            graph = create_graph(graph_nodes=request_data.graph_nodes, graph_edges=request_data.graph_edges)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
         graph = graph.compile()
 
         # Create backtest service with the compiled graph
