@@ -9,6 +9,11 @@ def merge_dicts(a: dict[str, any], b: dict[str, any]) -> dict[str, any]:
     return {**a, **b}
 
 
+def start(state: "AgentState"):
+    """Initialize the workflow with the input message."""
+    return state
+
+
 # Define agent state
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], operator.add]
