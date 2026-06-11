@@ -13,6 +13,8 @@ import { TabService } from '@/services/tab-service';
 import { Flow } from '@/types/flow';
 import { useCallback, useEffect, useState } from 'react';
 
+export const FLOW_CREATE_DIALOG_OPEN_EVENT = 'flow-create-dialog:open';
+
 export interface UseFlowManagementTabsReturn {
   // State
   flows: Flow[];
@@ -152,6 +154,18 @@ export function useFlowManagementTabs(): UseFlowManagementTabsReturn {
   useEffect(() => {
     loadFlows();
   }, [loadFlows]);
+
+  useEffect(() => {
+    const handleOpenCreateDialog = () => {
+      setCreateDialogOpen(true);
+    };
+
+    window.addEventListener(FLOW_CREATE_DIALOG_OPEN_EVENT, handleOpenCreateDialog);
+
+    return () => {
+      window.removeEventListener(FLOW_CREATE_DIALOG_OPEN_EVENT, handleOpenCreateDialog);
+    };
+  }, []);
 
   // Filter flows based on search query
   const filteredFlows = flows.filter(flow =>

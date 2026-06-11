@@ -1,8 +1,10 @@
 import { useTabsContext } from '@/contexts/tabs-context';
+import { FLOW_CREATE_DIALOG_OPEN_EVENT } from '@/hooks/use-flow-management-tabs';
 import { cn } from '@/lib/utils';
 import { TabService } from '@/services/tab-service';
 import { FileText, FolderOpen } from 'lucide-react';
 import { useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface TabContentProps {
   className?: string;
@@ -40,6 +42,10 @@ export function TabContent({ className }: TabContentProps) {
   }, [activeTab, openTab]);
 
   if (!activeTab) {
+    const openCreateDialog = () => {
+      window.dispatchEvent(new Event(FLOW_CREATE_DIALOG_OPEN_EVENT));
+    };
+
     return (
       <div className={cn(
         "h-full w-full flex items-center justify-center bg-background text-muted-foreground",
@@ -50,13 +56,16 @@ export function TabContent({ className }: TabContentProps) {
           <div>
             <div className="text-xl font-medium mb-2">Welcome to the AI Hedge Fund</div>
             <div className="text-sm max-w-md">
-              Create a flow from the left sidebar (⌘B) to open it in a tab, or open settings (⌘,) to configure your preferences.
+              Create your first flow from the left sidebar or start from a template flow to open it in a tab.
             </div>
           </div>
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/70">
             <FileText size={14} />
-            <span>Flows now open in tabs</span>
+            <span>Flows open in tabs and templates are pre-seeded</span>
           </div>
+          <Button onClick={openCreateDialog} className="mt-2">
+            Create your first flow
+          </Button>
         </div>
       </div>
     );
