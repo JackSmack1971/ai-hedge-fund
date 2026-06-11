@@ -75,14 +75,21 @@ class TestTokenEnforced:
 
 
 class TestTokenUnset:
-    def test_development_allows_requests(self, client, monkeypatch):
+    def test_token_unset_fails_closed_in_development(self, client, monkeypatch):
         monkeypatch.delenv("BACKEND_API_TOKEN", raising=False)
-        monkeypatch.setenv("ENVIRONMENT", "development")
         response = client.get("/flows/")
-        assert response.status_code == 200
+        assert response.status_code == 401
+        assert response.headers["WWW-Authenticate"] == "Bearer"
 
-    def test_production_fails_closed(self, client, monkeypatch):
+    def test_token_unset_fails_closed_in_production(self, client, monkeypatch):
         monkeypatch.delenv("BACKEND_API_TOKEN", raising=False)
         monkeypatch.setenv("ENVIRONMENT", "production")
         response = client.get("/flows/")
-        assert response.status_code == 503
+        assert response.status_code == 401
+        assert response.headers["WWW-Authenticate"] == "Bearer"
+
+    def test_explicit_disable_auth_allows_local_requests(self, client, monkeypatch):
+        monkeypatch.delenv("BACKEND_API_TOKEN", raising=False)
+        monkeypatch.setenv("DISABLE_AUTH", "true")
+        response = client.get("/flows/")
+        assert response.status_code == 200

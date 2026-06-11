@@ -4,10 +4,8 @@ Routes are protected by comparing the ``Authorization: Bearer <token>`` header
 against the ``BACKEND_API_TOKEN`` environment variable:
 
 - ``BACKEND_API_TOKEN`` set: every protected route requires a matching token.
-- ``BACKEND_API_TOKEN`` unset in development (the default ``ENVIRONMENT``):
-  authentication is disabled so local workflows keep working.
-- ``BACKEND_API_TOKEN`` unset with ``ENVIRONMENT=production``: fail closed —
-  all protected routes return 503 until a token is configured.
+- ``BACKEND_API_TOKEN`` unset: authentication fails closed by default.
+- ``DISABLE_AUTH=true``: explicit local-development bypass only.
 """
 
 import logging
@@ -21,11 +19,9 @@ logger = logging.getLogger(__name__)
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
-_PRODUCTION_ENVIRONMENTS = {"production", "prod"}
 
-
-def _is_production() -> bool:
-    return os.environ.get("ENVIRONMENT", "development").strip().lower() in _PRODUCTION_ENVIRONMENTS
+def _is_auth_disabled() -> bool:
+    return os.environ.get("DISABLE_AUTH", "").strip().lower() in {"1", "true", "yes"}
 
 
 async def verify_backend_token(
@@ -35,12 +31,13 @@ async def verify_backend_token(
     expected = os.environ.get("BACKEND_API_TOKEN")
 
     if not expected:
-        if _is_production():
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="BACKEND_API_TOKEN is not configured; refusing requests in production",
-            )
-        return
+        if _is_auth_disabled():
+            return
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="BACKEND_API_TOKEN is not configured; set DISABLE_AUTH=true only for local development",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     if credentials is None or not secrets.compare_digest(credentials.credentials.encode(), expected.encode()):
         raise HTTPException(
