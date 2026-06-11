@@ -286,6 +286,8 @@ export function ApiKeysSettings() {
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7"
+                  aria-label={visibleKeys[apiKey.key] ? `Hide ${apiKey.label} key` : `Show ${apiKey.label} key`}
+                  title={visibleKeys[apiKey.key] ? `Hide ${apiKey.label} key` : `Show ${apiKey.label} key`}
                   onClick={() => toggleKeyVisibility(apiKey.key)}
                 >
                   {visibleKeys[apiKey.key] ? (

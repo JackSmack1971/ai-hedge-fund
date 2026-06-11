@@ -112,6 +112,7 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
 
   // Filter out "default" tag
   const filteredTags = flow.tags?.filter(tag => tag !== 'default') || [];
+  const moreOptionsLabel = `More options for ${flow.name}`;
 
   return (
     <>
@@ -186,6 +187,7 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
             onClick={handleMenuClick}
             className="h-6 w-6 text-muted-foreground hover-item opacity-0 group-hover:opacity-100 transition-opacity rounded"
             title="More options"
+            aria-label={moreOptionsLabel}
           >
             <MoreHorizontal size={14} />
           </Button>
