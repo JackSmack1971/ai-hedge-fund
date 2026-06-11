@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.backend.database.connection import engine
 from app.backend.database.models import Base
+from app.backend.encryption import EncryptionKeyMissingError
+from app.backend.repositories.api_key_repository import ApiKeyRepository
 from app.backend.routes import api_router
 from app.backend.services.ollama_service import ollama_service
 
@@ -51,6 +53,22 @@ async def _log_ollama_status() -> None:
         logger.info("ℹ Ollama integration is available if you install it later")
 
 
+def _reencrypt_plaintext_api_keys_on_startup() -> None:
+    """Warn about legacy plaintext API keys and re-encrypt them when possible."""
+    from app.backend.database.connection import SessionLocal
+
+    db = SessionLocal()
+    try:
+        repo = ApiKeyRepository(db)
+        migrated = repo.reencrypt_plaintext_keys()
+        if migrated:
+            logger.warning("Re-encrypted %s legacy plaintext API key row(s) at startup", migrated)
+    except EncryptionKeyMissingError as exc:
+        logger.warning("Skipped API key plaintext migration at startup: %s", exc)
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Dev/test bootstrap only: Alembic migrations (alembic upgrade head) are the
@@ -58,6 +76,7 @@ async def lifespan(app: FastAPI):
     # that run migrations, since create_all never applies column/index changes.
     if _auto_create_tables_enabled():
         Base.metadata.create_all(bind=engine)
+    _reencrypt_plaintext_api_keys_on_startup()
     await _log_ollama_status()
     yield
 
