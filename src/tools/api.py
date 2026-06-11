@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 import random
-import time
+import threading
 
 import pandas as pd
 import requests
@@ -11,6 +11,7 @@ from pydantic import ValidationError
 _REQUEST_TIMEOUT = (10, 30)  # (connect_seconds, read_seconds)
 _MAX_PAGINATION_PAGES = 100
 _MAX_PAGINATION_SECONDS = 60.0
+_BACKOFF_WAIT_EVENT = threading.Event()
 
 from src.data.cache import get_cache
 from src.data.models import (
@@ -96,7 +97,7 @@ def _make_api_request(
             logger.warning(
                 "Rate limited (429). Attempt %s/%s. Retrying in %.1fs...", attempt + 1, max_retries + 1, delay
             )
-            time.sleep(delay)
+            _BACKOFF_WAIT_EVENT.wait(timeout=delay)
             continue
 
         # Return the response (whether success, other errors, or final 429)
