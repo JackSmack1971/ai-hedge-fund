@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useFlowConnectionState } from '@/hooks/use-flow-connection';
 import { cn } from '@/lib/utils';
 import { flowService } from '@/services/flow-service';
@@ -29,6 +30,8 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
     position: { x: 0, y: 0 }
   });
   const [editDialog, setEditDialog] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Check if this flow has an active connection
   const connectionState = useFlowConnectionState(flow.id.toString());
@@ -78,12 +81,20 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
   };
 
   const handleDeleteFlow = async () => {
-    if (window.confirm(`Are you sure you want to delete "${flow.name}"?`)) {
-      try {
-        await onDeleteFlow(flow);
-      } catch (error) {
-        console.error('Failed to delete flow:', error);
-      }
+    setContextMenu(prev => ({ ...prev, isOpen: false }));
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteFlow = async () => {
+    setIsDeleting(true);
+    try {
+      await onDeleteFlow(flow);
+      setDeleteDialogOpen(false);
+      await onRefresh();
+    } catch (error) {
+      console.error('Failed to delete flow:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -196,6 +207,16 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
         onClose={() => setEditDialog(false)}
         onFlowUpdated={onRefresh}
       />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Delete flow"
+        description={`Are you sure you want to delete "${flow.name}"? This action cannot be undone.`}
+        confirmLabel="Delete flow"
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDeleteFlow}
+        isLoading={isDeleting}
+      />
     </>
   );
-} 
+}
