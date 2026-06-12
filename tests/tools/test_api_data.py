@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 
 from src.data.cache import Cache
-from src.data.models import Price
+from src.data.models import FinancialMetrics, Price
 from src.tools.api import (
     get_company_news,
     get_financial_metrics,
@@ -31,6 +31,15 @@ def _mock_response(status_code: int, json_data) -> Mock:
     m.status_code = status_code
     m.json.return_value = json_data
     return m
+
+
+def _financial_metric_payload(report_period: str) -> dict:
+    """Build a complete FinancialMetrics payload row with nullable fields set to None."""
+    base = {"ticker": "AAPL", "report_period": report_period, "period": "ttm", "currency": "USD"}
+    for field_name in FinancialMetrics.model_fields:
+        if field_name not in base:
+            base[field_name] = None
+    return base
 
 
 # ──────────────────────────────────────────────────────────
@@ -129,6 +138,25 @@ class TestGetFinancialMetrics:
         mock_request.return_value = _mock_response(200, {"bad": "data"})
         result = get_financial_metrics("AAPL", "2024-03-08")
         assert result == []
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_limit_variants_share_cache_key_and_slice_results(self, mock_cache, mock_request):
+        payload = {
+            "financial_metrics": [
+                _financial_metric_payload(f"2024-{month:02d}-31") for month in range(1, 13)
+            ]
+        }
+        mock_request.return_value = _mock_response(200, payload)
+
+        result_5 = get_financial_metrics("AAPL", "2024-03-08", limit=5)
+        result_8 = get_financial_metrics("AAPL", "2024-03-08", limit=8)
+        result_12 = get_financial_metrics("AAPL", "2024-03-08", limit=12)
+
+        assert mock_request.call_count == 1
+        assert len(result_5) == 5
+        assert len(result_8) == 8
+        assert len(result_12) == 12
 
 
 # ──────────────────────────────────────────────────────────
@@ -438,3 +466,31 @@ class TestCompanyNewsPagination:
         result = get_company_news("AAPL", "2024-03-08", start_date="2024-01-10", limit=2)
         assert len(result) == 2
         assert mock_request.call_count == 1
+
+
+class TestPaginationGuards:
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_insider_trades_max_pages_guard(self, mock_cache, mock_request, caplog):
+        page = _mock_response(200, {"insider_trades": [_trade("2024-03-05"), _trade("2024-02-10")]})
+        mock_request.return_value = page
+
+        with caplog.at_level("WARNING"):
+            result = get_insider_trades("AAPL", "2024-03-08", start_date="2024-01-01", limit=2)
+
+        assert len(result) == 200
+        assert mock_request.call_count == 100
+        assert "max_pages=100" in caplog.text
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_company_news_max_pages_guard(self, mock_cache, mock_request, caplog):
+        page = _mock_response(200, {"news": [_news("2024-03-05"), _news("2024-02-10")]})
+        mock_request.return_value = page
+
+        with caplog.at_level("WARNING"):
+            result = get_company_news("AAPL", "2024-03-08", start_date="2024-01-01", limit=2)
+
+        assert len(result) == 200
+        assert mock_request.call_count == 100
+        assert "max_pages=100" in caplog.text

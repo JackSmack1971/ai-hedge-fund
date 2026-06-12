@@ -1,15 +1,21 @@
 import asyncio
 import json
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
+
+from app.backend.database import get_db
+from app.backend.repositories.api_key_repository import ApiKeyRepository
 
 router = APIRouter()
 
 
 @router.get("/")
-async def root():
-    return {"message": "Welcome to AI Hedge Fund API"}
+async def root(db: Session = Depends(get_db)):
+    repo = ApiKeyRepository(db)
+    plaintext_remaining = repo.count_plaintext_keys(include_inactive=True)
+    return {"message": "Welcome to AI Hedge Fund API", "plaintext_api_keys_remaining": plaintext_remaining}
 
 
 @router.get("/ping")

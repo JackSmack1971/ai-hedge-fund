@@ -71,8 +71,8 @@ export function Settings({ className }: SettingsProps) {
                   onClick={() => setSelectedSection(item.id)}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2 text-left rounded-md text-sm transition-colors",
-                    isSelected 
-                      ? "active-bg text-blue-500" 
+                    isSelected
+                      ? "active-bg text-info"
                       : "text-primary hover-item"
                   )}
                 >
@@ -93,4 +93,4 @@ export function Settings({ className }: SettingsProps) {
       </div>
     </div>
   );
-} 
+}

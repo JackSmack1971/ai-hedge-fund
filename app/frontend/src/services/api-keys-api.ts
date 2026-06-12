@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { backendFetch, backendJsonHeaders } from '@/services/http';
 
 // The backend never returns stored secret values; all responses use the summary shape.
 export interface ApiKeySummary {
@@ -30,7 +30,7 @@ export interface ApiKeyBulkUpdateRequest {
 }
 
 class ApiKeysService {
-  private baseUrl = `${API_BASE_URL}/api-keys`;
+  private basePath = '/api-keys';
 
   async getAllApiKeys(includeInactive = false): Promise<ApiKeySummary[]> {
     const params = new URLSearchParams();
@@ -38,7 +38,7 @@ class ApiKeysService {
       params.append('include_inactive', 'true');
     }
     
-    const response = await fetch(`${this.baseUrl}?${params}`);
+    const response = await backendFetch(`${this.basePath}?${params}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch API keys: ${response.statusText}`);
     }
@@ -46,7 +46,7 @@ class ApiKeysService {
   }
 
   async getApiKey(provider: string): Promise<ApiKeySummary> {
-    const response = await fetch(`${this.baseUrl}/${encodeURIComponent(provider)}`);
+    const response = await backendFetch(`${this.basePath}/${encodeURIComponent(provider)}`);
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error('API key not found');
@@ -57,11 +57,9 @@ class ApiKeysService {
   }
 
   async createOrUpdateApiKey(request: ApiKeyCreateRequest): Promise<ApiKeySummary> {
-    const response = await fetch(this.baseUrl, {
+    const response = await backendFetch(this.basePath, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: backendJsonHeaders(),
       body: JSON.stringify(request),
     });
     
@@ -72,11 +70,9 @@ class ApiKeysService {
   }
 
   async updateApiKey(provider: string, request: ApiKeyUpdateRequest): Promise<ApiKeySummary> {
-    const response = await fetch(`${this.baseUrl}/${encodeURIComponent(provider)}`, {
+    const response = await backendFetch(`${this.basePath}/${encodeURIComponent(provider)}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: backendJsonHeaders(),
       body: JSON.stringify(request),
     });
     
@@ -90,7 +86,7 @@ class ApiKeysService {
   }
 
   async deleteApiKey(provider: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/${encodeURIComponent(provider)}`, {
+    const response = await backendFetch(`${this.basePath}/${encodeURIComponent(provider)}`, {
       method: 'DELETE',
     });
     
@@ -103,7 +99,7 @@ class ApiKeysService {
   }
 
   async deactivateApiKey(provider: string): Promise<ApiKeySummary> {
-    const response = await fetch(`${this.baseUrl}/${encodeURIComponent(provider)}/deactivate`, {
+    const response = await backendFetch(`${this.basePath}/${encodeURIComponent(provider)}/deactivate`, {
       method: 'PATCH',
     });
     
@@ -117,11 +113,9 @@ class ApiKeysService {
   }
 
   async bulkUpdateApiKeys(request: ApiKeyBulkUpdateRequest): Promise<ApiKeySummary[]> {
-    const response = await fetch(`${this.baseUrl}/bulk`, {
+    const response = await backendFetch(`${this.basePath}/bulk`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: backendJsonHeaders(),
       body: JSON.stringify(request),
     });
     
@@ -132,7 +126,7 @@ class ApiKeysService {
   }
 
   async updateLastUsed(provider: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/${encodeURIComponent(provider)}/last-used`, {
+    const response = await backendFetch(`${this.basePath}/${encodeURIComponent(provider)}/last-used`, {
       method: 'PATCH',
     });
     
@@ -145,4 +139,4 @@ class ApiKeysService {
   }
 }
 
-export const apiKeysService = new ApiKeysService(); 
+export const apiKeysService = new ApiKeysService();

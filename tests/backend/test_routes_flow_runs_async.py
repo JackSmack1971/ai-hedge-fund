@@ -11,6 +11,8 @@ from sqlalchemy.pool import StaticPool
 from app.backend.database import get_db
 from app.backend.database.models import Base
 
+TOKEN = "test-backend-token"
+
 
 @pytest.fixture(scope="module")
 def client():
@@ -48,7 +50,7 @@ def _create_flow(client: TestClient) -> int:
 def test_create_flow_run_enqueues_background_task(client: TestClient):
     flow_id = _create_flow(client)
 
-    with patch("app.backend.routes.flow_runs.process_flow_run_task.delay") as mock_delay:
+    with patch("app.backend.services.flow_run_service.process_flow_run_task.delay") as mock_delay:
         response = client.post(f"/flows/{flow_id}/runs/", json={"request_data": {"mode": "test"}})
 
     assert response.status_code == 200, response.text
@@ -60,7 +62,7 @@ def test_create_flow_run_enqueues_background_task(client: TestClient):
 def test_create_flow_run_strips_api_keys_from_persisted_request(client: TestClient):
     flow_id = _create_flow(client)
 
-    with patch("app.backend.routes.flow_runs.process_flow_run_task.delay"):
+    with patch("app.backend.services.flow_run_service.process_flow_run_task.delay"):
         response = client.post(
             f"/flows/{flow_id}/runs/",
             json={
@@ -77,9 +79,9 @@ def test_create_flow_run_strips_api_keys_from_persisted_request(client: TestClie
     assert "api_keys" not in data["request_data"]
 
 
-def test_flow_run_events_stream_reports_status(client: TestClient):
+def test_flow_run_events_stream_reports_status(client: TestClient, monkeypatch):
     flow_id = _create_flow(client)
-    with patch("app.backend.routes.flow_runs.process_flow_run_task.delay"):
+    with patch("app.backend.services.flow_run_service.process_flow_run_task.delay"):
         create_response = client.post(f"/flows/{flow_id}/runs/", json={"request_data": {"mode": "test"}})
     assert create_response.status_code == 200, create_response.text
     run_id = create_response.json()["id"]
@@ -90,8 +92,27 @@ def test_flow_run_events_stream_reports_status(client: TestClient):
     )
     assert update_response.status_code == 200, update_response.text
 
-    with client.stream("GET", f"/flows/{flow_id}/runs/{run_id}/events") as response:
+    monkeypatch.setenv("BACKEND_API_TOKEN", TOKEN)
+
+    with client.stream(
+        "GET",
+        f"/flows/{flow_id}/runs/{run_id}/events",
+        params={"token": TOKEN},
+    ) as response:
         assert response.status_code == 200
         first_chunk = next(response.iter_text())
         assert "event: status" in first_chunk
         assert '"status": "COMPLETE"' in first_chunk
+
+
+def test_flow_run_events_rejects_missing_query_token_when_configured(client: TestClient, monkeypatch):
+    flow_id = _create_flow(client)
+    with patch("app.backend.services.flow_run_service.process_flow_run_task.delay"):
+        create_response = client.post(f"/flows/{flow_id}/runs/", json={"request_data": {"mode": "test"}})
+    assert create_response.status_code == 200, create_response.text
+    run_id = create_response.json()["id"]
+
+    monkeypatch.setenv("BACKEND_API_TOKEN", TOKEN)
+
+    response = client.get(f"/flows/{flow_id}/runs/{run_id}/events")
+    assert response.status_code == 401

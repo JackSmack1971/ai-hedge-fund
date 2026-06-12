@@ -4,11 +4,10 @@ import { Agent } from '@/data/agents';
 import { LanguageModel } from '@/data/models';
 import { extractBaseAgentKey } from '@/data/node-mappings';
 import { flowConnectionManager } from '@/hooks/use-flow-connection';
+import { backendFetch, backendJsonHeaders } from '@/services/http';
 import {
   HedgeFundRequest
 } from '@/services/types';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const api = {
   /**
@@ -17,7 +16,7 @@ export const api = {
    */
   getAgents: async (): Promise<Agent[]> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/hedge-fund/agents`);
+      const response = await backendFetch('/hedge-fund/agents');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -35,7 +34,7 @@ export const api = {
    */
   getLanguageModels: async (): Promise<LanguageModel[]> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/language-models/`);
+      const response = await backendFetch('/language-models/');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -55,11 +54,9 @@ export const api = {
    */
   saveJsonFile: async (filename: string, data: any): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/storage/save-json`, {
+      const response = await backendFetch('/storage/save-json', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: backendJsonHeaders(),
         body: JSON.stringify({
           filename,
           data
@@ -107,11 +104,9 @@ export const api = {
     const { signal } = controller;
 
     // Make a POST request with the JSON body
-    fetch(`${API_BASE_URL}/hedge-fund/run`, {
+    backendFetch('/hedge-fund/run', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: backendJsonHeaders(),
       body: JSON.stringify(backendParams),
       signal,
     })
@@ -308,4 +303,4 @@ export const api = {
       }
     };
   },
-}; 
+};

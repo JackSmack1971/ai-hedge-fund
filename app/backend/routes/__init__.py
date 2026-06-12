@@ -26,4 +26,4 @@ api_router.include_router(flow_runs_router, tags=["flow-runs"], dependencies=_pr
 api_router.include_router(ollama_router, tags=["ollama"], dependencies=_protected)
 api_router.include_router(language_models_router, tags=["language-models"], dependencies=_protected)
 api_router.include_router(api_keys_router, tags=["api-keys"], dependencies=_protected)
-api_router.include_router(websocket_router, tags=["flow-run-events"], dependencies=_protected)
+api_router.include_router(websocket_router, tags=["flow-run-events"])

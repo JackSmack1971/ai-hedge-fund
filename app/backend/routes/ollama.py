@@ -1,9 +1,10 @@
 import logging
+import re
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Path
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.backend.models.schemas import ErrorResponse
 from app.backend.services.ollama_service import ollama_service
@@ -12,9 +13,18 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ollama")
 
+_MODEL_NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]*(:[a-z0-9._-]+)?$")
+
 
 class ModelRequest(BaseModel):
     model_name: str
+
+    @field_validator("model_name")
+    @classmethod
+    def validate_model_name(cls, value: str) -> str:
+        if not _MODEL_NAME_PATTERN.fullmatch(value):
+            raise ValueError("Invalid Ollama model name")
+        return value
 
 
 class OllamaStatusResponse(BaseModel):
@@ -214,7 +224,7 @@ async def download_model_with_progress(request: ModelRequest):
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def get_download_progress(model_name: str):
+async def get_download_progress(model_name: str = Path(pattern=_MODEL_NAME_PATTERN.pattern)):
     """Get current download progress for a specific model."""
     try:
         progress = ollama_service.get_download_progress(model_name)
@@ -261,7 +271,7 @@ async def get_active_downloads():
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def delete_model(model_name: str):
+async def delete_model(model_name: str = Path(pattern=_MODEL_NAME_PATTERN.pattern)):
     """Delete an Ollama model."""
     try:
         logger.info(f"Delete request for model: {model_name}")
@@ -316,7 +326,7 @@ async def get_recommended_models():
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-async def cancel_download(model_name: str):
+async def cancel_download(model_name: str = Path(pattern=_MODEL_NAME_PATTERN.pattern)):
     """Cancel an active model download."""
     try:
         logger.info(f"Cancel download request for model: {model_name}")
