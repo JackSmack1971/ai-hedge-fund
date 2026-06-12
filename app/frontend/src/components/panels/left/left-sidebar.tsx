@@ -87,7 +87,7 @@ export function LeftSidebar({
       {!isDragging && (
         <div 
           className="absolute top-0 right-0 h-full w-1 cursor-ew-resize transition-all duration-150 z-10"
-          onMouseDown={startResize}
+          onPointerDown={startResize}
         />
       )}
 
