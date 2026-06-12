@@ -337,6 +337,7 @@ export function PortfolioStartNode({
                           variant="ghost"
                           onClick={() => removePosition(index)}
                           className="flex-shrink-0 h-8 w-4 text-muted-foreground hover:text-destructive"
+                          aria-label={`Remove position ${index + 1}`}
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -405,6 +406,7 @@ export function PortfolioStartNode({
                     variant="secondary"
                     className="flex-shrink-0 transition-all duration-200 hover:bg-primary hover:text-primary-foreground active:scale-95"
                     title={showAsProcessing ? "Stop" : `Run (${formatKeyboardShortcut('↵')})`}
+                    aria-label={showAsProcessing ? "Stop portfolio analyzer" : "Run portfolio analyzer"}
                     onClick={showAsProcessing ? handleStop : handlePlay}
                     disabled={!canRunPortfolioAnalyzer && !showAsProcessing}
                   >

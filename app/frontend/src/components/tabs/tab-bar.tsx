@@ -198,6 +198,7 @@ export function TabBar({ className }: TabBarProps) {
               }}
               onMouseDown={(e) => e.stopPropagation()} // Prevent drag when clicking close button
               title="Close tab"
+              aria-label={`Close ${tab.title}`}
             >
               <X size={11} className="transition-transform duration-150 hover:scale-110" />
             </Button>

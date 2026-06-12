@@ -21,6 +21,7 @@ export function FlowContextMenu({
   onDelete 
 }: FlowContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -46,11 +47,49 @@ export function FlowContextMenu({
     };
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (isOpen) {
+      itemRefs.current[0]?.focus();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleAction = (action: () => void) => {
     action();
     onClose();
+  };
+
+  const handleItemKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+    action: () => void
+  ) => {
+    const lastIndex = 2;
+
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Home' || event.key === 'End') {
+      event.preventDefault();
+
+      let nextIndex = index;
+      if (event.key === 'ArrowDown') nextIndex = (index + 1) % (lastIndex + 1);
+      if (event.key === 'ArrowUp') nextIndex = (index - 1 + (lastIndex + 1)) % (lastIndex + 1);
+      if (event.key === 'Home') nextIndex = 0;
+      if (event.key === 'End') nextIndex = lastIndex;
+
+      itemRefs.current[nextIndex]?.focus();
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleAction(action);
+    }
   };
 
   return (
@@ -60,6 +99,7 @@ export function FlowContextMenu({
         "fixed z-50 min-w-[160px] bg-panel border border-border rounded-md shadow-lg",
         "animate-in fade-in-0 zoom-in-95"
       )}
+      role="menu"
       style={{
         left: position.x,
         top: position.y,
@@ -67,9 +107,14 @@ export function FlowContextMenu({
     >
       <div className="p-1">
         <Button
+          ref={(el) => { itemRefs.current[0] = el; }}
           variant="ghost"
           size="sm"
           className="w-full justify-start text-primary hover-bg"
+          role="menuitem"
+          tabIndex={0}
+          aria-label="Edit flow"
+          onKeyDown={(event) => handleItemKeyDown(event, 0, onEdit)}
           onClick={() => handleAction(onEdit)}
         >
           <Edit size={14} className="mr-2" />
@@ -77,6 +122,7 @@ export function FlowContextMenu({
         </Button>
         
         <Button
+          ref={(el) => { itemRefs.current[1] = el; }}
           variant="ghost"
           size="sm"
           className="w-full justify-start text-primary hover-bg"
@@ -87,6 +133,7 @@ export function FlowContextMenu({
         </Button>
         
         <Button
+          ref={(el) => { itemRefs.current[2] = el; }}
           variant="ghost"
           size="sm"
           className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
