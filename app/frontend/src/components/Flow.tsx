@@ -44,7 +44,7 @@ export function Flow({ className = '' }: FlowProps) {
   const proOptions = { hideAttribution: true };
   
   // Get flow context for flow ID
-  const { currentFlowId } = useFlowContext();
+  const { currentFlowId, isUnsaved } = useFlowContext();
   const { setTabDirtyState } = useTabsContext();
   
   // Get enhanced flow actions for complete state persistence
