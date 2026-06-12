@@ -4,6 +4,69 @@ from sqlalchemy.orm import Session
 
 from app.backend.database.models import HedgeFundFlow
 
+DEFAULT_TEMPLATE_FLOW_NAME = "Data Wizards"
+DEFAULT_TEMPLATE_FLOW_DESCRIPTION = "A starter flow with Portfolio Input, three analysts, and a Portfolio Manager."
+DEFAULT_TEMPLATE_FLOW_NODES = [
+    {
+        "id": "portfolio-start-node_tmpl01",
+        "type": "portfolio-start-node",
+        "position": {"x": 0, "y": 0},
+        "data": {
+            "name": "Portfolio Input",
+            "description": "Enter your portfolio including tickers, shares, and prices.",
+            "status": "Idle",
+        },
+    },
+    {
+        "id": "valuation_analyst_tmpl01",
+        "type": "agent-node",
+        "position": {"x": 360, "y": -220},
+        "data": {
+            "name": "Valuation Analyst",
+            "description": "Company valuation specialist.",
+            "status": "Idle",
+        },
+    },
+    {
+        "id": "sentiment_analyst_tmpl01",
+        "type": "agent-node",
+        "position": {"x": 360, "y": 0},
+        "data": {
+            "name": "Sentiment Analyst",
+            "description": "News and market sentiment specialist.",
+            "status": "Idle",
+        },
+    },
+    {
+        "id": "technical_analyst_tmpl01",
+        "type": "agent-node",
+        "position": {"x": 360, "y": 220},
+        "data": {
+            "name": "Technical Analyst",
+            "description": "Price action and technical analysis specialist.",
+            "status": "Idle",
+        },
+    },
+    {
+        "id": "portfolio-manager-node_tmpl01",
+        "type": "portfolio-manager-node",
+        "position": {"x": 720, "y": 0},
+        "data": {
+            "name": "Portfolio Manager",
+            "description": "Synthesizes analyst signals into a trading decision.",
+            "status": "Idle",
+        },
+    },
+]
+DEFAULT_TEMPLATE_FLOW_EDGES = [
+    {"id": "e-portfolio-start-valuation", "source": "portfolio-start-node_tmpl01", "target": "valuation_analyst_tmpl01"},
+    {"id": "e-portfolio-start-sentiment", "source": "portfolio-start-node_tmpl01", "target": "sentiment_analyst_tmpl01"},
+    {"id": "e-portfolio-start-technical", "source": "portfolio-start-node_tmpl01", "target": "technical_analyst_tmpl01"},
+    {"id": "e-valuation-manager", "source": "valuation_analyst_tmpl01", "target": "portfolio-manager-node_tmpl01"},
+    {"id": "e-sentiment-manager", "source": "sentiment_analyst_tmpl01", "target": "portfolio-manager-node_tmpl01"},
+    {"id": "e-technical-manager", "source": "technical_analyst_tmpl01", "target": "portfolio-manager-node_tmpl01"},
+]
+
 
 class FlowRepository:
     """Repository for HedgeFundFlow CRUD operations"""
@@ -48,6 +111,26 @@ class FlowRepository:
         if not include_templates:
             query = query.filter(HedgeFundFlow.is_template == False)
         return query.order_by(HedgeFundFlow.updated_at.desc()).all()
+
+    def ensure_default_template_flow(self) -> Optional[HedgeFundFlow]:
+        """Seed the starter template flow when the flows table is empty."""
+        if self.db.query(HedgeFundFlow).count() > 0:
+            return None
+
+        existing_template = self.db.query(HedgeFundFlow).filter(HedgeFundFlow.name == DEFAULT_TEMPLATE_FLOW_NAME).first()
+        if existing_template:
+            return existing_template
+
+        return self.create_flow(
+            name=DEFAULT_TEMPLATE_FLOW_NAME,
+            description=DEFAULT_TEMPLATE_FLOW_DESCRIPTION,
+            nodes=DEFAULT_TEMPLATE_FLOW_NODES,
+            edges=DEFAULT_TEMPLATE_FLOW_EDGES,
+            viewport={"x": 0, "y": 0, "zoom": 1},
+            data={},
+            is_template=True,
+            tags=["template", "onboarding", "starter"],
+        )
 
     def get_flows_by_name(self, name: str) -> List[HedgeFundFlow]:
         """Search flows by name (case-insensitive partial match)"""

@@ -20,6 +20,16 @@ class TestMergeDicts:
     def test_empty_dicts(self):
         assert merge_dicts({}, {}) == {}
 
+    def test_nested_dicts_merge_recursively(self):
+        result = merge_dicts(
+            {"analyst_signals": {"agent_a": {"AAPL": {"signal": "bullish"}}}, "count": 1},
+            {"analyst_signals": {"agent_b": {"MSFT": {"signal": "bearish"}}}, "count": 2},
+        )
+
+        assert result["count"] == 2
+        assert result["analyst_signals"]["agent_a"]["AAPL"]["signal"] == "bullish"
+        assert result["analyst_signals"]["agent_b"]["MSFT"]["signal"] == "bearish"
+
 
 class TestShowAgentReasoning:
     def test_dict_output(self, capsys):

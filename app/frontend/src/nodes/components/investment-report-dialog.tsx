@@ -62,11 +62,11 @@ export function InvestmentReportDialog({
   const getActionIcon = (action: ActionType) => {
     switch (action) {
       case 'long':
-        return <ArrowUp className="h-4 w-4 text-green-500" />;
+        return <ArrowUp className="h-4 w-4 text-success" />;
       case 'short':
-        return <ArrowDown className="h-4 w-4 text-red-500" />;
+        return <ArrowDown className="h-4 w-4 text-destructive" />;
       case 'hold':
-        return <Minus className="h-4 w-4 text-yellow-500" />;
+        return <Minus className="h-4 w-4 text-warning" />;
       default:
         return null;
     }

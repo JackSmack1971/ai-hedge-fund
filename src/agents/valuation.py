@@ -6,6 +6,7 @@ Implements four complementary valuation methodologies and aggregates them with
 configurable weights. 
 """
 
+import logging
 import json
 import statistics
 
@@ -15,6 +16,8 @@ from src.graph.state import AgentState, show_agent_reasoning
 from src.tools.api import get_financial_metrics, get_market_cap, search_line_items
 from src.utils.api_key import get_api_key_from_state
 from src.utils.progress import progress
+
+logger = logging.getLogger(__name__)
 
 
 def valuation_analyst_agent(state: AgentState, agent_id: str = "valuation_analyst_agent"):
@@ -388,7 +391,8 @@ def calculate_fcf_volatility(fcf_history: list[float]) -> float:
         mean_fcf = statistics.mean(positive_fcf)
         std_fcf = statistics.stdev(positive_fcf)
         return min(std_fcf / mean_fcf, 1.0) if mean_fcf > 0 else 0.8
-    except:
+    except (TypeError, ValueError, statistics.StatisticsError, ZeroDivisionError) as exc:
+        logger.debug("FCF volatility fallback used after calculation error: %s", exc, exc_info=True)
         return 0.5
 
 
