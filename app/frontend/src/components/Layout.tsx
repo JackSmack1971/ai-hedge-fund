@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { SidebarStorageService } from '@/services/sidebar-storage';
 import { TabService } from '@/services/tab-service';
 import { ReactFlowProvider } from '@xyflow/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
 import { TopBar } from './layout/top-bar';
 
