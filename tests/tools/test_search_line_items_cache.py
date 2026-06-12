@@ -127,3 +127,27 @@ class TestSearchLineItemsCache:
 
         mock_post.assert_not_called()
         assert len(result) == 3
+
+    @patch("src.tools.api._cache")
+    @patch("src.tools.api.requests.post")
+    def test_limit_variants_share_cache_key(self, mock_post, mock_cache):
+        """Different requested limits should collapse to the same normalized cache key."""
+        from src.tools.api import search_line_items
+
+        mock_cache.get_line_items.return_value = None
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"search_results": []}
+        mock_post.return_value = mock_response
+
+        search_line_items("AAPL", ["revenue", "gross_profit"], "2024-12-31", limit=5)
+        first_key = mock_cache.get_line_items.call_args[0][0]
+
+        mock_cache.reset_mock()
+        mock_cache.get_line_items.return_value = None
+        mock_post.return_value = mock_response
+
+        search_line_items("AAPL", ["gross_profit", "revenue"], "2024-12-31", limit=8)
+        second_key = mock_cache.get_line_items.call_args[0][0]
+
+        assert first_key == second_key
