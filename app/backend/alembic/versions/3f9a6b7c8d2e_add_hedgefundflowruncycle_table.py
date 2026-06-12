@@ -48,7 +48,7 @@ def upgrade():
         op.create_table(
             "hedge_fund_flow_run_cycles",
             sa.Column("id", sa.Integer, primary_key=True, index=True),
-            sa.Column("flow_run_id", sa.Integer, nullable=False, index=True),
+            sa.Column("flow_run_id", sa.Integer, sa.ForeignKey("hedge_fund_flow_runs.id"), nullable=False),
             sa.Column("cycle_number", sa.Integer, nullable=False),
             sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
             sa.Column("started_at", sa.DateTime(timezone=True), nullable=False),
@@ -71,7 +71,6 @@ def upgrade():
         op.create_index("ix_hedge_fund_flow_run_cycles_flow_run_id", "hedge_fund_flow_run_cycles", ["flow_run_id"])
         op.create_index("ix_hedge_fund_flow_run_cycles_cycle_number", "hedge_fund_flow_run_cycles", ["cycle_number"])
         op.create_index("ix_hedge_fund_flow_run_cycles_status", "hedge_fund_flow_run_cycles", ["status"])
-        op.create_index("ix_hedge_fund_flow_run_cycles_started_at", "hedge_fund_flow_run_cycles", ["started_at"])
 
 
 def downgrade():
@@ -83,7 +82,6 @@ def downgrade():
     if "hedge_fund_flow_run_cycles" in existing_tables:
         # Drop indexes if they exist
         try:
-            op.drop_index("ix_hedge_fund_flow_run_cycles_started_at", "hedge_fund_flow_run_cycles")
             op.drop_index("ix_hedge_fund_flow_run_cycles_status", "hedge_fund_flow_run_cycles")
             op.drop_index("ix_hedge_fund_flow_run_cycles_cycle_number", "hedge_fund_flow_run_cycles")
             op.drop_index("ix_hedge_fund_flow_run_cycles_flow_run_id", "hedge_fund_flow_run_cycles")

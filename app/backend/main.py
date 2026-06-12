@@ -32,7 +32,7 @@ except PackageNotFoundError:  # running from source without an installed package
 
 
 def _auto_create_tables_enabled() -> bool:
-    return os.environ.get("AUTO_CREATE_TABLES", "true").strip().lower() in {"1", "true", "yes"}
+    return os.environ.get("AUTO_CREATE_TABLES", "false").strip().lower() in {"1", "true", "yes"}
 
 
 def _hedge_fund_run_rate_limit() -> int:
@@ -92,7 +92,7 @@ def _reencrypt_plaintext_api_keys_on_startup() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Dev/test bootstrap only: Alembic migrations (alembic upgrade head) are the
-    # authoritative schema mechanism. Set AUTO_CREATE_TABLES=false in deployments
+    # authoritative schema mechanism. Keep AUTO_CREATE_TABLES=false in deployments
     # that run migrations, since create_all never applies column/index changes.
     if _auto_create_tables_enabled():
         Base.metadata.create_all(bind=engine)

@@ -37,7 +37,7 @@ def upgrade() -> None:
         sa.UniqueConstraint("provider"),
     )
     op.create_index(op.f("ix_api_keys_id"), "api_keys", ["id"], unique=False)
-    op.create_index(op.f("ix_api_keys_provider"), "api_keys", ["provider"], unique=False)
+    op.create_index(op.f("ix_api_keys_provider"), "api_keys", ["provider"], unique=True)
 
 
 def downgrade() -> None:

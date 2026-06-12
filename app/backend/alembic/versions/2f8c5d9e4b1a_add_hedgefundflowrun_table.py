@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.create_table(
         "hedge_fund_flow_runs",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("flow_id", sa.Integer(), nullable=False),
+        sa.Column("flow_id", sa.Integer(), sa.ForeignKey("hedge_fund_flows.id"), nullable=False),
         sa.Column(
             "created_at", sa.DateTime(timezone=True), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=True
         ),

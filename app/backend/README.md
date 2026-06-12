@@ -64,6 +64,12 @@ The API will be available at:
 - API Endpoint: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
 
+## Database Schema
+
+Schema changes are managed by Alembic migrations in `app/backend/alembic/`.
+Run `alembic upgrade head` before starting a deployment so the database schema matches the code.
+The FastAPI lifespan only runs `Base.metadata.create_all()` when `AUTO_CREATE_TABLES=true`, which is intended for local/dev bootstrap only.
+
 ## API Endpoints
 
 - `POST /hedge-fund/run`: Run the hedge-fund workflow
