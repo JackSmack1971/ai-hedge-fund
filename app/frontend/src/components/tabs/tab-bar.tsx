@@ -77,20 +77,20 @@ export function TabBar({ className }: TabBarProps) {
         try {
           const savedFlow = await saveCurrentFlowWithCompleteState();
           if (!savedFlow) {
-            const shouldClose = window.confirm(`\"${tab.title}\" has unsaved changes. Close without saving?`);
+            const shouldClose = window.confirm(`"${tab.title}" has unsaved changes. Close without saving?`);
             if (!shouldClose) {
               return;
             }
           }
         } catch (error) {
           console.error('Failed to flush save before closing tab:', error);
-          const shouldClose = window.confirm(`Unable to save \"${tab.title}\". Close without saving?`);
+          const shouldClose = window.confirm(`Unable to save "${tab.title}". Close without saving?`);
           if (!shouldClose) {
             return;
           }
         }
       } else {
-        const shouldClose = window.confirm(`\"${tab.title}\" has unsaved changes. Close without saving?`);
+        const shouldClose = window.confirm(`"${tab.title}" has unsaved changes. Close without saving?`);
         if (!shouldClose) {
           return;
         }
