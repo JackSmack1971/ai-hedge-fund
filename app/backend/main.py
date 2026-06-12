@@ -107,6 +107,18 @@ app = FastAPI(
 
 
 @app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("Cache-Control", "no-store")
+    if response.headers.get("content-type", "").startswith("text/event-stream"):
+        response.headers.setdefault("X-Accel-Buffering", "no")
+    return response
+
+
+@app.middleware("http")
 async def rate_limit_hedge_fund_run(request: Request, call_next):
     if request.method == "POST" and request.url.path == "/hedge-fund/run":
         client_host = request.client.host if request.client else "unknown"

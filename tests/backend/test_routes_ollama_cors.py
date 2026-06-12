@@ -34,6 +34,7 @@ def test_progress_endpoint_has_no_wildcard_cors(test_app: TestClient):
     acao = response.headers.get("access-control-allow-origin")
     assert acao != "*", "wildcard Access-Control-Allow-Origin must not be hardcoded"
     assert acao != "https://evil.example.com", "disallowed origin must not be reflected"
+    assert response.headers.get("x-accel-buffering") == "no"
 
 
 def test_progress_endpoint_allows_configured_origin(test_app: TestClient):

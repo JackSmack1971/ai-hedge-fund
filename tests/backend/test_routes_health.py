@@ -21,3 +21,10 @@ class TestRootEndpoint:
         assert "message" in data
         assert "plaintext_api_keys_remaining" in data
         assert isinstance(data["plaintext_api_keys_remaining"], int)
+
+    def test_root_sets_security_headers(self, client):
+        response = client.get("/")
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["x-frame-options"] == "DENY"
+        assert response.headers["referrer-policy"] == "no-referrer"
+        assert response.headers["cache-control"] == "no-store"
