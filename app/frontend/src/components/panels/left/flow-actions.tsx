@@ -15,7 +15,7 @@ export function FlowActions({ onSave, onCreate }: FlowActionsProps) {
     <div className="p-2 flex justify-between flex-shrink-0 items-center border-b mt-4">
       <span className="text-primary text-sm font-medium ml-4">
         Flows
-        {isUnsaved && <span className="text-yellow-500 ml-1">*</span>}
+        {isUnsaved && <span className="text-warning ml-1">*</span>}
       </span>
       <div className="flex items-center gap-1">
         <Button
@@ -24,7 +24,7 @@ export function FlowActions({ onSave, onCreate }: FlowActionsProps) {
           onClick={onSave}
           className={cn(
             "h-6 w-6 text-primary hover-bg",
-            isUnsaved && "text-yellow-500"
+            isUnsaved && "text-warning"
           )}
           title={`Save "${currentFlowName}"`}
         >
@@ -42,4 +42,4 @@ export function FlowActions({ onSave, onCreate }: FlowActionsProps) {
       </div>
     </div>
   );
-} 
+}

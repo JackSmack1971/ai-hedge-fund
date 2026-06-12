@@ -1,9 +1,10 @@
 import json
+import hashlib
 import os
 from enum import Enum
-from functools import lru_cache
+from collections import OrderedDict
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 from langchain_anthropic import ChatAnthropic
 from langchain_deepseek import ChatDeepSeek
@@ -108,6 +109,9 @@ LLM_ORDER = [model.to_choice_tuple() for model in AVAILABLE_MODELS]
 
 # Create Ollama LLM_ORDER separately
 OLLAMA_LLM_ORDER = [model.to_choice_tuple() for model in OLLAMA_MODELS]
+
+_MODEL_CACHE_MAXSIZE = 32
+_MODEL_CACHE: OrderedDict[tuple[str, str, tuple[tuple[str, str], ...] | None], Any] = OrderedDict()
 
 
 def get_model_info(model_name: str, model_provider: str) -> LLMModel | None:
@@ -274,15 +278,46 @@ def _build_model(
         )
 
 
-@lru_cache(maxsize=32)
-def _cached_get_model(model_name: str, provider_str: str, frozen_keys: frozenset | None):
-    """LRU-cached wrapper — one client instance per (model, provider, api_keys) tuple."""
-    api_keys = dict(frozen_keys) if frozen_keys else None
+def _fingerprint_api_keys(api_keys: dict | None) -> tuple[tuple[str, str], ...] | None:
+    if not api_keys:
+        return None
+
+    return tuple(
+        sorted(
+            (key, hashlib.sha256(value.encode("utf-8")).hexdigest())
+            for key, value in api_keys.items()
+        )
+    )
+
+
+def _cache_key(model_name: str, provider_str: str, api_keys: dict | None) -> tuple[str, str, tuple[tuple[str, str], ...] | None]:
+    return (model_name, provider_str, _fingerprint_api_keys(api_keys))
+
+
+def clear_model_cache() -> None:
+    _MODEL_CACHE.clear()
+
+
+def _cached_get_model(model_name: str, provider_str: str, api_keys: dict | None):
+    """LRU-cached wrapper — one client instance per (model, provider, api_keys fingerprint) tuple."""
+    cache_key = _cache_key(model_name, provider_str, api_keys)
+    if cache_key in _MODEL_CACHE:
+        _MODEL_CACHE.move_to_end(cache_key)
+        return _MODEL_CACHE[cache_key]
+
     return _build_model(model_name, provider_str, api_keys)
 
 
 def get_model(model_name: str, model_provider, api_keys: dict = None):
     """Return a cached LLM client, reusing instances across repeated call_llm() invocations."""
     provider_str = model_provider.value if hasattr(model_provider, "value") else str(model_provider)
-    frozen_keys = frozenset(api_keys.items()) if api_keys else None
-    return _cached_get_model(model_name, provider_str, frozen_keys)
+    cache_key = _cache_key(model_name, provider_str, api_keys)
+    if cache_key in _MODEL_CACHE:
+        _MODEL_CACHE.move_to_end(cache_key)
+        return _MODEL_CACHE[cache_key]
+
+    model = _cached_get_model(model_name, provider_str, api_keys)
+    _MODEL_CACHE[cache_key] = model
+    if len(_MODEL_CACHE) > _MODEL_CACHE_MAXSIZE:
+        _MODEL_CACHE.popitem(last=False)
+    return model

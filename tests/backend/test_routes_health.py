@@ -21,6 +21,8 @@ class TestRootEndpoint:
         response = client.get("/")
         data = response.json()
         assert "message" in data
+        assert "plaintext_api_keys_remaining" in data
+        assert isinstance(data["plaintext_api_keys_remaining"], int)
 
     def test_root_sets_security_headers(self, client):
         response = client.get("/")
