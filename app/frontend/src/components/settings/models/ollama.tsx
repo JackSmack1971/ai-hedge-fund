@@ -638,12 +638,12 @@ export function OllamaSettings() {
       </div>
 
       {error && (
-        <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
             <div>
-              <h4 className="font-medium text-red-300">Error</h4>
-              <p className="text-sm text-red-400 mt-1">{error}</p>
+              <h4 className="font-medium text-destructive">Error</h4>
+              <p className="text-sm text-destructive mt-1">{error}</p>
             </div>
           </div>
         </div>
@@ -707,7 +707,7 @@ export function OllamaSettings() {
           <Button
             onClick={stopOllamaServer}
             disabled={actionLoading === 'stop-server'}
-            className="flex items-center gap-2 text-red-400 hover:bg-red-500/20 hover:text-red-300 bg-red-500/10 border-red-500/30 hover:border-red-500/50"
+            className="flex items-center gap-2 text-destructive hover:bg-destructive/20 hover:text-destructive bg-destructive/10 border-destructive/30 hover:border-destructive/50"
           >
             <Square className="h-4 w-4" />
             {actionLoading === 'stop-server' ? 'Stopping...' : 'Disconnect'}
@@ -734,9 +734,9 @@ export function OllamaSettings() {
                   </span>
                   <Badge className={cn(
                     "text-xs border",
-                    progress.status === 'downloading' && "bg-blue-600/30 text-primary border-blue-600/40",
-                    progress.status === 'completed' && "bg-green-600/30 text-green-500 border-green-600/40",
-                    progress.status === 'error' && "bg-red-600/30 text-red-500 border-red-600/40",
+                    progress.status === 'downloading' && "bg-info/30 text-primary border-info/40",
+                    progress.status === 'completed' && "bg-success/30 text-success border-success/40",
+                    progress.status === 'error' && "bg-destructive/30 text-destructive border-destructive/40",
                     progress.status === 'cancelled' && "bg-muted text-muted-foreground"
                   )}>
                     {progress.status === 'downloading' && 'Downloading'}
@@ -769,7 +769,7 @@ export function OllamaSettings() {
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div 
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    className="bg-info h-2 rounded-full transition-all duration-300"
                     style={{ width: `${progress.percentage || 0}%` }}
                   />
                 </div>
@@ -855,7 +855,7 @@ export function OllamaSettings() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-400" />
+              <AlertTriangle className="h-5 w-5 text-destructive" />
               Delete Model
             </DialogTitle>
             <DialogDescription>
@@ -896,7 +896,7 @@ export function OllamaSettings() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              <AlertTriangle className="h-5 w-5 text-warning" />
               Cancel Download
             </DialogTitle>
             <DialogDescription>

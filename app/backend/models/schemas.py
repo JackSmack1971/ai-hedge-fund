@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from enum import Enum
+import math
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -62,15 +63,22 @@ class ErrorResponse(BaseModel):
 
 # Base class for shared fields between HedgeFundRequest and BacktestRequest
 class BaseHedgeFundRequest(BaseModel):
-    tickers: List[str]
+    tickers: List[str] = Field(..., min_length=1, max_length=50)
     graph_nodes: List[GraphNode]
     graph_edges: List[GraphEdge]
     agent_models: Optional[List[AgentModelConfig]] = None
     model_name: Optional[str] = "gpt-4.1"
     model_provider: Optional[ModelProvider] = ModelProvider.OPENAI
-    margin_requirement: float = 0.0
-    portfolio_positions: Optional[List[PortfolioPosition]] = None
+    margin_requirement: float = Field(0.0, ge=0.0, le=1.0)
+    portfolio_positions: Optional[List[PortfolioPosition]] = Field(default=None, max_length=50)
     api_keys: Optional[Dict[str, str]] = None
+
+    @field_validator("margin_requirement")
+    @classmethod
+    def validate_margin_requirement_is_finite(cls, value: float) -> float:
+        if not math.isfinite(value):
+            raise ValueError("margin_requirement must be a finite number")
+        return value
 
     def get_agent_ids(self) -> List[str]:
         """Extract agent IDs from graph structure"""
@@ -94,7 +102,14 @@ class BaseHedgeFundRequest(BaseModel):
 class BacktestRequest(BaseHedgeFundRequest):
     start_date: str
     end_date: str
-    initial_capital: float = 100000.0
+    initial_capital: float = Field(100000.0, gt=0.0)
+
+    @field_validator("initial_capital")
+    @classmethod
+    def validate_initial_capital_is_finite(cls, value: float) -> float:
+        if not math.isfinite(value):
+            raise ValueError("initial_capital must be a finite number")
+        return value
 
     @field_validator("start_date", "end_date")
     @classmethod
@@ -146,7 +161,14 @@ class BacktestResponse(BaseModel):
 class HedgeFundRequest(BaseHedgeFundRequest):
     end_date: Optional[str] = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
     start_date: Optional[str] = None
-    initial_cash: float = 100000.0
+    initial_cash: float = Field(100000.0, gt=0.0)
+
+    @field_validator("initial_cash")
+    @classmethod
+    def validate_initial_cash_is_finite(cls, value: float) -> float:
+        if not math.isfinite(value):
+            raise ValueError("initial_cash must be a finite number")
+        return value
 
     @field_validator("start_date", "end_date")
     @classmethod

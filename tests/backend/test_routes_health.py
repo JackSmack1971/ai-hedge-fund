@@ -3,13 +3,11 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.backend.main import app
-
 
 @pytest.fixture(scope="module")
-def client():
-    with TestClient(app, raise_server_exceptions=False) as c:
-        yield c
+def client(test_app):
+    """Delegate to the conftest Alembic-backed test_app fixture."""
+    return test_app
 
 
 class TestRootEndpoint:
@@ -21,3 +19,5 @@ class TestRootEndpoint:
         response = client.get("/")
         data = response.json()
         assert "message" in data
+        assert "plaintext_api_keys_remaining" in data
+        assert isinstance(data["plaintext_api_keys_remaining"], int)

@@ -23,9 +23,9 @@ function BacktestProgress({ agentData }: { agentData: Record<string, any> }) {
         <div className="space-y-4">
           {/* Current Status */}
           <div className="flex items-center gap-2">
-            <MoreHorizontal className="h-4 w-4 text-yellow-500" />
+            <MoreHorizontal className="h-4 w-4 text-warning" />
             <span className="font-medium">Backtest Runner</span>
-            <span className="text-yellow-500 flex-1">{backtestAgent.message || backtestAgent.status}</span>
+            <span className="text-warning flex-1">{backtestAgent.message || backtestAgent.status}</span>
           </div>
         </div>
       </CardContent>
@@ -121,7 +121,7 @@ function BacktestTradingTable({ agentData }: { agentData: Record<string, any> })
                   return (
                     <TableRow key={idx}>
                       <TableCell className="font-medium">{row.date}</TableCell>
-                      <TableCell className="font-medium text-cyan-500">{row.ticker}</TableCell>
+                      <TableCell className="font-medium text-info">{row.ticker}</TableCell>
                       <TableCell>
                         <span className={cn("font-medium", getActionColor(row.action || ''))}>
                           {row.action?.toUpperCase() || 'HOLD'}
@@ -135,9 +135,9 @@ function BacktestTradingTable({ agentData }: { agentData: Record<string, any> })
                       <TableCell className="text-primary">
                         ${row.position_value?.toLocaleString() || '0'}
                       </TableCell>
-                      <TableCell className="text-green-500">{row.bullish_count || 0}</TableCell>
-                      <TableCell className="text-red-500">{row.bearish_count || 0}</TableCell>
-                      <TableCell className="text-blue-500">{row.neutral_count || 0}</TableCell>
+                      <TableCell className="text-success">{row.bullish_count || 0}</TableCell>
+                      <TableCell className="text-destructive">{row.bearish_count || 0}</TableCell>
+                      <TableCell className="text-info">{row.neutral_count || 0}</TableCell>
                     </TableRow>
                   );
                 }
@@ -189,7 +189,7 @@ function BacktestResults({ outputData }: { outputData: any }) {
               {performance_metrics.sharpe_ratio !== null && performance_metrics.sharpe_ratio !== undefined && (
                 <div className="flex justify-between">
                   <span>Sharpe Ratio:</span>
-                  <span className={cn("font-medium", performance_metrics.sharpe_ratio > 1 ? "text-green-500" : "text-red-500")}>
+                  <span className={cn("font-medium", performance_metrics.sharpe_ratio > 1 ? "text-success" : "text-destructive")}>
                     {performance_metrics.sharpe_ratio.toFixed(2)}
                   </span>
                 </div>
@@ -197,7 +197,7 @@ function BacktestResults({ outputData }: { outputData: any }) {
               {performance_metrics.sortino_ratio !== null && performance_metrics.sortino_ratio !== undefined && (
                 <div className="flex justify-between">
                   <span>Sortino Ratio:</span>
-                  <span className={cn("font-medium", performance_metrics.sortino_ratio > 1 ? "text-green-500" : "text-red-500")}>
+                  <span className={cn("font-medium", performance_metrics.sortino_ratio > 1 ? "text-success" : "text-destructive")}>
                     {performance_metrics.sortino_ratio.toFixed(2)}
                   </span>
                 </div>
@@ -205,7 +205,7 @@ function BacktestResults({ outputData }: { outputData: any }) {
               {performance_metrics.max_drawdown !== null && performance_metrics.max_drawdown !== undefined && (
                 <div className="flex justify-between">
                   <span>Max Drawdown:</span>
-                  <span className="font-medium text-red-500">
+                  <span className="font-medium text-destructive">
                     {Math.abs(performance_metrics.max_drawdown).toFixed(2)}%
                   </span>
                 </div>
@@ -278,10 +278,10 @@ function BacktestResults({ outputData }: { outputData: any }) {
                 {Object.entries(final_portfolio.positions).map(([ticker, position]: [string, any]) => (
                   <TableRow key={ticker}>
                     <TableCell className="font-medium">{ticker}</TableCell>
-                    <TableCell className={cn(position.long > 0 ? "text-green-500" : "text-muted-foreground")}>
+                    <TableCell className={cn(position.long > 0 ? "text-success" : "text-muted-foreground")}>
                       {position.long}
                     </TableCell>
-                    <TableCell className={cn(position.short > 0 ? "text-red-500" : "text-muted-foreground")}>
+                    <TableCell className={cn(position.short > 0 ? "text-destructive" : "text-muted-foreground")}>
                       {position.short}
                     </TableCell>
                     <TableCell>${position.long_cost_basis.toFixed(2)}</TableCell>
@@ -348,7 +348,7 @@ function BacktestPerformanceMetrics({ agentData }: { agentData: Record<string, a
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-xs text-muted-foreground">Total Return</div>
-            <div className={cn("font-sm", totalReturn >= 0 ? "text-green-500" : "text-red-500")}>
+            <div className={cn("font-sm", totalReturn >= 0 ? "text-success" : "text-destructive")}>
               {totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(2)}%
             </div>
           </div>
@@ -358,7 +358,7 @@ function BacktestPerformanceMetrics({ agentData }: { agentData: Record<string, a
           </div>
           <div className="text-center">
             <div className="text-xs text-muted-foreground">Max Drawdown</div>
-            <div className="font-sm text-red-500">{Math.abs(maxDrawdown).toFixed(2)}%</div>
+            <div className="font-sm text-destructive">{Math.abs(maxDrawdown).toFixed(2)}%</div>
           </div>
           <div className="text-center">
             <div className="text-xs text-muted-foreground">Periods Traded</div>
@@ -378,7 +378,7 @@ function BacktestPerformanceMetrics({ agentData }: { agentData: Record<string, a
           </div>
           <div className="text-center">
             <div className="text-xs text-muted-foreground">P&L</div>
-            <div className={cn("font-sm", totalReturn >= 0 ? "text-green-500" : "text-red-500")}>
+            <div className={cn("font-sm", totalReturn >= 0 ? "text-success" : "text-destructive")}>
               ${(currentValue - initialValue).toLocaleString()}
             </div>
           </div>
@@ -413,4 +413,4 @@ export function BacktestOutput({
 
     </>
   );
-} 
+}

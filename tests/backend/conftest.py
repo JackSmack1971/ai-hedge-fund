@@ -25,6 +25,9 @@ def _alembic_config() -> Config:
     config = Config(str(BACKEND_DIR / "alembic.ini"))
     config.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
     config.set_main_option("sqlalchemy.url", TEST_DATABASE_URL)
+    # Prevent Alembic from reconfiguring the Python logging system during tests,
+    # which would replace pytest's caplog handler and break log-capture assertions.
+    config.config_file_name = None
     return config
 
 

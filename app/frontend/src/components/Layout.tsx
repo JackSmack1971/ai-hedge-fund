@@ -13,6 +13,7 @@ import { SidebarStorageService } from '@/services/sidebar-storage';
 import { TabService } from '@/services/tab-service';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useState } from 'react';
+import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
 import { TopBar } from './layout/top-bar';
 
 // Create a LayoutContent component to access the FlowContext, TabsContext, and LayoutContext
@@ -29,6 +30,7 @@ function LayoutContent() {
   const [isRightCollapsed, setIsRightCollapsed] = useState(() => 
     SidebarStorageService.loadRightSidebarState(false)
   );
+  const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false);
 
   // Track actual sidebar widths for dynamic positioning
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(280);
@@ -50,6 +52,7 @@ function LayoutContent() {
     undefined, // redo
     toggleBottomPanel, // Cmd+J for bottom panel
     handleSettingsClick, // Shift+Cmd+J for settings
+    () => setIsShortcutsDialogOpen(prev => !prev), // ? / Ctrl+/ / Cmd+/
   );
 
   // Save sidebar states whenever they change
@@ -91,6 +94,12 @@ function LayoutContent() {
         onToggleRight={() => setIsRightCollapsed(!isRightCollapsed)}
         onToggleBottom={toggleBottomPanel}
         onSettingsClick={handleSettingsClick}
+        onShortcutsClick={() => setIsShortcutsDialogOpen(true)}
+      />
+
+      <KeyboardShortcutsDialog
+        open={isShortcutsDialogOpen}
+        onOpenChange={setIsShortcutsDialogOpen}
       />
 
       {/* Tab Bar - positioned absolutely like bottom panel */}
