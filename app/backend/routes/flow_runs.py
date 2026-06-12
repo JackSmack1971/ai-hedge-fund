@@ -12,6 +12,7 @@ from app.backend.models.schemas import (
     FlowRunUpdateRequest,
 )
 from app.backend.services.flow_run_service import FlowRunService
+from app.backend.services.graph import sanitize_request_payload
 
 router = APIRouter(prefix="/flows/{flow_id}/runs", tags=["flow-runs"])
 
@@ -27,7 +28,9 @@ router = APIRouter(prefix="/flows/{flow_id}/runs", tags=["flow-runs"])
 async def create_flow_run(flow_id: int, request: FlowRunCreateRequest, db: Session = Depends(get_db)):
     """Create a new flow run for the specified flow"""
     try:
-        flow_run = FlowRunService(db).create_flow_run(flow_id=flow_id, request_data=request.request_data)
+        flow_run = FlowRunService(db).create_flow_run(
+            flow_id=flow_id, request_data=sanitize_request_payload(request.request_data)
+        )
         return FlowRunResponse.model_validate(flow_run)
     except HTTPException:
         raise

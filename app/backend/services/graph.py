@@ -1,5 +1,6 @@
 import logging
 import asyncio
+from contextvars import copy_context
 import json
 import re
 
@@ -13,6 +14,28 @@ from src.graph.state import AgentState, start
 from src.utils.analysts import ANALYST_CONFIG
 
 logger = logging.getLogger(__name__)
+
+
+def sanitize_request_payload(request):
+    """Return a request object or dict with plaintext API keys removed."""
+    if request is None:
+        return None
+
+    if hasattr(request, "model_copy"):
+        return request.model_copy(update={"api_keys": None})
+
+    if isinstance(request, dict):
+        sanitized = {}
+        for key, value in request.items():
+            if key == "api_keys":
+                continue
+            sanitized[key] = sanitize_request_payload(value)
+        return sanitized
+
+    if isinstance(request, list):
+        return [sanitize_request_payload(value) for value in request]
+
+    return request
 
 
 def extract_base_agent_key(unique_id: str) -> str:
@@ -146,8 +169,12 @@ async def run_graph_async(graph, portfolio, tickers, start_date, end_date, model
     # Use run_in_executor to run the synchronous function in a separate thread
     # so it doesn't block the event loop
     loop = asyncio.get_running_loop()
+    context = copy_context()
     result = await loop.run_in_executor(
-        None, lambda: run_graph(graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request)
+        None,
+        lambda: context.run(
+            run_graph, graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request
+        ),
     )  # Use default executor
     return result
 
@@ -185,7 +212,7 @@ def run_graph(
                 "show_reasoning": False,
                 "model_name": model_name,
                 "model_provider": model_provider,
-                "request": request,  # Pass the request for agent-specific model access
+                "request": sanitize_request_payload(request),  # Keep secrets out of AgentState
             },
         },
     )

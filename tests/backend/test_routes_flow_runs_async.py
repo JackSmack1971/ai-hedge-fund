@@ -59,6 +59,26 @@ def test_create_flow_run_enqueues_background_task(client: TestClient):
     mock_delay.assert_called_once_with(data["id"])
 
 
+def test_create_flow_run_strips_api_keys_from_persisted_request(client: TestClient):
+    flow_id = _create_flow(client)
+
+    with patch("app.backend.services.flow_run_service.process_flow_run_task.delay"):
+        response = client.post(
+            f"/flows/{flow_id}/runs/",
+            json={
+                "request_data": {
+                    "mode": "test",
+                    "api_keys": {"OPENAI_API_KEY": "secret"},
+                }
+            },
+        )
+
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["request_data"]["mode"] == "test"
+    assert "api_keys" not in data["request_data"]
+
+
 def test_flow_run_events_stream_reports_status(client: TestClient, monkeypatch):
     flow_id = _create_flow(client)
     with patch("app.backend.services.flow_run_service.process_flow_run_task.delay"):

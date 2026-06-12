@@ -1,12 +1,30 @@
 """Helper functions for LLM"""
 
 import json
+from contextvars import ContextVar
 
 from pydantic import BaseModel
 
 from src.graph.state import AgentState
 from src.llm.models import get_model, get_model_info
 from src.utils.progress import progress
+
+_request_api_keys: ContextVar[dict | None] = ContextVar("request_api_keys", default=None)
+
+
+def set_request_api_keys(api_keys: dict | None):
+    """Store request-scoped API keys for downstream LLM calls."""
+    return _request_api_keys.set(api_keys)
+
+
+def reset_request_api_keys(token) -> None:
+    """Restore the previous request-scoped API key context."""
+    _request_api_keys.reset(token)
+
+
+def get_request_api_keys() -> dict | None:
+    """Return the active request-scoped API keys, if any."""
+    return _request_api_keys.get()
 
 
 def call_llm(
@@ -41,10 +59,10 @@ def call_llm(
         model_provider = "OPENAI"
 
     # Extract API keys from state if available
-    api_keys = None
+    api_keys = get_request_api_keys()
     if state:
         request = state.get("metadata", {}).get("request")
-        if request and hasattr(request, "api_keys"):
+        if api_keys is None and request and hasattr(request, "api_keys"):
             api_keys = request.api_keys
 
     model_info = get_model_info(model_name, model_provider)
