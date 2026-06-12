@@ -27,9 +27,12 @@ class FlowRunRepository:
         self.db.refresh(flow_run)
         return flow_run
 
-    def get_flow_run_by_id(self, run_id: int) -> Optional[HedgeFundFlowRun]:
+    def get_flow_run_by_id(self, run_id: int, flow_id: int | None = None) -> Optional[HedgeFundFlowRun]:
         """Get a flow run by its ID"""
-        return self.db.query(HedgeFundFlowRun).filter(HedgeFundFlowRun.id == run_id).first()
+        query = self.db.query(HedgeFundFlowRun).filter(HedgeFundFlowRun.id == run_id)
+        if flow_id is not None:
+            query = query.filter(HedgeFundFlowRun.flow_id == flow_id)
+        return query.first()
 
     def get_flow_runs_by_flow_id(self, flow_id: int, limit: int = 50, offset: int = 0) -> List[HedgeFundFlowRun]:
         """Get all runs for a specific flow, ordered by most recent first"""
@@ -62,12 +65,13 @@ class FlowRunRepository:
     def update_flow_run(
         self,
         run_id: int,
+        flow_id: int | None = None,
         status: Optional[FlowRunStatus] = None,
         results: Optional[Dict[str, Any]] = None,
         error_message: Optional[str] = None,
     ) -> Optional[HedgeFundFlowRun]:
         """Update an existing flow run"""
-        flow_run = self.get_flow_run_by_id(run_id)
+        flow_run = self.get_flow_run_by_id(run_id, flow_id=flow_id)
         if not flow_run:
             return None
 
@@ -91,9 +95,9 @@ class FlowRunRepository:
         self.db.refresh(flow_run)
         return flow_run
 
-    def delete_flow_run(self, run_id: int) -> bool:
+    def delete_flow_run(self, run_id: int, flow_id: int | None = None) -> bool:
         """Delete a flow run by ID"""
-        flow_run = self.get_flow_run_by_id(run_id)
+        flow_run = self.get_flow_run_by_id(run_id, flow_id=flow_id)
         if not flow_run:
             return False
 

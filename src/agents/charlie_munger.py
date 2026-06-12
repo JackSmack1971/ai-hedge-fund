@@ -2,7 +2,7 @@ import json
 
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing_extensions import Literal
 
 from src.graph.state import AgentState, show_agent_reasoning
@@ -20,7 +20,7 @@ from src.utils.progress import progress
 
 class CharlieMungerSignal(BaseModel):
     signal: Literal["bullish", "bearish", "neutral"]
-    confidence: int
+    confidence: int = Field(ge=0, le=100)
     reasoning: str
 
 

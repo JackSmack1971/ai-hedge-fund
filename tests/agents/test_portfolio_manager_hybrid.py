@@ -282,3 +282,40 @@ class TestMetaLabelNeutralFallback:
                 _run_pm(state)
 
         assert "llm_timeout" in caplog.text
+
+    def test_llm_buy_quantity_is_clamped_to_ceiling(self):
+        """LLM decisions cannot exceed the deterministic quantity ceiling."""
+        from src.agents.portfolio_manager import generate_trading_decision
+
+        state = _make_pm_state(remaining_position_limit=1000.0, current_price=100.0)
+        current_prices = {"AAPL": 100.0}
+        max_shares = {"AAPL": 10}
+        portfolio = state["data"]["portfolio"]
+        signals_by_ticker = {"AAPL": {}}
+
+        def fake_call_llm(prompt, pydantic_model, agent_name=None, state=None, default_factory=None, max_retries=3):
+            return PortfolioManagerOutput(
+                decisions={
+                    "AAPL": PortfolioDecision(
+                        action="buy",
+                        quantity=50,
+                        confidence=80,
+                        reasoning="Overzealous trade",
+                    )
+                }
+            )
+
+        with patch("src.agents.portfolio_manager.call_llm", side_effect=fake_call_llm):
+            result = generate_trading_decision(
+                tickers=["AAPL"],
+                signals_by_ticker=signals_by_ticker,
+                current_prices=current_prices,
+                max_shares=max_shares,
+                portfolio=portfolio,
+                agent_id="portfolio_manager",
+                state=state,
+            )
+
+        assert result.decisions["AAPL"].action == "buy"
+        assert result.decisions["AAPL"].quantity == 10
+        assert "clamped" in result.decisions["AAPL"].reasoning

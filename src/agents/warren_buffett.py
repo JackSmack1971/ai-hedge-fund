@@ -1,3 +1,4 @@
+import logging
 import json
 
 from langchain_core.messages import HumanMessage
@@ -11,10 +12,12 @@ from src.utils.api_key import get_api_key_from_state
 from src.utils.llm import call_llm
 from src.utils.progress import progress
 
+logger = logging.getLogger(__name__)
+
 
 class WarrenBuffettSignal(BaseModel):
     signal: Literal["bullish", "bearish", "neutral"]
-    confidence: int = Field(description="Confidence 0-100")
+    confidence: int = Field(ge=0, le=100, description="Confidence 0-100")
     reasoning: str = Field(description="Reasoning for the decision")
     error: str | None = None
 
@@ -442,8 +445,8 @@ def calculate_owner_earnings(financial_line_items: list) -> dict[str, any]:
                 wc_previous = current_assets_previous - current_liab_previous
                 working_capital_change = wc_current - wc_previous
                 details.append(f"Working capital change: ${working_capital_change:,.0f}")
-        except:
-            pass  # Skip working capital adjustment if data unavailable
+        except Exception as exc:
+            logger.debug("Skipping working capital adjustment for %s: %s", ticker, exc, exc_info=True)
 
     # Calculate owner earnings
     owner_earnings = net_income + depreciation - maintenance_capex - working_capital_change

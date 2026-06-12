@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 class PortfolioDecision(BaseModel):
     action: Literal["buy", "sell", "short", "cover", "hold"]
-    quantity: int = Field(description="Number of shares to trade")
-    confidence: int = Field(description="Confidence 0-100")
+    quantity: int = Field(ge=0, description="Number of shares to trade")
+    confidence: int = Field(ge=0, le=100, description="Confidence 0-100")
     reasoning: str = Field(description="Reasoning for the decision")
 
 
@@ -297,7 +297,34 @@ def generate_trading_decision(
         default_factory=create_default_portfolio_output,
     )
 
-    # Merge prefilled holds with LLM results
+    # Re-validate every LLM decision against the deterministic ceilings before returning.
     merged = dict(prefilled_decisions)
-    merged.update(llm_out.decisions)
+    for ticker in tickers_for_llm:
+        decision = llm_out.decisions.get(ticker) or PortfolioDecision(
+            action="hold", quantity=0, confidence=0, reasoning="Default decision: hold"
+        )
+        allowed = allowed_actions_full.get(ticker, {"hold": 0})
+        max_allowed_quantity = int(allowed.get(decision.action, 0) or 0)
+
+        if decision.action == "hold" or decision.action not in allowed:
+            merged[ticker] = PortfolioDecision(
+                action="hold",
+                quantity=0,
+                confidence=decision.confidence,
+                reasoning=f"{decision.reasoning} (corrected to hold)",
+            )
+            continue
+
+        normalized_quantity = max(0, min(int(decision.quantity), max_allowed_quantity))
+        merged[ticker] = PortfolioDecision(
+            action=decision.action,
+            quantity=normalized_quantity,
+            confidence=decision.confidence,
+            reasoning=(
+                decision.reasoning
+                if normalized_quantity == int(decision.quantity)
+                else f"{decision.reasoning} (clamped to ceiling)"
+            ),
+        )
+
     return PortfolioManagerOutput(decisions=merged)
