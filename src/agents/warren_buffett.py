@@ -19,6 +19,7 @@ class WarrenBuffettSignal(BaseModel):
     signal: Literal["bullish", "bearish", "neutral"]
     confidence: int = Field(ge=0, le=100, description="Confidence 0-100")
     reasoning: str = Field(description="Reasoning for the decision")
+    error: str | None = None
 
 
 def warren_buffett_agent(state: AgentState, agent_id: str = "warren_buffett_agent"):
@@ -140,6 +141,7 @@ def warren_buffett_agent(state: AgentState, agent_id: str = "warren_buffett_agen
             "signal": buffett_output.signal,
             "confidence": buffett_output.confidence,
             "reasoning": buffett_output.reasoning,
+            "error": buffett_output.error,
         }
 
         progress.update_status(agent_id, ticker, "Done", analysis=buffett_output.reasoning)
@@ -857,7 +859,7 @@ def generate_buffett_output(
 
     # Default fallback uses int confidence to match schema and avoid parse retries
     def create_default_warren_buffett_signal():
-        return WarrenBuffettSignal(signal="neutral", confidence=50, reasoning="Insufficient data")
+        return WarrenBuffettSignal(signal="neutral", confidence=0, reasoning="Insufficient data", error="llm_timeout")
 
     return call_llm(
         prompt=prompt,

@@ -265,6 +265,24 @@ class TestMetaLabelNeutralFallback:
         assert "hybrid_mode" not in source
         assert "meta_label" not in source
 
+    def test_error_signals_are_skipped_with_warning(self, caplog):
+        """Errored analyst signals should be logged and excluded from LLM inputs."""
+        state = _make_pm_state(remaining_position_limit=1000.0, current_price=100.0)
+        state["data"]["analyst_signals"]["warren_buffett_agent"] = {
+            "AAPL": {
+                "signal": "neutral",
+                "confidence": 0,
+                "reasoning": "llm fallback",
+                "error": "llm_timeout",
+            }
+        }
+
+        with caplog.at_level("WARNING"):
+            with _mock_pm_llm():
+                _run_pm(state)
+
+        assert "llm_timeout" in caplog.text
+
     def test_llm_buy_quantity_is_clamped_to_ceiling(self):
         """LLM decisions cannot exceed the deterministic quantity ceiling."""
         from src.agents.portfolio_manager import generate_trading_decision

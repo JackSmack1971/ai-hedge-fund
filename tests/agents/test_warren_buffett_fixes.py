@@ -1,11 +1,14 @@
 """Regression tests for warren_buffett.py fixes — #134 (pricing power) and #135 (max_score)."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+from tests.agents.conftest import _make_empty_state
 
 from src.agents.warren_buffett import (
     analyze_consistency,
     analyze_fundamentals,
     analyze_pricing_power,
+    warren_buffett_agent,
 )
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -119,3 +122,27 @@ class TestMaxScoreKeys:
         items = [_line_item(net_income=50 - i * 10) for i in range(5)]
         result = analyze_consistency(items)
         assert result["score"] == 3
+
+
+class TestLLMFailureFallback:
+    def test_warren_buffett_signal_carries_error_flag(self):
+        state = _make_empty_state(tickers=["AAPL"])
+
+        with (
+            patch("src.agents.warren_buffett.get_financial_metrics", return_value=[_metric()]),
+            patch("src.agents.warren_buffett.search_line_items", return_value=[]),
+            patch("src.agents.warren_buffett.get_market_cap", return_value=100.0),
+            patch("src.agents.warren_buffett.analyze_fundamentals", return_value={"score": 1, "max_score": 7, "details": ""}),
+            patch("src.agents.warren_buffett.analyze_consistency", return_value={"score": 1, "max_score": 3, "details": ""}),
+            patch("src.agents.warren_buffett.analyze_moat", return_value={"score": 1, "max_score": 5, "details": ""}),
+            patch("src.agents.warren_buffett.analyze_pricing_power", return_value={"score": 1, "details": ""}),
+            patch("src.agents.warren_buffett.analyze_book_value_growth", return_value={"score": 1, "details": ""}),
+            patch("src.agents.warren_buffett.analyze_management_quality", return_value={"score": 1, "max_score": 2, "details": ""}),
+            patch("src.agents.warren_buffett.calculate_intrinsic_value", return_value={"intrinsic_value": 200.0, "details": []}),
+            patch("src.agents.warren_buffett.call_llm", side_effect=lambda *args, **kwargs: kwargs["default_factory"]()),
+        ):
+            result = warren_buffett_agent(state)
+
+        payload = state["data"]["analyst_signals"]["warren_buffett_agent"]["AAPL"]
+        assert payload["error"] == "llm_timeout"
+        assert result["data"]["analyst_signals"]["warren_buffett_agent"]["AAPL"]["error"] == "llm_timeout"

@@ -100,7 +100,10 @@ def call_llm(
                 print(f"Error in LLM call after {max_retries} attempts: {e}")
                 # Use default_factory if provided, otherwise create a basic default
                 if default_factory:
-                    return default_factory()
+                    default_response = default_factory()
+                    if hasattr(default_response, "model_copy") and "error" in default_response.__class__.model_fields:
+                        return default_response.model_copy(update={"error": "llm_timeout"})
+                    return default_response
                 return create_default_response(pydantic_model)
 
     # This should never be reached due to the retry logic above
