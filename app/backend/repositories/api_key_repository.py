@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List, Optional
 
 from sqlalchemy import func
@@ -29,7 +28,7 @@ class ApiKeyRepository:
         return api_key
 
     def create_or_update_api_key(
-        self, provider: str, key_value: str, description: str = None, is_active: bool = True
+        self, provider: str, key_value: str, description: Optional[str] = None, is_active: bool = True
     ) -> ApiKey:
         """Create a new API key or update existing one"""
         # Check if API key already exists for this provider
@@ -78,7 +77,7 @@ class ApiKeyRepository:
         return api_keys
 
     def update_api_key(
-        self, provider: str, key_value: str = None, description: str = None, is_active: bool = None
+        self, provider: str, key_value: Optional[str] = None, description: Optional[str] = None, is_active: Optional[bool] = None
     ) -> Optional[ApiKey]:
         """Update an existing API key"""
         api_key = self.db.query(ApiKey).filter(ApiKey.provider == provider).first()

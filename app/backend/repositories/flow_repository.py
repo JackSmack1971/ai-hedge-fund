@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -77,13 +77,13 @@ class FlowRepository:
     def create_flow(
         self,
         name: str,
-        nodes: dict,
-        edges: dict,
-        description: str = None,
-        viewport: dict = None,
-        data: dict = None,
+        nodes: Dict[str, Any],
+        edges: Dict[str, Any],
+        description: Optional[str] = None,
+        viewport: Optional[Dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
         is_template: bool = False,
-        tags: List[str] = None,
+        tags: Optional[List[str]] = None,
     ) -> HedgeFundFlow:
         """Create a new hedge fund flow"""
         flow = HedgeFundFlow(
@@ -144,14 +144,14 @@ class FlowRepository:
     def update_flow(
         self,
         flow_id: int,
-        name: str = None,
-        description: str = None,
-        nodes: dict = None,
-        edges: dict = None,
-        viewport: dict = None,
-        data: dict = None,
-        is_template: bool = None,
-        tags: List[str] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        nodes: Optional[Dict[str, Any]] = None,
+        edges: Optional[Dict[str, Any]] = None,
+        viewport: Optional[Dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        is_template: Optional[bool] = None,
+        tags: Optional[List[str]] = None,
     ) -> Optional[HedgeFundFlow]:
         """Update an existing flow"""
         flow = self.get_flow_by_id(flow_id)

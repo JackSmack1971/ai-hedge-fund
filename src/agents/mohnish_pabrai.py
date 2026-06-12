@@ -1,3 +1,4 @@
+from typing import Any
 import json
 
 from langchain_core.messages import HumanMessage
@@ -25,8 +26,8 @@ def mohnish_pabrai_agent(state: AgentState, agent_id: str = "mohnish_pabrai_agen
     tickers = data["tickers"]
     api_key = get_api_key_from_state(state, "FINANCIAL_DATASETS_API_KEY")
 
-    analysis_data: dict[str, any] = {}
-    pabrai_analysis: dict[str, any] = {}
+    analysis_data: dict[str, Any] = {}
+    pabrai_analysis: dict[str, Any] = {}
 
     # Pabrai focuses on: downside protection, simple business, moat via unit economics, FCF yield vs alternatives,
     # and potential for doubling in 2-3 years at low risk.
@@ -125,7 +126,7 @@ def mohnish_pabrai_agent(state: AgentState, agent_id: str = "mohnish_pabrai_agen
     return {"messages": [message], "data": state["data"]}
 
 
-def analyze_downside_protection(financial_line_items: list) -> dict[str, any]:
+def analyze_downside_protection(financial_line_items: list) -> dict[str, Any]:
     """Assess balance-sheet strength and downside resiliency (capital preservation first)."""
     if not financial_line_items:
         return {"score": 0, "details": "Insufficient data"}
@@ -195,7 +196,7 @@ def analyze_downside_protection(financial_line_items: list) -> dict[str, any]:
     return {"score": min(10, score), "details": "; ".join(details)}
 
 
-def analyze_pabrai_valuation(financial_line_items: list, market_cap: float | None) -> dict[str, any]:
+def analyze_pabrai_valuation(financial_line_items: list, market_cap: float | None) -> dict[str, Any]:
     """Value via simple FCF yield and asset-light preference (keep it simple, low mistakes)."""
     if not financial_line_items or market_cap is None or market_cap <= 0:
         return {"score": 0, "details": "Insufficient data", "fcf_yield": None, "normalized_fcf": None}
@@ -266,7 +267,7 @@ def analyze_pabrai_valuation(financial_line_items: list, market_cap: float | Non
     }
 
 
-def analyze_double_potential(financial_line_items: list, market_cap: float | None) -> dict[str, any]:
+def analyze_double_potential(financial_line_items: list, market_cap: float | None) -> dict[str, Any]:
     """Estimate low-risk path to double capital in ~2-3 years: runway from FCF growth + rerating."""
     if not financial_line_items or market_cap is None or market_cap <= 0:
         return {"score": 0, "details": "Insufficient data"}
@@ -325,7 +326,7 @@ def analyze_double_potential(financial_line_items: list, market_cap: float | Non
 
 def generate_pabrai_output(
     ticker: str,
-    analysis_data: dict[str, any],
+    analysis_data: dict[str, Any],
     state: AgentState,
     agent_id: str,
 ) -> MohnishPabraiSignal:

@@ -1,3 +1,4 @@
+from typing import Any
 import json
 
 from langchain_core.messages import HumanMessage
@@ -443,7 +444,7 @@ def analyze_insider_activity(insider_trades: list) -> dict:
 
 def generate_lynch_output(
     ticker: str,
-    analysis_data: dict[str, any],
+    analysis_data: dict[str, Any],
     state: AgentState,
     agent_id: str,
 ) -> PeterLynchSignal:

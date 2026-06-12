@@ -2,6 +2,7 @@
 
 import json
 from contextvars import ContextVar
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -28,7 +29,7 @@ def get_request_api_keys() -> dict | None:
 
 
 def call_llm(
-    prompt: any,
+    prompt: Any,
     pydantic_model: type[BaseModel],
     agent_name: str | None = None,
     state: AgentState | None = None,

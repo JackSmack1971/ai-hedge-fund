@@ -1,3 +1,4 @@
+from typing import Any
 import json
 import statistics
 
@@ -531,7 +532,7 @@ def analyze_druckenmiller_valuation(financial_line_items: list, market_cap: floa
 
 def generate_druckenmiller_output(
     ticker: str,
-    analysis_data: dict[str, any],
+    analysis_data: dict[str, Any],
     state: AgentState,
     agent_id: str,
 ) -> StanleyDruckenmillerSignal:

@@ -1,3 +1,4 @@
+from typing import Any
 import json
 import os
 
@@ -350,7 +351,7 @@ def format_backtest_row(
     sortino_ratio: float = None,
     max_drawdown: float = None,
     benchmark_return_pct: float | None = None,
-) -> list[any]:
+) -> list[Any]:
     """Format a row for the backtest results table"""
     # Color the action
     action_color = {

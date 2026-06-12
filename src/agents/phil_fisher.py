@@ -1,3 +1,4 @@
+from typing import Any
 import json
 import statistics
 
@@ -533,7 +534,7 @@ def analyze_sentiment(news_items: list) -> dict:
 
 def generate_fisher_output(
     ticker: str,
-    analysis_data: dict[str, any],
+    analysis_data: dict[str, Any],
     state: AgentState,
     agent_id: str,
 ) -> PhilFisherSignal:
