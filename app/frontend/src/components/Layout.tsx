@@ -127,8 +127,8 @@ function LayoutContent() {
         isLeftCollapsed={isLeftCollapsed}
         isRightCollapsed={isRightCollapsed}
         isBottomCollapsed={isBottomCollapsed}
-        onToggleLeft={() => setIsLeftCollapsed(!isLeftCollapsed)}
-        onToggleRight={() => setIsRightCollapsed(!isRightCollapsed)}
+        onToggleLeft={handleToggleLeft}
+        onToggleRight={handleToggleRight}
         onToggleBottom={toggleBottomPanel}
         onSettingsClick={handleSettingsClick}
         onShortcutsClick={() => setIsShortcutsDialogOpen(true)}
