@@ -87,7 +87,7 @@ def test_flow_run_events_stream_reports_status(client: TestClient, monkeypatch):
 
 def test_flow_run_events_rejects_missing_query_token_when_configured(client: TestClient, monkeypatch):
     flow_id = _create_flow(client)
-    with patch("app.backend.routes.flow_runs.process_flow_run_task.delay"):
+    with patch("app.backend.services.flow_run_service.process_flow_run_task.delay"):
         create_response = client.post(f"/flows/{flow_id}/runs/", json={"request_data": {"mode": "test"}})
     assert create_response.status_code == 200, create_response.text
     run_id = create_response.json()["id"]

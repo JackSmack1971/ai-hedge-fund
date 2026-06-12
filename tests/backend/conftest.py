@@ -10,8 +10,12 @@ from app.backend.database.models import Base
 
 @pytest.fixture(autouse=True)
 def _database_encryption_key(monkeypatch):
-    """Stored-API-key writes fail closed without DATABASE_ENCRYPTION_KEY; provide one for tests."""
+    """Stored-API-key writes fail closed without DATABASE_ENCRYPTION_KEY; provide one for tests.
+    Also sets DISABLE_AUTH=true so PR-87 fail-closed auth doesn't block non-auth tests.
+    Individual auth tests override this with monkeypatch.delenv('DISABLE_AUTH').
+    """
     monkeypatch.setenv("DATABASE_ENCRYPTION_KEY", "backend-test-encryption-key")
+    monkeypatch.setenv("DISABLE_AUTH", "true")
 
 
 @pytest.fixture(scope="function")

@@ -70,6 +70,8 @@ async def _log_ollama_status() -> None:
 
 def _reencrypt_plaintext_api_keys_on_startup() -> None:
     """Warn about legacy plaintext API keys and re-encrypt them when possible."""
+    from sqlalchemy.exc import OperationalError
+
     from app.backend.database.connection import SessionLocal
 
     db = SessionLocal()
@@ -80,6 +82,9 @@ def _reencrypt_plaintext_api_keys_on_startup() -> None:
             logger.warning("Re-encrypted %s legacy plaintext API key row(s) at startup", migrated)
     except EncryptionKeyMissingError as exc:
         logger.warning("Skipped API key plaintext migration at startup: %s", exc)
+    except OperationalError:
+        # Tables may not exist yet (e.g. test environments that haven't run migrations).
+        logger.debug("Skipped API key plaintext migration: schema not ready")
     finally:
         db.close()
 
