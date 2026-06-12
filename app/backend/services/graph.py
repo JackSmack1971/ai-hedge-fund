@@ -3,6 +3,7 @@ import asyncio
 from contextvars import copy_context
 import json
 import re
+from collections import deque
 
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
@@ -58,6 +59,53 @@ def extract_base_agent_key(unique_id: str) -> str:
     return unique_id  # Return original if no suffix pattern found
 
 
+def _add_planned_edge(
+    planned_edges: list[tuple[str, str]],
+    planned_edge_set: set[tuple[str, str]],
+    source: str,
+    target: str,
+) -> None:
+    """Record a unique planned edge while rejecting self-loops early."""
+    if source == target:
+        raise ValueError(f"Self-loop edges are not allowed: {source}")
+
+    edge = (source, target)
+    if edge in planned_edge_set:
+        return
+
+    planned_edge_set.add(edge)
+    planned_edges.append(edge)
+
+
+def _validate_planned_edges_are_acyclic(planned_edges: list[tuple[str, str]]) -> None:
+    """Reject graph edge sets that contain a directed cycle."""
+    adjacency: dict[str, set[str]] = {}
+    in_degree: dict[str, int] = {}
+    nodes: set[str] = set()
+
+    for source, target in planned_edges:
+        nodes.add(source)
+        nodes.add(target)
+        adjacency.setdefault(source, set()).add(target)
+        adjacency.setdefault(target, set())
+        in_degree[target] = in_degree.get(target, 0) + 1
+        in_degree.setdefault(source, in_degree.get(source, 0))
+
+    queue = deque(sorted(node for node in nodes if in_degree.get(node, 0) == 0))
+    visited = 0
+
+    while queue:
+        node = queue.popleft()
+        visited += 1
+        for target in sorted(adjacency.get(node, set())):
+            in_degree[target] -= 1
+            if in_degree[target] == 0:
+                queue.append(target)
+
+    if visited != len(nodes):
+        raise ValueError("Cyclic graph configurations are not allowed")
+
+
 # Helper function to create the agent graph
 def create_graph(graph_nodes: list, graph_edges: list) -> StateGraph:
     """Create the workflow based on the React Flow graph structure."""
@@ -110,6 +158,8 @@ def create_graph(graph_nodes: list, graph_edges: list) -> StateGraph:
     nodes_with_incoming_edges = set()
     nodes_with_outgoing_edges = set()
     direct_to_portfolio_managers = {}  # Map analyst ID to portfolio manager ID for direct connections
+    planned_edges: list[tuple[str, str]] = []
+    planned_edge_set: set[tuple[str, str]] = set()
 
     for edge in graph_edges:
         # Only consider edges between agent nodes (not from stock tickers)
@@ -130,30 +180,35 @@ def create_graph(graph_nodes: list, graph_edges: list) -> StateGraph:
                 direct_to_portfolio_managers[edge.source] = edge.target
             else:
                 # Add edge between agent nodes (but not direct to portfolio managers)
-                graph.add_edge(edge.source, edge.target)
+                _add_planned_edge(planned_edges, planned_edge_set, edge.source, edge.target)
 
     # Connect start_node to nodes that don't have incoming edges from other agents
     for agent_id in agent_ids:
         if agent_id not in nodes_with_incoming_edges:
             base_agent_key = extract_base_agent_key(agent_id)
             if base_agent_key in ANALYST_CONFIG and base_agent_key != "portfolio_manager":
-                graph.add_edge("start_node", agent_id)
+                _add_planned_edge(planned_edges, planned_edge_set, "start_node", agent_id)
 
     # Connect analysts that have direct connections to portfolio managers to their corresponding risk managers
     for analyst_id, portfolio_manager_id in direct_to_portfolio_managers.items():
         risk_manager_id = risk_manager_nodes[portfolio_manager_id]
-        graph.add_edge(analyst_id, risk_manager_id)
+        _add_planned_edge(planned_edges, planned_edge_set, analyst_id, risk_manager_id)
 
     # Connect each risk manager to its corresponding portfolio manager
     for portfolio_manager_id, risk_manager_id in risk_manager_nodes.items():
-        graph.add_edge(risk_manager_id, portfolio_manager_id)
+        _add_planned_edge(planned_edges, planned_edge_set, risk_manager_id, portfolio_manager_id)
 
-    # Connect portfolio managers to END.
-    if portfolio_manager_nodes:
-        for portfolio_manager_id in portfolio_manager_nodes:
-            graph.add_edge(portfolio_manager_id, END)
-    else:
-        # If the graph has no portfolio manager, make sure terminal analyst nodes can finish.
+    # Connect portfolio managers to END
+    for portfolio_manager_id in portfolio_manager_nodes:
+        _add_planned_edge(planned_edges, planned_edge_set, portfolio_manager_id, END)
+
+    _validate_planned_edges_are_acyclic(planned_edges)
+
+    for source, target in planned_edges:
+        graph.add_edge(source, target)
+
+    # If the graph has no portfolio manager, make sure terminal analyst nodes can finish.
+    if not portfolio_manager_nodes:
         for agent_id in agent_ids:
             base_agent_key = extract_base_agent_key(agent_id)
             if base_agent_key in ANALYST_CONFIG and agent_id not in nodes_with_outgoing_edges:
@@ -215,6 +270,7 @@ def run_graph(
                 "request": sanitize_request_payload(request),  # Keep secrets out of AgentState
             },
         },
+        config={"recursion_limit": 50},
     )
 
 
