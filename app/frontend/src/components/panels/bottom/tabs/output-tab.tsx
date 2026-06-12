@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFlowContext } from '@/contexts/flow-context';
-import { useFlowConnectionState } from '@/hooks/use-flow-connection';
 import { useNodeContext } from '@/contexts/node-context';
 import { cn } from '@/lib/utils';
 import { BacktestOutput } from './backtest-output';
