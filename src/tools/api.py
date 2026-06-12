@@ -10,6 +10,8 @@ from pydantic import ValidationError
 from src.config import src_settings
 
 _REQUEST_TIMEOUT = (10, 30)  # (connect_seconds, read_seconds)
+_MAX_PAGINATION_PAGES = 100
+_MAX_PAGINATION_SECONDS = 60.0
 
 from src.data.cache import get_cache
 from src.data.models import (
@@ -102,6 +104,32 @@ def _make_api_request(
         return response
 
 
+def _pagination_guard_hit(endpoint: str, ticker: str, page_count: int, session_started_at: float) -> bool:
+    """Stop runaway pagination if the API keeps returning full pages or stalls."""
+    if page_count >= _MAX_PAGINATION_PAGES:
+        logger.warning(
+            "Stopping %s pagination for %s after %s pages (max_pages=%s)",
+            endpoint,
+            ticker,
+            page_count,
+            _MAX_PAGINATION_PAGES,
+        )
+        return True
+
+    elapsed = time.monotonic() - session_started_at
+    if elapsed >= _MAX_PAGINATION_SECONDS:
+        logger.warning(
+            "Stopping %s pagination for %s after %.1fs (max_seconds=%.1f)",
+            endpoint,
+            ticker,
+            elapsed,
+            _MAX_PAGINATION_SECONDS,
+        )
+        return True
+
+    return False
+
+
 def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None) -> list[Price]:
     """Fetch price data from cache or API."""
     # Cache is keyed by ticker only so that a wide prefetch range covers all
@@ -147,12 +175,14 @@ def get_financial_metrics(
     api_key: str = None,
 ) -> list[FinancialMetrics]:
     """Fetch financial metrics from cache or API."""
-    # Create a cache key that includes all parameters to ensure exact matches
-    cache_key = f"{ticker}_{period}_{end_date}_{limit}"
+    # Normalize to the maximum cache granularity used by current callers so
+    # different per-agent limits collapse onto a single upstream fetch.
+    cache_limit = max(limit, 12)
+    cache_key = f"{ticker}_{period}_{end_date}_{cache_limit}"
 
-    # Check cache first - simple exact match
+    # Check cache first - exact match after normalization
     if cached_data := _cache.get_financial_metrics(cache_key):
-        return [FinancialMetrics(**metric) for metric in cached_data]
+        return [FinancialMetrics(**metric) for metric in cached_data][:limit]
 
     # If not in cache, fetch from API
     headers = {}
@@ -160,7 +190,10 @@ def get_financial_metrics(
     if financial_api_key:
         headers["X-API-KEY"] = financial_api_key
 
-    url = f"https://api.financialdatasets.ai/financial-metrics/?ticker={ticker}&report_period_lte={end_date}&limit={limit}&period={period}"
+    url = (
+        "https://api.financialdatasets.ai/financial-metrics/"
+        f"?ticker={ticker}&report_period_lte={end_date}&limit={cache_limit}&period={period}"
+    )
     response = _make_api_request(url, headers)
     if response.status_code != 200:
         _log_http_error("financial metrics", ticker, response)
@@ -177,9 +210,9 @@ def get_financial_metrics(
     if not financial_metrics:
         return []
 
-    # Cache the results as dicts using the comprehensive cache key
+    # Cache the results as dicts using the normalized cache key
     _cache.set_financial_metrics(cache_key, [m.model_dump() for m in financial_metrics])
-    return financial_metrics
+    return financial_metrics[:limit]
 
 
 def search_line_items(
@@ -192,7 +225,8 @@ def search_line_items(
 ) -> list[LineItem]:
     """Fetch line items from cache or API."""
     items_key = "_".join(sorted(line_items))
-    cache_key = f"{ticker}_{period}_{end_date}_{limit}_{items_key}"
+    cache_limit = max(limit, 12)
+    cache_key = f"{ticker}_{period}_{end_date}_{cache_limit}_{items_key}"
     if cached_data := _cache.get_line_items(cache_key):
         return [LineItem(**item) for item in cached_data][:limit]
 
@@ -208,7 +242,7 @@ def search_line_items(
         "line_items": line_items,
         "end_date": end_date,
         "period": period,
-        "limit": limit,
+        "limit": cache_limit,
     }
     response = _make_api_request(url, headers, method="POST", json_data=body)
     if response.status_code != 200:
@@ -252,8 +286,13 @@ def get_insider_trades(
 
     all_trades = []
     current_end_date = end_date
+    page_count = 0
+    session_started_at = time.monotonic()
 
     while True:
+        if _pagination_guard_hit("insider trades", ticker, page_count, session_started_at):
+            break
+
         url = f"https://api.financialdatasets.ai/insider-trades/?ticker={ticker}&filing_date_lte={current_end_date}"
         if start_date:
             url += f"&filing_date_gte={start_date}"
@@ -276,6 +315,7 @@ def get_insider_trades(
             break
 
         all_trades.extend(insider_trades)
+        page_count += 1
 
         # Only continue pagination if we have a start_date and got a full page
         if not start_date or len(insider_trades) < limit:
@@ -319,8 +359,13 @@ def get_company_news(
 
     all_news = []
     current_end_date = end_date
+    page_count = 0
+    session_started_at = time.monotonic()
 
     while True:
+        if _pagination_guard_hit("company news", ticker, page_count, session_started_at):
+            break
+
         url = f"https://api.financialdatasets.ai/news/?ticker={ticker}&end_date={current_end_date}"
         if start_date:
             url += f"&start_date={start_date}"
@@ -343,6 +388,7 @@ def get_company_news(
             break
 
         all_news.extend(company_news)
+        page_count += 1
 
         # Only continue pagination if we have a start_date and got a full page
         if not start_date or len(company_news) < limit:

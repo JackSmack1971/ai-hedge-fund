@@ -54,6 +54,7 @@ async def get_flows(include_templates: bool = True, db: Session = Depends(get_db
     """Get all flows (summary view)"""
     try:
         repo = FlowRepository(db)
+        repo.ensure_default_template_flow()
         flows = repo.get_all_flows(include_templates=include_templates)
         return [FlowSummaryResponse.model_validate(flow) for flow in flows]
     except Exception as e:

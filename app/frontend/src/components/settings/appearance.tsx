@@ -59,7 +59,7 @@ export function ThemeSettings() {
                   variant="outline"
                   className={cn(
                     "flex flex-col items-center gap-3 h-auto p-4 bg-panel border-gray-600 hover:border-primary hover-bg",
-                    isSelected && "border-blue-500 bg-blue-500/10 text-blue-500"
+                    isSelected && "border-info bg-info/10 text-info"
                   )}
                   onClick={() => setTheme(themeOption.id)}
                 >
@@ -78,4 +78,4 @@ export function ThemeSettings() {
       </Card>
     </div>
   );
-} 
+}
