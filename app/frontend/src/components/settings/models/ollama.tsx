@@ -803,17 +803,13 @@ export function OllamaSettings() {
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div 
-<<<<<<< HEAD
                     className="bg-info h-2 rounded-full transition-all duration-300"
-=======
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                     role="progressbar"
                     aria-label={`Download progress for ${displayName}`}
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={Math.round(progress.percentage || 0)}
                     aria-valuetext={progress.percentage ? `${progress.percentage.toFixed(1)}%` : '0%'}
->>>>>>> ab65861 (feat(frontend): announce async progress for assistive tech)
                     style={{ width: `${progress.percentage || 0}%` }}
                   />
                 </div>

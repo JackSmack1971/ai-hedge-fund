@@ -318,6 +318,7 @@ export function StockAnalyzerNode({
                     variant="secondary"
                     className="flex-shrink-0 transition-all duration-200 hover:bg-primary hover:text-primary-foreground active:scale-95"
                     title={showAsProcessing ? "Stop" : `Run (${formatKeyboardShortcut('↵')})`}
+                    aria-label={showAsProcessing ? "Stop stock analyzer" : "Run stock analyzer"}
                     onClick={showAsProcessing ? handleStop : handlePlay}
                     disabled={!canRunHedgeFund && !showAsProcessing}
                   >
