@@ -33,11 +33,11 @@ export function getDisplayName(agentName: string): string {
 export function getStatusIcon(status: string) {
   switch (status.toLowerCase()) {
     case 'complete':
-      return { icon: CheckCircle, color: 'text-green-500' };
+      return { icon: CheckCircle, color: 'text-success' };
     case 'error':
-      return { icon: XCircle, color: 'text-red-500' };
+      return { icon: XCircle, color: 'text-destructive' };
     case 'in_progress':
-      return { icon: MoreHorizontal, color: 'text-yellow-500' };
+      return { icon: MoreHorizontal, color: 'text-warning' };
     default:
       return { icon: Clock, color: 'text-muted-foreground' };
   }
@@ -47,9 +47,9 @@ export function getStatusIcon(status: string) {
 export function getSignalColor(signal: string): string {
   switch (signal.toUpperCase()) {
     case 'BULLISH':
-      return 'text-green-500';
+      return 'text-success';
     case 'BEARISH':
-      return 'text-red-500';
+      return 'text-destructive';
     case 'NEUTRAL':
       return 'text-primary';
     default:
@@ -62,10 +62,10 @@ export function getActionColor(action: string): string {
   switch (action.toUpperCase()) {
     case 'BUY':
     case 'COVER':
-      return 'text-green-500';
+      return 'text-success';
     case 'SELL':
     case 'SHORT':
-      return 'text-red-500';
+      return 'text-destructive';
     case 'HOLD':
       return 'text-primary';
     default:
@@ -104,4 +104,4 @@ export function sortAgents(agents: [string, AgentData][]): [string, AgentData][]
     // If no timestamp difference, sort alphabetically
     return agentA.localeCompare(agentB);
   });
-} 
+}

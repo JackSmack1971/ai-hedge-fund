@@ -1,5 +1,7 @@
 """Tests for app/backend/models/schemas.py — Pydantic schema validation."""
 
+import math
+
 import pytest
 from pydantic import ValidationError
 
@@ -98,6 +100,18 @@ class TestHedgeFundRequest:
         with pytest.raises(ValidationError):
             HedgeFundRequest(**data)
 
+    def test_negative_initial_cash_raises(self):
+        data = self._minimal_request()
+        data["initial_cash"] = -1
+        with pytest.raises(ValidationError):
+            HedgeFundRequest(**data)
+
+    def test_oversized_ticker_list_raises(self):
+        data = self._minimal_request()
+        data["tickers"] = [f"T{i}" for i in range(51)]
+        with pytest.raises(ValidationError):
+            HedgeFundRequest(**data)
+
 
 class TestFlowRunStatus:
     def test_status_values(self):
@@ -155,6 +169,26 @@ class TestBacktestRequestDates:
         data = self._minimal_request()
         data["start_date"] = "2024-01-01"
         data["end_date"] = "2024-01-01"
+        with pytest.raises(ValidationError):
+            BacktestRequest(**data)
+
+    def test_nan_margin_requirement_raises(self):
+        data = self._minimal_request()
+        data["margin_requirement"] = math.nan
+        with pytest.raises(ValidationError):
+            BacktestRequest(**data)
+
+    def test_negative_initial_capital_raises(self):
+        data = self._minimal_request()
+        data["initial_capital"] = -1
+        with pytest.raises(ValidationError):
+            BacktestRequest(**data)
+
+    def test_oversized_portfolio_positions_raise(self):
+        data = self._minimal_request()
+        data["portfolio_positions"] = [
+            {"ticker": f"T{i}", "quantity": 1.0, "trade_price": 1.0} for i in range(51)
+        ]
         with pytest.raises(ValidationError):
             BacktestRequest(**data)
 

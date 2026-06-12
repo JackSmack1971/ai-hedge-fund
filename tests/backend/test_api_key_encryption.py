@@ -1,11 +1,15 @@
 """Tests for encryption-at-rest of stored API keys (DATABASE_ENCRYPTION_KEY)."""
 
+import base64
+import hashlib
+
 import pytest
 from cryptography.fernet import Fernet
 
 from app.backend.database.models import ApiKey
 from app.backend.encryption import (
     CIPHERTEXT_PREFIX,
+    LEGACY_CIPHERTEXT_PREFIX,
     decrypt_value,
     DecryptionError,
     encrypt_value,
@@ -30,6 +34,12 @@ class TestEncryptionModule:
         assert ciphertext.startswith(CIPHERTEXT_PREFIX)
         assert decrypt_value(ciphertext) == SECRET
 
+    def test_legacy_ciphertext_is_still_decryptable(self):
+        legacy_key = base64.urlsafe_b64encode(hashlib.sha256(b"unit-test-passphrase").digest())
+        legacy_ciphertext = LEGACY_CIPHERTEXT_PREFIX + Fernet(legacy_key).encrypt(SECRET.encode()).decode()
+
+        assert decrypt_value(legacy_ciphertext) == SECRET
+
     def test_accepts_generated_fernet_key(self, monkeypatch):
         monkeypatch.setenv("DATABASE_ENCRYPTION_KEY", Fernet.generate_key().decode())
         assert decrypt_value(encrypt_value(SECRET)) == SECRET
@@ -53,6 +63,9 @@ class TestEncryptionModule:
         monkeypatch.setenv("DATABASE_ENCRYPTION_KEY", "a-different-passphrase")
         with pytest.raises(DecryptionError, match="DATABASE_ENCRYPTION_KEY"):
             decrypt_value(ciphertext)
+
+    def test_is_encrypted_recognizes_legacy_prefix(self):
+        assert is_encrypted(LEGACY_CIPHERTEXT_PREFIX + "abc")
 
 
 class TestRepositoryEncryption:
@@ -90,6 +103,7 @@ class TestRepositoryEncryption:
         assert migrated == 1
         row = db_session.query(ApiKey).filter(ApiKey.provider == "LEGACY_KEY").one()
         assert is_encrypted(row.key_value)
+        assert row.key_value.startswith(CIPHERTEXT_PREFIX)
         assert decrypt_value(row.key_value) == "legacy-plaintext"
         # Second run is a no-op
         assert repo.reencrypt_plaintext_keys() == 0
@@ -110,3 +124,18 @@ class TestServiceDecryption:
 
         service = ApiKeyService(db_session)
         assert service.get_api_key("LEGACY_KEY") == "legacy-plaintext"
+
+        row = db_session.query(ApiKey).filter(ApiKey.provider == "LEGACY_KEY").one()
+        assert is_encrypted(row.key_value)
+        assert decrypt_value(row.key_value) == "legacy-plaintext"
+
+    def test_service_dict_reads_legacy_plaintext(self, db_session):
+        db_session.add(ApiKey(provider="LEGACY_DICT_KEY", key_value="legacy-dict-plaintext", is_active=True))
+        db_session.commit()
+
+        service = ApiKeyService(db_session)
+        assert service.get_api_keys_dict() == {"LEGACY_DICT_KEY": "legacy-dict-plaintext"}
+
+        row = db_session.query(ApiKey).filter(ApiKey.provider == "LEGACY_DICT_KEY").one()
+        assert is_encrypted(row.key_value)
+        assert decrypt_value(row.key_value) == "legacy-dict-plaintext"

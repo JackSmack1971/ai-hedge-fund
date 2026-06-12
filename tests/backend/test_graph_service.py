@@ -1,8 +1,12 @@
+"""Tests for app/backend/services/graph.py graph assembly and executor."""
+
 from unittest.mock import patch
 
 import pytest
+from langgraph.graph import END
 
-from app.backend.services.graph import GRAPH_EXECUTOR, run_graph_async
+from app.backend.models.schemas import GraphNode
+from app.backend.services.graph import GRAPH_EXECUTOR, create_graph, run_graph_async
 
 
 @pytest.mark.asyncio
@@ -26,3 +30,17 @@ async def test_run_graph_async_uses_dedicated_executor():
     assert result == {"ok": True}
     assert dummy_loop.executor is GRAPH_EXECUTOR
     mock_run_graph.assert_called_once()
+
+
+class TestCreateGraphTerminalEdges:
+    def test_graph_without_portfolio_manager_gets_end_edge(self):
+        graph = create_graph(
+            graph_nodes=[GraphNode(id="warren_buffett_abc123")],
+            graph_edges=[],
+        )
+
+        compiled = graph.compile()
+        graph_view = compiled.get_graph()
+        edge_targets = {edge.target for edge in graph_view.edges if edge.source == "warren_buffett_abc123"}
+
+        assert END in edge_targets

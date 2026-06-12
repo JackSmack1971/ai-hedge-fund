@@ -108,6 +108,11 @@ GROQ_API_KEY=your-groq-api-key
 FINANCIAL_DATASETS_API_KEY=your-financial-datasets-api-key
 ```
 
+If backend auth is enabled, add the matching frontend token in `app/frontend/.env`:
+```bash
+VITE_BACKEND_API_TOKEN=your-backend-api-token
+```
+
 4. Install Poetry (if not already installed):
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -

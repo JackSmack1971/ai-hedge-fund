@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { apiKeysService } from '@/services/api-keys-api';
 import { Eye, EyeOff, Key, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface ApiKey {
   key: string;
@@ -12,6 +12,8 @@ interface ApiKey {
   url: string;
   placeholder: string;
 }
+
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 // Placeholder shown for keys that exist server-side; the real value is never sent to the browser.
 const MASKED_KEY_VALUE = '••••••••••••••••';
@@ -82,12 +84,21 @@ export function ApiKeysSettings() {
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
   const [savedProviders, setSavedProviders] = useState<Set<string>>(new Set());
   const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
+  const [saveStatuses, setSaveStatuses] = useState<Record<string, SaveStatus>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const saveTimersRef = useRef<Record<string, number>>({});
 
   // Load API keys from backend on component mount
   useEffect(() => {
     loadApiKeys();
+  }, []);
+
+  useEffect(() => {
+    const timers = saveTimersRef.current;
+    return () => {
+      Object.values(timers).forEach(window.clearTimeout);
+    };
   }, []);
 
   const loadApiKeys = async () => {
@@ -148,33 +159,50 @@ export function ApiKeysSettings() {
       [key]: value
     }));
 
-    // Auto-save with debouncing
-    try {
-      if (value.trim()) {
-        await apiKeysService.createOrUpdateApiKey({
-          provider: key,
-          key_value: value.trim(),
-          is_active: true
-        });
-        setSavedProviders(prev => new Set(prev).add(key));
-      } else {
-        // If value is empty, delete the key
-        try {
-          await apiKeysService.deleteApiKey(key);
-        } catch {
-          // Key might not exist, which is fine
-          console.log(`Key ${key} not found for deletion, which is expected`);
-        }
-        setSavedProviders(prev => {
-          const next = new Set(prev);
-          next.delete(key);
-          return next;
-        });
-      }
-    } catch (err) {
-      console.error(`Failed to save API key ${key}:`, err);
-      setError(`Failed to save ${key}. Please try again.`);
+    setSaveStatuses(prev => ({ ...prev, [key]: 'saving' }));
+
+    const existingTimer = saveTimersRef.current[key];
+    if (existingTimer) {
+      window.clearTimeout(existingTimer);
     }
+
+    saveTimersRef.current[key] = window.setTimeout(() => {
+      void (async () => {
+        delete saveTimersRef.current[key];
+        try {
+          if (value.trim()) {
+            await apiKeysService.createOrUpdateApiKey({
+              provider: key,
+              key_value: value.trim(),
+              is_active: true
+            });
+            setSavedProviders(prev => new Set(prev).add(key));
+          } else {
+            // If value is empty, delete the key
+            try {
+              await apiKeysService.deleteApiKey(key);
+            } catch {
+              // Key might not exist, which is fine
+              console.log(`Key ${key} not found for deletion, which is expected`);
+            }
+            setSavedProviders(prev => {
+              const next = new Set(prev);
+              next.delete(key);
+              return next;
+            });
+          }
+
+          setSaveStatuses(prev => ({ ...prev, [key]: 'saved' }));
+          window.setTimeout(() => {
+            setSaveStatuses(prev => ({ ...prev, [key]: 'idle' }));
+          }, 2000);
+        } catch (err) {
+          console.error(`Failed to save API key ${key}:`, err);
+          setSaveStatuses(prev => ({ ...prev, [key]: 'error' }));
+          setError(`Failed to save ${key}. Please try again.`);
+        }
+      })();
+    }, 500);
   };
 
   const toggleKeyVisibility = (key: string) => {
@@ -197,6 +225,7 @@ export function ApiKeysSettings() {
         next.delete(key);
         return next;
       });
+      setSaveStatuses(prev => ({ ...prev, [key]: 'idle' }));
     } catch (err) {
       console.error(`Failed to delete API key ${key}:`, err);
       setError(`Failed to delete ${key}. Please try again.`);
@@ -215,12 +244,23 @@ export function ApiKeysSettings() {
       <CardContent className="space-y-4">
         {keys.map((apiKey) => (
           <div key={apiKey.key} className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
                          <button
-               className="text-sm font-medium text-primary hover:text-blue-500 cursor-pointer transition-colors text-left"
+               className="text-sm font-medium text-primary hover:text-info cursor-pointer transition-colors text-left"
                onClick={() => window.open(apiKey.url, '_blank')}
              >
                {apiKey.label}
              </button>
+              <span
+                className="text-xs text-muted-foreground min-h-4"
+                role="status"
+                aria-live="polite"
+              >
+                {saveStatuses[apiKey.key] === 'saving' && 'Saving...'}
+                {saveStatuses[apiKey.key] === 'saved' && 'Saved'}
+                {saveStatuses[apiKey.key] === 'error' && 'Save failed'}
+              </span>
+            </div>
             <div className="relative">
               <Input
                 type={visibleKeys[apiKey.key] ? 'text' : 'password'}
@@ -236,7 +276,7 @@ export function ApiKeysSettings() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-red-500/10 hover:text-red-500"
+                    className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => clearKey(apiKey.key)}
                   >
                     <Trash2 className="h-3 w-3" />
@@ -294,12 +334,12 @@ export function ApiKeysSettings() {
 
       {/* Error Message */}
       {error && (
-        <Card className="bg-red-500/5 border-red-500/20">
+        <Card className="bg-destructive/10 border-destructive/20">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <Key className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <Key className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
               <div className="space-y-1">
-                <h4 className="text-sm font-medium text-red-500">Error</h4>
+                <h4 className="text-sm font-medium text-destructive">Error</h4>
                 <p className="text-xs text-muted-foreground">{error}</p>
                 <Button
                   variant="ghost"
@@ -308,7 +348,7 @@ export function ApiKeysSettings() {
                     setError(null);
                     loadApiKeys();
                   }}
-                  className="text-xs mt-2 p-0 h-auto text-red-500 hover:text-red-400"
+                  className="text-xs mt-2 p-0 h-auto text-destructive hover:text-destructive/80"
                 >
                   Try again
                 </Button>
