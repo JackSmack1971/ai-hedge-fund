@@ -1,8 +1,11 @@
 import { Button } from '@/components/ui/button';
+import { useEnhancedFlowActions } from '@/hooks/use-enhanced-flow-actions';
+import { useFlowContext } from '@/contexts/flow-context';
 import { useTabsContext } from '@/contexts/tabs-context';
 import { cn } from '@/lib/utils';
 import { FileText, Layout, Settings, X } from 'lucide-react';
 import { ReactNode, useState } from 'react';
+import type { Tab } from '@/contexts/tabs-context';
 
 interface TabBarProps {
   className?: string;
@@ -22,6 +25,8 @@ const getTabIcon = (type: string): ReactNode => {
 
 export function TabBar({ className }: TabBarProps) {
   const { tabs, activeTabId, setActiveTab, closeTab, reorderTabs } = useTabsContext();
+  const { currentFlowId } = useFlowContext();
+  const { saveCurrentFlowWithCompleteState } = useEnhancedFlowActions();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -62,6 +67,37 @@ export function TabBar({ className }: TabBarProps) {
   const handleDragEnd = () => {
     setDraggedIndex(null);
     setDragOverIndex(null);
+  };
+
+  const handleCloseTab = async (tab: Tab) => {
+    if (tab.type === 'flow' && tab.isDirty && tab.flow?.id) {
+      const isCurrentFlow = currentFlowId === tab.flow.id;
+
+      if (isCurrentFlow) {
+        try {
+          const savedFlow = await saveCurrentFlowWithCompleteState();
+          if (!savedFlow) {
+            const shouldClose = window.confirm(`"${tab.title}" has unsaved changes. Close without saving?`);
+            if (!shouldClose) {
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Failed to flush save before closing tab:', error);
+          const shouldClose = window.confirm(`Unable to save "${tab.title}". Close without saving?`);
+          if (!shouldClose) {
+            return;
+          }
+        }
+      } else {
+        const shouldClose = window.confirm(`"${tab.title}" has unsaved changes. Close without saving?`);
+        if (!shouldClose) {
+          return;
+        }
+      }
+    }
+
+    closeTab(tab.id);
   };
 
   return (
@@ -134,6 +170,12 @@ export function TabBar({ className }: TabBarProps) {
             </span>
 
             {/* Close Button */}
+            {tab.isDirty && (
+              <span
+                className="ml-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-yellow-500"
+                title="Unsaved changes"
+              />
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -152,7 +194,7 @@ export function TabBar({ className }: TabBarProps) {
               }}
               onClick={(e) => {
                 e.stopPropagation();
-                closeTab(tab.id);
+                void handleCloseTab(tab);
               }}
               onMouseDown={(e) => e.stopPropagation()} // Prevent drag when clicking close button
               title="Close tab"
@@ -168,4 +210,4 @@ export function TabBar({ className }: TabBarProps) {
       </div>
     </div>
   );
-} 
+}

@@ -26,6 +26,7 @@ import { AppNode } from '@/nodes/types';
 import { edgeTypes } from '../edges';
 import { nodeTypes } from '../nodes';
 import { TooltipProvider } from './ui/tooltip';
+import { useTabsContext } from '@/contexts/tabs-context';
 
 type FlowProps = {
   className?: string;
@@ -43,7 +44,8 @@ export function Flow({ className = '' }: FlowProps) {
   const proOptions = { hideAttribution: true };
   
   // Get flow context for flow ID
-  const { currentFlowId } = useFlowContext();
+  const { currentFlowId, isUnsaved } = useFlowContext();
+  const { setTabDirtyState } = useTabsContext();
   
   // Get enhanced flow actions for complete state persistence
   const { saveCurrentFlowWithCompleteState } = useEnhancedFlowActions();
@@ -87,6 +89,15 @@ export function Flow({ className = '' }: FlowProps) {
       }
     }, 1000); // 1 second debounce
   }, [currentFlowId, saveCurrentFlowWithCompleteState]);
+
+  // Mirror the active flow's unsaved state into the corresponding tab
+  useEffect(() => {
+    if (!currentFlowId) {
+      return;
+    }
+
+    setTabDirtyState(`flow-${currentFlowId}`, isUnsaved);
+  }, [currentFlowId, isUnsaved, setTabDirtyState]);
 
   // Enhanced onNodesChange handler with auto-save for specific change types
   const handleNodesChange = useCallback((changes: NodeChange<AppNode>[]) => {
