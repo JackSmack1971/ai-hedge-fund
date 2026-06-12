@@ -5,12 +5,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from app.backend.auth import verify_backend_token_or_query
 from app.backend.database import get_db
 from app.backend.models.schemas import FlowRunStatus
 from app.backend.repositories.flow_repository import FlowRepository
 from app.backend.repositories.flow_run_repository import FlowRunRepository
 
-router = APIRouter(prefix="/flows/{flow_id}/runs", tags=["flow-run-events"])
+router = APIRouter(
+    prefix="/flows/{flow_id}/runs",
+    tags=["flow-run-events"],
+    dependencies=[Depends(verify_backend_token_or_query)],
+)
 
 
 @router.get("/{run_id}/events")

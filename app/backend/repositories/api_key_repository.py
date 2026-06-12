@@ -19,6 +19,15 @@ class ApiKeyRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def _reencrypt_if_plaintext(self, api_key: ApiKey) -> ApiKey:
+        """Rewrite a legacy plaintext row as encrypted storage before returning it."""
+        if not is_encrypted(api_key.key_value):
+            api_key.key_value = encrypt_value(api_key.key_value)
+            api_key.updated_at = func.now()
+            self.db.commit()
+            self.db.refresh(api_key)
+        return api_key
+
     def create_or_update_api_key(
         self, provider: str, key_value: str, description: str = None, is_active: bool = True
     ) -> ApiKey:
@@ -47,14 +56,26 @@ class ApiKeyRepository:
 
     def get_api_key_by_provider(self, provider: str) -> Optional[ApiKey]:
         """Get API key by provider name"""
-        return self.db.query(ApiKey).filter(ApiKey.provider == provider, ApiKey.is_active == True).first()
+        api_key = self.db.query(ApiKey).filter(ApiKey.provider == provider, ApiKey.is_active == True).first()
+        return self._reencrypt_if_plaintext(api_key) if api_key else None
 
     def get_all_api_keys(self, include_inactive: bool = False) -> List[ApiKey]:
         """Get all API keys"""
         query = self.db.query(ApiKey)
         if not include_inactive:
             query = query.filter(ApiKey.is_active == True)
-        return query.order_by(ApiKey.provider).all()
+        api_keys = query.order_by(ApiKey.provider).all()
+        plaintext_found = False
+        for api_key in api_keys:
+            if not is_encrypted(api_key.key_value):
+                plaintext_found = True
+                api_key.key_value = encrypt_value(api_key.key_value)
+                api_key.updated_at = func.now()
+        if plaintext_found:
+            self.db.commit()
+            for api_key in api_keys:
+                self.db.refresh(api_key)
+        return api_keys
 
     def update_api_key(
         self, provider: str, key_value: str = None, description: str = None, is_active: bool = None
@@ -118,6 +139,13 @@ class ApiKeyRepository:
         if migrated:
             self.db.commit()
         return migrated
+
+    def count_plaintext_keys(self, include_inactive: bool = True) -> int:
+        """Count rows that still store plaintext API keys."""
+        query = self.db.query(ApiKey)
+        if not include_inactive:
+            query = query.filter(ApiKey.is_active == True)
+        return sum(1 for api_key in query.all() if not is_encrypted(api_key.key_value))
 
     def bulk_create_or_update(self, api_keys_data: List[dict]) -> List[ApiKey]:
         """Bulk create or update multiple API keys"""

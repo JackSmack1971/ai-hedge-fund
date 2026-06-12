@@ -1,7 +1,5 @@
 import os
 
-from colorama import init
-from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
 
@@ -14,7 +12,7 @@ from src.agents.portfolio_manager import portfolio_management_agent
 from src.agents.psychological_guardrail import psychological_guardrail_agent
 from src.agents.risk_manager import risk_management_agent
 from src.cli.input import parse_cli_inputs
-from src.graph.state import AgentState
+from src.graph.state import AgentState, start
 from src.regime.classifier import classify_regime
 from src.regime.selector import select_analysts_for_regime
 from src.schemas.hybrid import RegimeClassification
@@ -23,12 +21,6 @@ from src.utils.analysts import get_analyst_nodes
 from src.utils.display import print_trading_output
 from src.utils.parsing import parse_hedge_fund_response
 from src.utils.progress import progress
-
-# Load environment variables from .env file
-load_dotenv()
-
-init(autoreset=True)
-
 
 def hybrid_layer_node(state: AgentState) -> dict:
     """Composite node: runs all four hybrid agents sequentially with state threading (D-38)."""
@@ -162,11 +154,6 @@ def _apply_adaptive_routing(
     return effective, regime_classification, regime_selection
 
 
-def start(state: AgentState):
-    """Initialize the workflow with the input message."""
-    return state
-
-
 def create_workflow(selected_analysts=None):
     """Create the workflow with selected analysts."""
     workflow = StateGraph(AgentState)
@@ -203,6 +190,13 @@ def create_workflow(selected_analysts=None):
 
 
 if __name__ == "__main__":
+    from colorama import init
+    from dotenv import load_dotenv
+
+    # Load environment variables only when running the CLI entry point.
+    load_dotenv()
+    init(autoreset=True)
+
     inputs = parse_cli_inputs(
         description="Run the hedge fund trading system",
         require_tickers=True,

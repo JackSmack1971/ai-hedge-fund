@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useFlowConnectionState } from '@/hooks/use-flow-connection';
 import { cn } from '@/lib/utils';
 import { flowService } from '@/services/flow-service';
@@ -29,6 +30,8 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
     position: { x: 0, y: 0 }
   });
   const [editDialog, setEditDialog] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Check if this flow has an active connection
   const connectionState = useFlowConnectionState(flow.id.toString());
@@ -78,12 +81,20 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
   };
 
   const handleDeleteFlow = async () => {
-    if (window.confirm(`Are you sure you want to delete "${flow.name}"?`)) {
-      try {
-        await onDeleteFlow(flow);
-      } catch (error) {
-        console.error('Failed to delete flow:', error);
-      }
+    setContextMenu(prev => ({ ...prev, isOpen: false }));
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteFlow = async () => {
+    setIsDeleting(true);
+    try {
+      await onDeleteFlow(flow);
+      setDeleteDialogOpen(false);
+      await onRefresh();
+    } catch (error) {
+      console.error('Failed to delete flow:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -107,8 +118,8 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
       <div 
         className={cn(
           "group flex items-center justify-between px-4 py-3 transition-colors cursor-pointer",
-          isActive 
-            ? "border-l-2 border-blue-500" 
+          isActive
+            ? "border-l-2 border-info"
             : "hover-bg"
         )}
         onClick={handleLoadFlow}
@@ -118,18 +129,18 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-1 min-w-0">
               {flow.is_template ? (
-                <Layout size={14} className="text-blue-500 flex-shrink-0" />
+                <Layout size={14} className="text-info flex-shrink-0" />
               ) : (
                 <FileText size={14} className={cn(
                   "flex-shrink-0",
-                  isActive ? "text-blue-500" : "text-muted-foreground"
+                  isActive ? "text-info" : "text-muted-foreground"
                 )} />
               )}
               <span
                 className={cn(
                   "text-subtitle font-medium text-left truncate",
-                  isActive 
-                    ? "text-blue-500" 
+                  isActive
+                    ? "text-info"
                     : "text-primary"
                 )}
                 title={flow.name}
@@ -141,8 +152,8 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
             {/* Active connection indicator - right aligned */}
             {hasActiveConnection && (
               <div className="flex items-center gap-1 flex-shrink-0">
-                <Zap className="h-3 w-3 text-yellow-500 animate-pulse" />
-                <span className="text-xs text-yellow-500 font-medium">Running</span>
+                <Zap className="h-3 w-3 text-warning animate-pulse" />
+                <span className="text-xs text-warning font-medium">Running</span>
               </div>
             )}
           </div>
@@ -196,6 +207,16 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
         onClose={() => setEditDialog(false)}
         onFlowUpdated={onRefresh}
       />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Delete flow"
+        description={`Are you sure you want to delete "${flow.name}"? This action cannot be undone.`}
+        confirmLabel="Delete flow"
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDeleteFlow}
+        isLoading={isDeleting}
+      />
     </>
   );
-} 
+}

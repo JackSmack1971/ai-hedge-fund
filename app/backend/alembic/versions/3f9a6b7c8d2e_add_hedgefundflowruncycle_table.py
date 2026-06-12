@@ -6,8 +6,12 @@ Create Date: 2024-11-27 10:00:00.000000
 
 """
 
+import logging
+
 import sqlalchemy as sa
 from alembic import op
+
+logger = logging.getLogger(__name__)
 
 # revision identifiers, used by Alembic.
 revision = "3f9a6b7c8d2e"
@@ -83,8 +87,8 @@ def downgrade():
             op.drop_index("ix_hedge_fund_flow_run_cycles_status", "hedge_fund_flow_run_cycles")
             op.drop_index("ix_hedge_fund_flow_run_cycles_cycle_number", "hedge_fund_flow_run_cycles")
             op.drop_index("ix_hedge_fund_flow_run_cycles_flow_run_id", "hedge_fund_flow_run_cycles")
-        except:
-            pass  # Index may not exist
+        except Exception as exc:
+            logger.debug("Skipping missing index during downgrade: %s", exc, exc_info=True)
 
         # Drop hedge_fund_flow_run_cycles table
         op.drop_table("hedge_fund_flow_run_cycles")

@@ -22,7 +22,7 @@ import { useFlowContext } from '@/contexts/flow-context';
 import { useLayoutContext } from '@/contexts/layout-context';
 import { useNodeContext } from '@/contexts/node-context';
 import { useFlowConnection } from '@/hooks/use-flow-connection';
-import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
+import { buildKeyboardShortcuts, useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { useNodeState } from '@/hooks/use-node-state';
 import { cn, formatKeyboardShortcut } from '@/lib/utils';
 import { type PortfolioStartNode } from '../types';
@@ -84,19 +84,13 @@ export function PortfolioStartNode({
   
   // Add keyboard shortcut for Cmd+Enter / Ctrl+Enter to run portfolio analyzer
   useKeyboardShortcuts({
-    shortcuts: [
-      {
-        key: 'Enter',
-        ctrlKey: true,
-        metaKey: true,
-        callback: () => {
-          if (canRunPortfolioAnalyzer) {
-            handlePlay();
-          }
-        },
-        preventDefault: true,
+    shortcuts: buildKeyboardShortcuts({
+      runPortfolioAnalyzer: () => {
+        if (canRunPortfolioAnalyzer) {
+          handlePlay();
+        }
       },
-    ],
+    }),
   });
   
   // Recover flow state when component mounts or flow changes
