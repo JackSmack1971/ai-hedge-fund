@@ -21,6 +21,8 @@ interface FlowConnectionInfo {
   startTime: number;
   lastActivity: number;
   error?: string;
+  announcement?: string;
+  announcementVersion?: number;
 }
 
 // Global connection manager - tracks all active flow connections
@@ -35,16 +37,25 @@ class FlowConnectionManager {
       abortController: null,
       startTime: 0,
       lastActivity: 0,
+      announcement: '',
+      announcementVersion: 0,
     };
   }
 
   // Set connection info for a flow
   setConnection(flowId: string, info: Partial<FlowConnectionInfo>): void {
     const existing = this.getConnection(flowId);
+    const nextAnnouncement = info.announcement ?? existing.announcement ?? '';
+    const announcementVersion =
+      info.announcement !== undefined && info.announcement !== existing.announcement
+        ? (existing.announcementVersion ?? 0) + 1
+        : existing.announcementVersion ?? 0;
     const updated = {
       ...existing,
       ...info,
       lastActivity: Date.now(),
+      announcement: nextAnnouncement,
+      announcementVersion,
     };
     
     this.connections.set(flowId, updated);
@@ -137,6 +148,7 @@ export function useFlowConnection(flowId: string | null) {
       state: 'connecting',
       startTime: Date.now(),
       error: undefined,
+      announcement: 'Analysis started',
     });
 
     try {
@@ -159,6 +171,7 @@ export function useFlowConnection(flowId: string | null) {
         state: 'error',
         error: error instanceof Error ? error.message : 'Unknown error',
         abortController: null,
+        announcement: `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
     }
   }, [flowId, canRun, nodeContext]);
@@ -175,6 +188,7 @@ export function useFlowConnection(flowId: string | null) {
       state: 'connecting',
       startTime: Date.now(),
       error: undefined,
+      announcement: 'Analysis started',
     });
 
     try {
@@ -197,6 +211,7 @@ export function useFlowConnection(flowId: string | null) {
         state: 'error',
         error: error instanceof Error ? error.message : 'Unknown error',
         abortController: null,
+        announcement: `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
     }
   }, [flowId, canRun, nodeContext]);
@@ -231,6 +246,7 @@ export function useFlowConnection(flowId: string | null) {
       state: 'cancelled',
       abortController: null,
       error: undefined,
+      announcement: 'Run cancelled',
     });
 
     cancelResetTimeoutRef.current = setTimeout(() => {

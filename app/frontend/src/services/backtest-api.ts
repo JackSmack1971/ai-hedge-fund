@@ -200,15 +200,16 @@ export const backtestApi = {
                           state: 'completed',
                           abortController: null,
                           error: undefined,
+                          announcement: 'Analysis complete',
                         });
 
                         // Auto-cleanup completed connections after a delay
                         setTimeout(() => {
                           const currentConnection = flowConnectionManager.getConnection(flowId);
                           if (currentConnection.state === 'completed') {
-                            flowConnectionManager.setConnection(flowId, {
-                              state: 'idle',
-                            });
+                        flowConnectionManager.setConnection(flowId, {
+                          state: 'idle',
+                        });
                           }
                         }, 30000); // 30 seconds
                       }
@@ -227,6 +228,7 @@ export const backtestApi = {
                           state: 'error',
                           error: eventData.message || 'Unknown error occurred',
                           abortController: null,
+                          announcement: `Analysis failed: ${eventData.message || 'Unknown error occurred'}`,
                         });
                       }
                       break;
@@ -250,6 +252,7 @@ export const backtestApi = {
                 state: 'completed-with-warning',
                 error: 'The backend stopped streaming before sending a completion event.',
                 abortController: null,
+                announcement: 'Analysis complete',
               });
             }
           }
@@ -270,6 +273,7 @@ export const backtestApi = {
                 state: 'error',
                 error: message,
                 abortController: null,
+                announcement: `Analysis failed: ${error.message || 'Connection error'}`,
               });
             }
           }
@@ -295,6 +299,7 @@ export const backtestApi = {
           state: 'error',
           error: message,
           abortController: null,
+          announcement: `Analysis failed: ${message}`,
         });
       }
     });
@@ -308,6 +313,7 @@ export const backtestApi = {
           state: 'idle',
           abortController: null,
           error: undefined,
+          announcement: 'Run cancelled',
         });
       }
     };
