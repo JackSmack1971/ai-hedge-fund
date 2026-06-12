@@ -62,6 +62,28 @@ class TestFlowsGet:
         assert response.status_code == 200
         assert isinstance(response.json(), list)
 
+    def test_get_all_flows_seeds_default_template_once(self, client):
+        existing_response = client.get("/flows/")
+        assert existing_response.status_code == 200, existing_response.text
+        for flow in existing_response.json():
+            delete_response = client.delete(f"/flows/{flow['id']}")
+            assert delete_response.status_code == 200, delete_response.text
+
+        first_response = client.get("/flows/")
+        assert first_response.status_code == 200, first_response.text
+        first_payload = first_response.json()
+        template_flows = [flow for flow in first_payload if flow["is_template"]]
+        assert len(template_flows) == 1
+        assert template_flows[0]["name"] == "Data Wizards"
+        assert template_flows[0]["tags"] == ["template", "onboarding", "starter"]
+
+        second_response = client.get("/flows/")
+        assert second_response.status_code == 200, second_response.text
+        second_payload = second_response.json()
+        second_templates = [flow for flow in second_payload if flow["is_template"]]
+        assert len(second_templates) == 1
+        assert second_templates[0]["name"] == "Data Wizards"
+
     def test_get_flow_by_id_existing(self, client):
         create_resp = client.post("/flows/", json={"name": "Flow X", "nodes": [], "edges": []})
         assert create_resp.status_code == 200, create_resp.text

@@ -6,7 +6,19 @@ from typing_extensions import Annotated, Sequence, TypedDict
 
 
 def merge_dicts(a: dict[str, any], b: dict[str, any]) -> dict[str, any]:
-    return {**a, **b}
+    merged = dict(a)
+    for key, value in b.items():
+        existing = merged.get(key)
+        if isinstance(existing, dict) and isinstance(value, dict):
+            merged[key] = merge_dicts(existing, value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def start(state: "AgentState"):
+    """Initialize the workflow with the input message."""
+    return state
 
 
 # Define agent state

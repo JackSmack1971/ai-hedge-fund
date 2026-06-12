@@ -1,7 +1,9 @@
+import { Button } from '@/components/ui/button';
 import { FlowItemGroup } from '@/components/panels/left/flow-item-group';
 import { SearchBox } from '@/components/panels/search-box';
 import { Accordion } from '@/components/ui/accordion';
 import { useTabsContext } from '@/contexts/tabs-context';
+import { FLOW_CREATE_DIALOG_OPEN_EVENT } from '@/hooks/use-flow-management-tabs';
 import { Flow } from '@/types/flow';
 import { FolderOpen } from 'lucide-react';
 
@@ -50,6 +52,9 @@ export function FlowList({
   };
 
   const activeFlowId = getActiveFlowId();
+  const openCreateDialog = () => {
+    window.dispatchEvent(new Event(FLOW_CREATE_DIALOG_OPEN_EVENT));
+  };
 
   return (
     <div className="flex-grow overflow-auto text-primary scrollbar-thin scrollbar-thumb-ramp-grey-700">
@@ -85,7 +90,7 @@ export function FlowList({
           {templateFlows.length > 0 && (
             <FlowItemGroup
               key="templates"
-              title="Templates"
+              title="Template Flows"
               flows={templateFlows}
               onLoadFlow={onLoadFlow}
               onDeleteFlow={onDeleteFlow}
@@ -97,12 +102,15 @@ export function FlowList({
       )}
 
       {!isLoading && filteredFlows.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground text-sm">
+          <div className="text-center py-8 text-muted-foreground text-sm">
           {flows.length === 0 ? (
             <div className="space-y-2">
               <FolderOpen size={32} className="mx-auto text-muted-foreground" />
               <div>No flows saved yet</div>
               <div className="text-xs">Create your first flow to get started</div>
+              <Button variant="outline" size="sm" onClick={openCreateDialog} className="mt-2">
+                Create flow
+              </Button>
             </div>
           ) : (
             'No flows match your search'

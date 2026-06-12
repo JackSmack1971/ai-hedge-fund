@@ -1,3 +1,4 @@
+import logging
 import asyncio
 import json
 import re
@@ -8,9 +9,10 @@ from langgraph.graph import END, StateGraph
 from app.backend.services.agent_service import create_agent_function
 from src.agents.portfolio_manager import portfolio_management_agent
 from src.agents.risk_manager import risk_management_agent
-from src.graph.state import AgentState
-from src.main import start
+from src.graph.state import AgentState, start
 from src.utils.analysts import ANALYST_CONFIG
+
+logger = logging.getLogger(__name__)
 
 
 def extract_base_agent_key(unique_id: str) -> str:
@@ -123,9 +125,16 @@ def create_graph(graph_nodes: list, graph_edges: list) -> StateGraph:
     for portfolio_manager_id, risk_manager_id in risk_manager_nodes.items():
         graph.add_edge(risk_manager_id, portfolio_manager_id)
 
-    # Connect portfolio managers to END
-    for portfolio_manager_id in portfolio_manager_nodes:
-        graph.add_edge(portfolio_manager_id, END)
+    # Connect portfolio managers to END.
+    if portfolio_manager_nodes:
+        for portfolio_manager_id in portfolio_manager_nodes:
+            graph.add_edge(portfolio_manager_id, END)
+    else:
+        # If the graph has no portfolio manager, make sure terminal analyst nodes can finish.
+        for agent_id in agent_ids:
+            base_agent_key = extract_base_agent_key(agent_id)
+            if base_agent_key in ANALYST_CONFIG and agent_id not in nodes_with_outgoing_edges:
+                graph.add_edge(agent_id, END)
 
     # Set the entry point to the start node
     graph.set_entry_point("start_node")
@@ -187,11 +196,11 @@ def parse_hedge_fund_response(response):
     try:
         return json.loads(response)
     except json.JSONDecodeError as e:
-        print(f"JSON decoding error: {e}\nResponse: {repr(response)}")
+        logger.exception("JSON decoding error while parsing LLM response: %r", response)
         return None
     except TypeError as e:
-        print(f"Invalid response type (expected string, got {type(response).__name__}): {e}")
+        logger.exception("Invalid response type while parsing LLM response: %s", type(response).__name__)
         return None
     except Exception as e:
-        print(f"Unexpected error while parsing response: {e}\nResponse: {repr(response)}")
+        logger.exception("Unexpected error while parsing LLM response: %r", response)
         return None
