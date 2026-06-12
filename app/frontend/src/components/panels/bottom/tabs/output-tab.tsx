@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFlowContext } from '@/contexts/flow-context';
+import { useFlowConnectionState } from '@/hooks/use-flow-connection';
 import { useNodeContext } from '@/contexts/node-context';
 import { cn } from '@/lib/utils';
 import { BacktestOutput } from './backtest-output';
@@ -13,7 +14,8 @@ interface OutputTabProps {
 export function OutputTab({ className }: OutputTabProps) {
   const { currentFlowId } = useFlowContext();
   const { getAgentNodeDataForFlow, getOutputNodeDataForFlow } = useNodeContext();
-  
+  const connection = useFlowConnectionState(currentFlowId?.toString() || null);
+
   // Get current flow data
   const agentData = getAgentNodeDataForFlow(currentFlowId?.toString() || null);
   const outputData = getOutputNodeDataForFlow(currentFlowId?.toString() || null);
