@@ -4,6 +4,12 @@ import { extractBaseAgentKey } from '@/data/node-mappings';
 import { flowConnectionManager } from '@/hooks/use-flow-connection';
 import { backendFetch, backendJsonHeaders } from '@/services/http';
 import {
+  buildActionableHttpErrorMessage,
+  buildActionableNetworkErrorMessage,
+  showRunErrorToast,
+  showRunWarningToast,
+} from '@/services/run-feedback';
+import {
   BacktestDayResult,
   BacktestPerformanceMetrics,
   BacktestRequest
@@ -33,9 +39,24 @@ export const backtestApi = {
       body: JSON.stringify(params),
       signal,
     })
-    .then(response => {
+    .then(async response => {
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const message = await buildActionableHttpErrorMessage(response, {
+          authMessage: 'Backend authentication failed - check your API token settings',
+          serverMessage: 'Backtest backend error - check that the server is running',
+          fallbackMessage: 'Backtest request failed',
+        });
+
+        if (flowId) {
+          showRunErrorToast('backtest', flowId, message);
+          flowConnectionManager.setConnection(flowId, {
+            state: 'error',
+            error: message,
+            abortController: null,
+          });
+        }
+
+        return;
       }
             
       // Process the response as a stream of SSE events
@@ -178,6 +199,7 @@ export const backtestApi = {
                         flowConnectionManager.setConnection(flowId, {
                           state: 'completed',
                           abortController: null,
+                          error: undefined,
                         });
 
                         // Auto-cleanup completed connections after a delay
@@ -222,9 +244,11 @@ export const backtestApi = {
           // After the stream has finished, check if we are still in a connected state
           if (flowId) {
             const currentConnection = flowConnectionManager.getConnection(flowId);
-            if (currentConnection.state === 'connected') {
+          if (currentConnection.state === 'connected') {
+              showRunWarningToast('backtest', flowId, 'The backend stopped streaming before sending a completion event.');
               flowConnectionManager.setConnection(flowId, {
-                state: 'completed',
+                state: 'completed-with-warning',
+                error: 'The backend stopped streaming before sending a completion event.',
                 abortController: null,
               });
             }
@@ -233,16 +257,18 @@ export const backtestApi = {
           if (error.name !== 'AbortError') {
             console.error('Error reading backtest SSE stream:', error);
             // Mark nodes as error when there's a connection error
+            const message = buildActionableNetworkErrorMessage(error, 'Backtest backend error - check that the server is running');
             nodeContext.updateAgentNode(flowId, 'portfolio-start', {
               status: 'ERROR',
-              message: 'Connection error during backtest',
+              message,
             });
             
             // Update flow connection state to error
             if (flowId) {
+              showRunErrorToast('backtest', flowId, message);
               flowConnectionManager.setConnection(flowId, {
                 state: 'error',
-                error: error.message || 'Connection error',
+                error: message,
                 abortController: null,
               });
             }
@@ -256,16 +282,18 @@ export const backtestApi = {
     .catch((error: any) => {
       console.error('Backtest SSE connection error:', error);
       // Mark nodes as error when there's a connection error
+      const message = buildActionableNetworkErrorMessage(error, 'Backtest backend error - check that the server is running');
       nodeContext.updateAgentNode(flowId, 'portfolio-start', {
         status: 'ERROR',
-        message: 'Failed to connect to backtest service',
+        message,
       });
       
       // Update flow connection state to error
       if (flowId) {
+        showRunErrorToast('backtest', flowId, message);
         flowConnectionManager.setConnection(flowId, {
           state: 'error',
-          error: error.message || 'Connection failed',
+          error: message,
           abortController: null,
         });
       }
@@ -279,6 +307,7 @@ export const backtestApi = {
         flowConnectionManager.setConnection(flowId, {
           state: 'idle',
           abortController: null,
+          error: undefined,
         });
       }
     };
