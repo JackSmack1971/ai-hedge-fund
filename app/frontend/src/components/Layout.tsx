@@ -8,20 +8,21 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { FlowProvider, useFlowContext } from '@/contexts/flow-context';
 import { LayoutProvider, useLayoutContext } from '@/contexts/layout-context';
 import { TabsProvider, useTabsContext } from '@/contexts/tabs-context';
+import { useFlowConnectionState } from '@/hooks/use-flow-connection';
 import { useLayoutKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { SidebarStorageService } from '@/services/sidebar-storage';
 import { TabService } from '@/services/tab-service';
 import { ReactFlowProvider } from '@xyflow/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
 import { TopBar } from './layout/top-bar';
 
 // Create a LayoutContent component to access the FlowContext, TabsContext, and LayoutContext
 function LayoutContent() {
-  const { reactFlowInstance } = useFlowContext();
-  const { openTab } = useTabsContext();
+  const { reactFlowInstance, currentFlowId } = useFlowContext();
+  const { tabs, openTab } = useTabsContext();
   const { isBottomCollapsed, expandBottomPanel, collapseBottomPanel, toggleBottomPanel } = useLayoutContext();
   const isMobile = useIsMobile();
   
@@ -40,10 +41,42 @@ function LayoutContent() {
   const [rightSidebarWidth, setRightSidebarWidth] = useState(280);
   const [bottomPanelHeight, setBottomPanelHeight] = useState(300);
 
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!tabs.some(tab => tab.isDirty)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [tabs]);
+
   const handleSettingsClick = () => {
     const tabData = TabService.createSettingsTab();
     openTab(tabData);
   };
+
+  useEffect(() => {
+    const announcement = currentConnection?.announcement;
+    const announcementVersion = currentConnection?.announcementVersion ?? 0;
+
+    if (!announcement || announcementVersion === announcementVersionRef.current) {
+      return;
+    }
+
+    announcementVersionRef.current = announcementVersion;
+    setLiveMessage('');
+
+    const timeoutId = window.setTimeout(() => {
+      setLiveMessage(announcement);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [currentConnection?.announcement, currentConnection?.announcementVersion]);
 
   // Add keyboard shortcuts for toggling sidebars and fit view
   useLayoutKeyboardShortcuts(
@@ -122,6 +155,10 @@ function LayoutContent() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden relative bg-background">
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {liveMessage}
+      </div>
+
       {/* VSCode-style Top Bar */}
       <TopBar
         isLeftCollapsed={isLeftCollapsed}

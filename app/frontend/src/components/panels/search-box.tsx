@@ -20,6 +20,7 @@ export function SearchBox({
           type="text" 
           placeholder={placeholder} 
           className="bg-transparent text-sm focus:outline-none text-primary w-full placeholder-muted-foreground"
+          aria-label={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -40,4 +41,4 @@ export function SearchBox({
       </div>
     </div>
   );
-} 
+}

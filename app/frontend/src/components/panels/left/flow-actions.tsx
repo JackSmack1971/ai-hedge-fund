@@ -27,6 +27,7 @@ export function FlowActions({ onSave, onCreate }: FlowActionsProps) {
             isUnsaved && "text-warning"
           )}
           title={`Save "${currentFlowName}"`}
+          aria-label={`Save "${currentFlowName}"`}
         >
           <Save size={14} />
         </Button>
@@ -36,6 +37,7 @@ export function FlowActions({ onSave, onCreate }: FlowActionsProps) {
           onClick={onCreate}
           className="h-6 w-6 text-primary hover-bg"
           title="Create new flow"
+          aria-label="Create new flow"
         >
           <Plus size={14} />
         </Button>

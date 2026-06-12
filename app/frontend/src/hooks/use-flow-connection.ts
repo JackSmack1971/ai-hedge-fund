@@ -2,10 +2,18 @@ import { useNodeContext } from '@/contexts/node-context';
 import { api } from '@/services/api';
 import { backtestApi } from '@/services/backtest-api';
 import { BacktestRequest, HedgeFundRequest } from '@/services/types';
+import { useToastManager } from '@/hooks/use-toast-manager';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Connection state for a specific flow
-export type FlowConnectionState = 'idle' | 'connecting' | 'connected' | 'error' | 'completed';
+export type FlowConnectionState =
+  | 'idle'
+  | 'connecting'
+  | 'connected'
+  | 'error'
+  | 'completed'
+  | 'completed-with-warning'
+  | 'cancelled';
 
 interface FlowConnectionInfo {
   state: FlowConnectionState;
@@ -13,6 +21,8 @@ interface FlowConnectionInfo {
   startTime: number;
   lastActivity: number;
   error?: string;
+  announcement?: string;
+  announcementVersion?: number;
 }
 
 // Global connection manager - tracks all active flow connections
@@ -27,16 +37,25 @@ class FlowConnectionManager {
       abortController: null,
       startTime: 0,
       lastActivity: 0,
+      announcement: '',
+      announcementVersion: 0,
     };
   }
 
   // Set connection info for a flow
   setConnection(flowId: string, info: Partial<FlowConnectionInfo>): void {
     const existing = this.getConnection(flowId);
+    const nextAnnouncement = info.announcement ?? existing.announcement ?? '';
+    const announcementVersion =
+      info.announcement !== undefined && info.announcement !== existing.announcement
+        ? (existing.announcementVersion ?? 0) + 1
+        : existing.announcementVersion ?? 0;
     const updated = {
       ...existing,
       ...info,
       lastActivity: Date.now(),
+      announcement: nextAnnouncement,
+      announcementVersion,
     };
     
     this.connections.set(flowId, updated);
@@ -79,8 +98,10 @@ export const flowConnectionManager = new FlowConnectionManager();
  */
 export function useFlowConnection(flowId: string | null) {
   const nodeContext = useNodeContext();
+  const { info } = useToastManager();
   const [, forceUpdate] = useState({});
   const listenerRef = useRef<() => void>();
+  const cancelResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Force re-render when connections change
   useEffect(() => {
@@ -92,6 +113,9 @@ export function useFlowConnection(flowId: string | null) {
       if (listenerRef.current) {
         flowConnectionManager.removeListener(listenerRef.current);
       }
+      if (cancelResetTimeoutRef.current) {
+        clearTimeout(cancelResetTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -100,7 +124,8 @@ export function useFlowConnection(flowId: string | null) {
   const isConnecting = connection?.state === 'connecting';
   const isConnected = connection?.state === 'connected';
   const isError = connection?.state === 'error';
-  const isCompleted = connection?.state === 'completed';
+  const isCompleted = connection?.state === 'completed' || connection?.state === 'completed-with-warning';
+  const isCancelling = connection?.state === 'cancelled';
   
   // Check if any agents are currently processing
   const isProcessing = flowId ? (() => {
@@ -109,7 +134,7 @@ export function useFlowConnection(flowId: string | null) {
   })() : false;
   
   // Can run if we have a flow ID and we're not already running
-  const canRun = Boolean(flowId && !isConnecting && !isConnected && !isProcessing);
+  const canRun = Boolean(flowId && !isConnecting && !isConnected && !isProcessing && !isCancelling);
 
   // Start a flow connection
   const runFlow = useCallback((params: HedgeFundRequest) => {
@@ -122,6 +147,8 @@ export function useFlowConnection(flowId: string | null) {
     flowConnectionManager.setConnection(flowId, {
       state: 'connecting',
       startTime: Date.now(),
+      error: undefined,
+      announcement: 'Analysis started',
     });
 
     try {
@@ -132,6 +159,7 @@ export function useFlowConnection(flowId: string | null) {
       flowConnectionManager.setConnection(flowId, {
         state: 'connected',
         abortController,
+        error: undefined,
       });
 
       // TODO: We should enhance the API to notify us when the connection completes
@@ -143,6 +171,7 @@ export function useFlowConnection(flowId: string | null) {
         state: 'error',
         error: error instanceof Error ? error.message : 'Unknown error',
         abortController: null,
+        announcement: `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
     }
   }, [flowId, canRun, nodeContext]);
@@ -158,6 +187,8 @@ export function useFlowConnection(flowId: string | null) {
     flowConnectionManager.setConnection(flowId, {
       state: 'connecting',
       startTime: Date.now(),
+      error: undefined,
+      announcement: 'Analysis started',
     });
 
     try {
@@ -168,6 +199,7 @@ export function useFlowConnection(flowId: string | null) {
       flowConnectionManager.setConnection(flowId, {
         state: 'connected',
         abortController,
+        error: undefined,
       });
 
       // TODO: We should enhance the API to notify us when the connection completes
@@ -179,6 +211,7 @@ export function useFlowConnection(flowId: string | null) {
         state: 'error',
         error: error instanceof Error ? error.message : 'Unknown error',
         abortController: null,
+        announcement: `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
     }
   }, [flowId, canRun, nodeContext]);
@@ -188,6 +221,13 @@ export function useFlowConnection(flowId: string | null) {
     if (!flowId) return;
 
     console.log(`[stopFlow] Stopping flow ${flowId}`);
+    if (cancelResetTimeoutRef.current) {
+      clearTimeout(cancelResetTimeoutRef.current);
+      cancelResetTimeoutRef.current = null;
+    }
+
+    info('Run cancelled', `flow-run-cancelled-${flowId}`);
+
     const connection = flowConnectionManager.getConnection(flowId);
     console.log(`[stopFlow] Current connection state:`, connection);
     
@@ -203,12 +243,24 @@ export function useFlowConnection(flowId: string | null) {
 
     // Update connection state
     flowConnectionManager.setConnection(flowId, {
-      state: 'idle',
+      state: 'cancelled',
       abortController: null,
+      error: undefined,
+      announcement: 'Run cancelled',
     });
+
+    cancelResetTimeoutRef.current = setTimeout(() => {
+      const currentConnection = flowConnectionManager.getConnection(flowId);
+      if (currentConnection.state === 'cancelled') {
+        flowConnectionManager.setConnection(flowId, {
+          state: 'idle',
+          error: undefined,
+        });
+      }
+    }, 750);
     
     console.log(`[stopFlow] Flow ${flowId} stopped and reset to idle`);
-  }, [flowId, nodeContext]);
+  }, [flowId, info, nodeContext]);
 
   // Recover from stale states (called when loading a flow)
   const recoverFlowState = useCallback(() => {
@@ -221,14 +273,15 @@ export function useFlowConnection(flowId: string | null) {
       // Check if the connection is old (more than 5 minutes)
       const isStale = Date.now() - connection.lastActivity > 5 * 60 * 1000;
       
-      if (isStale) {
-        console.log(`Recovering stale connection for flow ${flowId}`);
-        flowConnectionManager.setConnection(flowId, {
-          state: 'idle',
-          abortController: null,
-        });
+        if (isStale) {
+          console.log(`Recovering stale connection for flow ${flowId}`);
+          flowConnectionManager.setConnection(flowId, {
+            state: 'idle',
+            abortController: null,
+            error: undefined,
+          });
+        }
       }
-    }
   }, [flowId, isProcessing]);
 
   return {
@@ -237,6 +290,7 @@ export function useFlowConnection(flowId: string | null) {
     isConnected,
     isError,
     isCompleted,
+    isCancelling,
     isProcessing,
     canRun,
     error: connection?.error,
@@ -256,11 +310,14 @@ export function useFlowConnectionState(flowId: string | null) {
   useEffect(() => {
     if (!flowId) return;
 
-    const unsubscribe = flowConnectionManager.addListener(() => {
+    const listener = () => {
       forceUpdate({});
-    });
+    };
+    flowConnectionManager.addListener(listener);
 
-    return unsubscribe;
+    return () => {
+      flowConnectionManager.removeListener(listener);
+    };
   }, [flowId]);
 
   return flowId ? flowConnectionManager.getConnection(flowId) : null;

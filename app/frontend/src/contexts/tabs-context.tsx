@@ -10,6 +10,7 @@ export interface Tab {
   type: TabType;
   title: string;
   content: ReactNode;
+  isDirty?: boolean;
   // For flow tabs
   flow?: Flow;
   // For other tabs (settings, etc.)
@@ -21,6 +22,7 @@ interface SerializableTab {
   id: string;
   type: TabType;
   title: string;
+  isDirty?: boolean;
   flow?: Flow;
   metadata?: Record<string, any>;
 }
@@ -37,6 +39,7 @@ interface TabsContextType {
   reorderTabs: (fromIndex: number, toIndex: number) => void;
   updateTabTitle: (tabId: string, newTitle: string) => void;
   updateFlowTabTitle: (flowId: number, newTitle: string) => void;
+  setTabDirtyState: (tabId: string, isDirty: boolean) => void;
 }
 
 const TabsContext = createContext<TabsContextType | null>(null);
@@ -82,6 +85,7 @@ export function TabsProvider({ children }: TabsProviderProps) {
         id: tab.id,
         type: tab.type,
         title: tab.title,
+        isDirty: tab.isDirty,
         flow: tab.flow,
         metadata: tab.metadata,
       }));
@@ -124,6 +128,7 @@ export function TabsProvider({ children }: TabsProviderProps) {
         const restoredTabs: Tab[] = savedTabs.map(savedTab => ({
           ...savedTab,
           content: null, // Will be filled in by TabService when tabs are accessed
+          isDirty: savedTab.isDirty ?? false,
         }));
         
         setTabs(restoredTabs);
@@ -166,12 +171,17 @@ export function TabsProvider({ children }: TabsProviderProps) {
       if (existingTabIndex !== -1) {
         // Tab exists, just update it and focus
         const updatedTabs = [...prevTabs];
-        updatedTabs[existingTabIndex] = { ...tabData, id: tabId };
+        updatedTabs[existingTabIndex] = {
+          ...updatedTabs[existingTabIndex],
+          ...tabData,
+          id: tabId,
+          isDirty: tabData.isDirty ?? updatedTabs[existingTabIndex].isDirty ?? false,
+        };
         setActiveTabId(tabId);
         return updatedTabs;
       } else {
         // Create new tab
-        const newTab: Tab = { ...tabData, id: tabId };
+        const newTab: Tab = { ...tabData, id: tabId, isDirty: tabData.isDirty ?? false };
         setActiveTabId(tabId);
         return [...prevTabs, newTab];
       }
@@ -251,6 +261,15 @@ export function TabsProvider({ children }: TabsProviderProps) {
     });
   }, []);
 
+  // Update a tab's dirty state
+  const setTabDirtyState = useCallback((tabId: string, isDirty: boolean) => {
+    setTabs(prevTabs => prevTabs.map(tab => (
+      tab.id === tabId
+        ? { ...tab, isDirty }
+        : tab
+    )));
+  }, []);
+
   const value = {
     tabs,
     activeTabId,
@@ -263,6 +282,7 @@ export function TabsProvider({ children }: TabsProviderProps) {
     reorderTabs,
     updateTabTitle,
     updateFlowTabTitle,
+    setTabDirtyState,
   };
 
   return (
@@ -270,4 +290,4 @@ export function TabsProvider({ children }: TabsProviderProps) {
       {children}
     </TabsContext.Provider>
   );
-} 
+}
