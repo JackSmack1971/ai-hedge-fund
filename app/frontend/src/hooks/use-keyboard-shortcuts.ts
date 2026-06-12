@@ -205,7 +205,7 @@ function matchesTrigger(event: KeyboardEvent, trigger: KeyboardShortcutTrigger):
     ? (event.ctrlKey || event.metaKey)
     : (!event.ctrlKey && !event.metaKey);
 
-  return keyMatch && shiftMatch && altMatch && modifierMatch;
+  return !!(keyMatch && shiftMatch && altMatch && modifierMatch);
 }
 
 export function buildKeyboardShortcuts(
