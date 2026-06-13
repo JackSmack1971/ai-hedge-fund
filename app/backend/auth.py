@@ -11,11 +11,12 @@ against the ``BACKEND_API_TOKEN`` environment variable:
 """
 
 import logging
-import os
 import secrets
 
 from fastapi import HTTPException, Query, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from app.backend.config import backend_settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +24,14 @@ _bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def _is_auth_disabled() -> bool:
-    return os.environ.get("DISABLE_AUTH", "").strip().lower() in {"1", "true", "yes"}
+    return backend_settings.disable_auth
 
 
 async def verify_backend_token(
     credentials: HTTPAuthorizationCredentials | None = Security(_bearer_scheme),
 ) -> None:
     """FastAPI dependency enforcing the BACKEND_API_TOKEN bearer token."""
-    expected = os.environ.get("BACKEND_API_TOKEN")
+    expected = backend_settings.backend_api_token
 
     if not expected:
         if _is_auth_disabled():
@@ -68,7 +69,7 @@ async def verify_backend_token_or_query(
     Browser-native EventSource clients cannot send Authorization headers, so
     SSE endpoints can use this dependency to accept `?token=...` instead.
     """
-    expected = os.environ.get("BACKEND_API_TOKEN")
+    expected = backend_settings.backend_api_token
 
     if not expected:
         if _is_auth_disabled():

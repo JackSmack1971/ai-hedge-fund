@@ -1,8 +1,9 @@
-import os
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
+
+from app.backend.config import backend_settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,7 +21,7 @@ from app.backend.database.models import Base
 target_metadata = Base.metadata
 
 # Override sqlalchemy.url with DATABASE_URL env var if set (12-factor compliance)
-if db_url := os.environ.get("DATABASE_URL"):
+if db_url := backend_settings.database_url:
     config.set_main_option("sqlalchemy.url", db_url)
 
 # other values from the config, defined by the needs of env.py,

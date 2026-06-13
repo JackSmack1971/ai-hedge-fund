@@ -1,5 +1,4 @@
 import logging
-import os
 import time
 from contextlib import asynccontextmanager
 from collections import defaultdict, deque
@@ -12,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from app.backend.database.connection import engine
 from app.backend.database.models import Base
+from app.backend.config import backend_settings
 from app.backend.encryption import EncryptionKeyMissingError
 from app.backend.repositories.api_key_repository import ApiKeyRepository
 from app.backend.routes import api_router
@@ -32,15 +32,11 @@ except PackageNotFoundError:  # running from source without an installed package
 
 
 def _auto_create_tables_enabled() -> bool:
-    return os.environ.get("AUTO_CREATE_TABLES", "false").strip().lower() in {"1", "true", "yes"}
+    return backend_settings.auto_create_tables
 
 
 def _hedge_fund_run_rate_limit() -> int:
-    raw_value = os.environ.get("HEDGE_FUND_RUN_RATE_LIMIT_PER_MINUTE", "5").strip()
-    try:
-        return max(1, int(raw_value))
-    except ValueError:
-        return 5
+    return backend_settings.hedge_fund_run_rate_limit_per_minute
 
 
 async def _log_ollama_status() -> None:
@@ -136,8 +132,7 @@ async def rate_limit_hedge_fund_run(request: Request, call_next):
     return await call_next(request)
 
 # Configure CORS — override via CORS_ORIGINS env var (comma-separated) for non-local deployments
-_default_origins = "http://localhost:5173,http://127.0.0.1:5173"
-_cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", _default_origins).split(",") if o.strip()]
+_cors_origins = backend_settings.get_cors_origins()
 
 app.add_middleware(
     CORSMiddleware,

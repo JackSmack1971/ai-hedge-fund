@@ -1,8 +1,9 @@
-import os
 from pathlib import Path
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
+
+from app.backend.config import backend_settings
 
 # Get the backend directory path
 BACKEND_DIR = Path(__file__).parent.parent
@@ -10,7 +11,7 @@ DATABASE_PATH = BACKEND_DIR / "hedge_fund.db"
 
 # Database configuration — read from env for 12-factor compliance; fall back to local SQLite
 _default_db_url = f"sqlite:///{DATABASE_PATH}"
-DATABASE_URL = os.environ.get("DATABASE_URL", _default_db_url)
+DATABASE_URL = backend_settings.database_url or _default_db_url
 
 _is_sqlite = DATABASE_URL.startswith("sqlite")
 _connect_args = {"check_same_thread": False, "timeout": 30} if _is_sqlite else {}

@@ -21,11 +21,12 @@ If the variable is unset, storing or decrypting keys fails closed with
 import base64
 import binascii
 import hashlib
-import os
 from functools import lru_cache
 from typing import Optional
 
 from cryptography.fernet import Fernet, InvalidToken
+
+from app.backend.config import backend_settings
 
 LEGACY_CIPHERTEXT_PREFIX = "fernet:"
 CIPHERTEXT_PREFIX = "fernet2:"
@@ -42,7 +43,7 @@ class DecryptionError(RuntimeError):
 
 
 def _get_raw_key() -> str:
-    raw = os.environ.get("DATABASE_ENCRYPTION_KEY")
+    raw = backend_settings.database_encryption_key
     if not raw:
         raise EncryptionKeyMissingError(
             "DATABASE_ENCRYPTION_KEY is not set; refusing to store or read API keys without encryption. "

@@ -1,8 +1,8 @@
-import os
-
 from celery import Celery
 
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+from app.backend.config import backend_settings
+
+REDIS_URL = backend_settings.redis_url
 
 celery_app = Celery("ai_hedge_fund", broker=REDIS_URL, backend=REDIS_URL)
 celery_app.conf.task_serializer = "json"
