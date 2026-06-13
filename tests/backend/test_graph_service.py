@@ -67,6 +67,9 @@ class TestCreateGraphTerminalEdges:
 
 @pytest.mark.asyncio
 async def test_run_graph_async_uses_dedicated_executor():
+    import sys
+    import app.backend.services.graph as graph_module
+
     class DummyLoop:
         def __init__(self):
             self.executor = None
@@ -79,10 +82,20 @@ async def test_run_graph_async_uses_dedicated_executor():
 
     dummy_loop = DummyLoop()
 
+    # DummyContext.run calls func(*args) directly, bypassing contextvars machinery
+    # and module-reload side-effects so the patch on run_graph is always visible.
+    class DummyContext:
+        def run(self, func, *args, **kwargs):
+            return func(*args, **kwargs)
+
     with patch("app.backend.services.graph.asyncio.get_running_loop", return_value=dummy_loop):
-        with patch("app.backend.services.graph.run_graph", return_value={"ok": True}) as mock_run_graph:
-            result = await run_graph_async("graph", {}, [], "2024-01-01", "2024-01-02", "model", "provider")
+        with patch("app.backend.services.graph.copy_context", return_value=DummyContext()):
+            with patch("app.backend.services.graph.run_graph", return_value={"ok": True}) as mock_run_graph:
+                # Re-fetch run_graph_async from the live module so that if the module
+                # was reloaded by a previous test we still call the current version.
+                live_run_graph_async = sys.modules["app.backend.services.graph"].run_graph_async
+                result = await live_run_graph_async("graph", {}, [], "2024-01-01", "2024-01-02", "model", "provider")
 
     assert result == {"ok": True}
-    assert dummy_loop.executor is GRAPH_EXECUTOR
+    assert dummy_loop.executor is graph_module.GRAPH_EXECUTOR
     mock_run_graph.assert_called_once()
