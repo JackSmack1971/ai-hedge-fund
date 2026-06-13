@@ -91,9 +91,9 @@ def _make_api_request(
             request_kwargs["params"] = params
 
         if method.upper() == "POST":
-            response = requests.post(url, json=json_data, **request_kwargs)
+            response = requests.post(url, json=json_data, **request_kwargs)  # nosec B113
         else:
-            response = requests.get(url, **request_kwargs)
+            response = requests.get(url, **request_kwargs)  # nosec B113
 
         if response.status_code == 429 and attempt < max_retries:
             # Honour Retry-After header when present; otherwise full-jitter exponential backoff
