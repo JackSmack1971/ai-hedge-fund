@@ -40,6 +40,9 @@ function LayoutContent() {
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(280);
   const [rightSidebarWidth, setRightSidebarWidth] = useState(280);
   const [bottomPanelHeight, setBottomPanelHeight] = useState(300);
+  const [liveMessage, setLiveMessage] = useState('');
+  const announcementVersionRef = useRef(0);
+  const currentConnection = useFlowConnectionState(currentFlowId?.toString() ?? null);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -60,23 +63,23 @@ function LayoutContent() {
     openTab(tabData);
   };
 
-  useEffect(() => {
-    const announcement = currentConnection?.announcement;
-    const announcementVersion = currentConnection?.announcementVersion ?? 0;
+  const connectionAnnouncement = currentConnection?.announcement;
+  const connectionAnnouncementVersion = currentConnection?.announcementVersion ?? 0;
 
-    if (!announcement || announcementVersion === announcementVersionRef.current) {
+  useEffect(() => {
+    if (!connectionAnnouncement || connectionAnnouncementVersion === announcementVersionRef.current) {
       return;
     }
 
-    announcementVersionRef.current = announcementVersion;
+    announcementVersionRef.current = connectionAnnouncementVersion;
     setLiveMessage('');
 
     const timeoutId = window.setTimeout(() => {
-      setLiveMessage(announcement);
+      setLiveMessage(connectionAnnouncement);
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [currentConnection?.announcement, currentConnection?.announcementVersion]);
+  }, [connectionAnnouncement, connectionAnnouncementVersion]);
 
   // Add keyboard shortcuts for toggling sidebars and fit view
   useLayoutKeyboardShortcuts(
