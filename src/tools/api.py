@@ -86,14 +86,10 @@ def _make_api_request(
         Exception: If the request fails with a non-429 error
     """
     for attempt in range(max_retries + 1):  # +1 for initial attempt
-        request_kwargs = {"headers": headers, "timeout": _REQUEST_TIMEOUT}
-        if params is not None:
-            request_kwargs["params"] = params
-
         if method.upper() == "POST":
-            response = requests.post(url, json=json_data, **request_kwargs)  # nosec B113
+            response = requests.post(url, headers=headers, json=json_data, timeout=_REQUEST_TIMEOUT)  # nosec B113
         else:
-            response = requests.get(url, **request_kwargs)  # nosec B113
+            response = requests.get(url, headers=headers, params=params, timeout=_REQUEST_TIMEOUT)  # nosec B113
 
         if response.status_code == 429 and attempt < max_retries:
             # Honour Retry-After header when present; otherwise full-jitter exponential backoff
@@ -191,16 +187,11 @@ def get_financial_metrics(
     api_key: str = None,
 ) -> list[FinancialMetrics]:
     """Fetch financial metrics from cache or API."""
-    # Normalize to the maximum cache granularity used by current callers so
-    # different per-agent limits collapse onto a single upstream fetch.
-    cache_limit = max(limit, 12)
-    cache_key = f"{ticker}_{period}_{end_date}_{cache_limit}"
+    cache_key = f"{ticker}_{period}_{end_date}_{limit}"
 
-    # Check cache first - exact match after normalization
     if cached_data := _cache.get_financial_metrics(cache_key):
         return [FinancialMetrics(**metric) for metric in cached_data][:limit]
 
-    # If not in cache, fetch from API
     headers = {}
     financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
     if financial_api_key:
@@ -210,7 +201,7 @@ def get_financial_metrics(
     params = {
         "ticker": ticker,
         "report_period_lte": end_date,
-        "limit": cache_limit,
+        "limit": limit,
         "period": period,
     }
     response = _make_api_request(url, headers, params=params)
@@ -218,7 +209,6 @@ def get_financial_metrics(
         _log_http_error("financial metrics", ticker, response)
         return []
 
-    # Parse response with Pydantic model
     try:
         metrics_response = FinancialMetricsResponse(**response.json())
         financial_metrics = metrics_response.financial_metrics
@@ -229,7 +219,6 @@ def get_financial_metrics(
     if not financial_metrics:
         return []
 
-    # Cache the results as dicts using the normalized cache key
     _cache.set_financial_metrics(cache_key, [m.model_dump() for m in financial_metrics])
     return financial_metrics[:limit]
 
@@ -244,8 +233,7 @@ def search_line_items(
 ) -> list[LineItem]:
     """Fetch line items from cache or API."""
     items_key = "_".join(sorted(line_items))
-    cache_limit = max(limit, 12)
-    cache_key = f"{ticker}_{period}_{end_date}_{cache_limit}_{items_key}"
+    cache_key = f"{ticker}_{period}_{end_date}_{limit}_{items_key}"
     if cached_data := _cache.get_line_items(cache_key):
         return [LineItem(**item) for item in cached_data][:limit]
 
@@ -261,7 +249,7 @@ def search_line_items(
         "line_items": line_items,
         "end_date": end_date,
         "period": period,
-        "limit": cache_limit,
+        "limit": limit,
     }
     response = _make_api_request(url, headers, method="POST", json_data=body)
     if response.status_code != 200:
