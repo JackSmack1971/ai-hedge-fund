@@ -40,7 +40,7 @@ class TestDbSessionReleasedBeforeStreaming:
                 graph_edges=_GRAPH_EDGES,
                 start_date="2024-01-01",
                 end_date="2024-03-31",
-                model_name="gpt-4o",
+                model_name="gpt-4.1",
                 model_provider="OpenAI",
             )
 
@@ -72,7 +72,7 @@ class TestDbSessionReleasedBeforeStreaming:
                 graph_edges=_GRAPH_EDGES,
                 start_date="2024-01-01",
                 end_date="2024-03-31",
-                model_name="gpt-4o",
+                model_name="gpt-4.1",
                 model_provider="OpenAI",
                 initial_capital=100_000.0,
             )
@@ -100,7 +100,7 @@ class TestDbSessionReleasedBeforeStreaming:
                 graph_edges=_GRAPH_EDGES,
                 start_date="2024-01-01",
                 end_date="2024-03-31",
-                model_name="gpt-4o",
+                model_name="gpt-4.1",
                 model_provider="OpenAI",
                 api_keys={"OPENAI_API_KEY": "sk-test"},
             )

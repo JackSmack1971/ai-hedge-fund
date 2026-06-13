@@ -151,7 +151,7 @@ def technical_analyst_agent(state: AgentState, agent_id: str = "technical_analys
     progress.update_status(agent_id, None, "Done")
 
     return {
-        "messages": state["messages"] + [message],
+        "messages": list(state["messages"]) + [message],
         "data": data,
     }
 

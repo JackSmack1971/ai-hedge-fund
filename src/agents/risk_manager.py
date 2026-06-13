@@ -1,5 +1,6 @@
 import json
 import math
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -131,7 +132,7 @@ def risk_management_agent(state: AgentState, agent_id: str = "risk_management_ag
         vol_adjusted_limit_pct = calculate_volatility_adjusted_limit(vol_data.get("annualized_volatility", 0.25))
 
         # Correlation adjustment
-        corr_metrics = {
+        corr_metrics: dict[str, Any] = {
             "avg_correlation_with_active": None,
             "max_correlation_with_active": None,
             "top_correlated_tickers": [],
@@ -233,7 +234,7 @@ def risk_management_agent(state: AgentState, agent_id: str = "risk_management_ag
     state["data"]["analyst_signals"][agent_id] = risk_analysis
 
     return {
-        "messages": state["messages"] + [message],
+        "messages": list(state["messages"]) + [message],
         "data": data,
     }
 

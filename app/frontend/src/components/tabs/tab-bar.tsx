@@ -153,7 +153,7 @@ export function TabBar({ className }: TabBarProps) {
 
             {/* Tab Icon */}
             <div className={cn(
-              "flex-shrink-0 transition-colors duration-150",
+              "shrink-0 transition-colors duration-150",
               activeTabId === tab.id ? "text-primary" : ""
             )}
             style={{
@@ -172,7 +172,7 @@ export function TabBar({ className }: TabBarProps) {
             {/* Close Button */}
             {tab.isDirty && (
               <span
-                className="ml-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-yellow-500"
+                className="ml-1.5 h-2 w-2 shrink-0 rounded-full bg-yellow-500"
                 title="Unsaved changes"
               />
             )}
@@ -180,7 +180,7 @@ export function TabBar({ className }: TabBarProps) {
               variant="ghost"
               size="sm"
               className={cn(
-                "h-5 w-5 p-0 flex-shrink-0 ml-1 rounded-sm transition-all duration-150",
+                "h-5 w-5 p-0 shrink-0 ml-1 rounded-sm transition-all duration-150",
                 "opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none",
                 activeTabId === tab.id && "opacity-70 hover:opacity-100"
               )}

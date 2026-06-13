@@ -41,19 +41,19 @@ def create_portfolio(
             trade_price = position.trade_price
 
             # Ensure ticker exists in portfolio (it should from tickers list)
-            if ticker in portfolio["positions"]:
+            if ticker in portfolio["positions"]:  # type: ignore[operator]
                 if quantity > 0:
                     # Positive quantity means long position
-                    portfolio["positions"][ticker]["long"] = quantity
-                    portfolio["positions"][ticker]["long_cost_basis"] = trade_price
+                    portfolio["positions"][ticker]["long"] = quantity  # type: ignore[index,operator]
+                    portfolio["positions"][ticker]["long_cost_basis"] = trade_price  # type: ignore[index,operator]
                 elif quantity < 0:
                     # Negative quantity means short position
-                    portfolio["positions"][ticker]["short"] = abs(quantity)
-                    portfolio["positions"][ticker]["short_cost_basis"] = trade_price
+                    portfolio["positions"][ticker]["short"] = abs(quantity)  # type: ignore[index,operator]
+                    portfolio["positions"][ticker]["short_cost_basis"] = trade_price  # type: ignore[index,operator]
                     # Calculate margin used for short position
-                    portfolio["positions"][ticker]["short_margin_used"] = (
+                    portfolio["positions"][ticker]["short_margin_used"] = (  # type: ignore[index,operator]
                         abs(quantity) * trade_price * margin_requirement
                     )
-                    portfolio["margin_used"] += portfolio["positions"][ticker]["short_margin_used"]
+                    portfolio["margin_used"] += portfolio["positions"][ticker]["short_margin_used"]  # type: ignore[index,operator]
 
     return portfolio

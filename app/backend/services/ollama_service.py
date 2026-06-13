@@ -11,7 +11,7 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import AsyncGenerator, Dict, List, Optional
+from typing import AsyncGenerator, Dict, List, Optional, Any
 
 import ollama
 
@@ -33,7 +33,7 @@ class OllamaService:
     # PUBLIC API METHODS
     # =============================================================================
 
-    async def check_ollama_status(self) -> Dict[str, any]:
+    async def check_ollama_status(self) -> Dict[str, Any]:
         """Check Ollama installation and server status."""
         try:
             is_installed = await self._check_installation()
@@ -56,7 +56,7 @@ class OllamaService:
             logger.error(f"Error checking Ollama status: {e}")
             return self._create_error_status(str(e))
 
-    async def start_server(self) -> Dict[str, any]:
+    async def start_server(self) -> Dict[str, Any]:
         """Start the Ollama server."""
         try:
             success = await self._execute_server_start()
@@ -68,7 +68,7 @@ class OllamaService:
             logger.error(f"Error starting Ollama server: {e}")
             return {"success": False, "message": f"Error starting server: {str(e)}"}
 
-    async def stop_server(self) -> Dict[str, any]:
+    async def stop_server(self) -> Dict[str, Any]:
         """Stop the Ollama server."""
         try:
             success = await self._execute_server_stop()
@@ -80,7 +80,7 @@ class OllamaService:
             logger.error(f"Error stopping Ollama server: {e}")
             return {"success": False, "message": f"Error stopping server: {str(e)}"}
 
-    async def download_model(self, model_name: str) -> Dict[str, any]:
+    async def download_model(self, model_name: str) -> Dict[str, Any]:
         """Download an Ollama model."""
         try:
             success = await self._execute_model_download(model_name)
@@ -99,7 +99,7 @@ class OllamaService:
         async for progress_data in self._stream_model_download(model_name):
             yield progress_data
 
-    async def delete_model(self, model_name: str) -> Dict[str, any]:
+    async def delete_model(self, model_name: str) -> Dict[str, Any]:
         """Delete an Ollama model."""
         try:
             success = await self._execute_model_deletion(model_name)
@@ -153,11 +153,11 @@ class OllamaService:
             logger.error(f"Error getting available models for API: {e}")
             return []  # Return empty list on error to not break the API
 
-    def get_download_progress(self, model_name: str) -> Optional[Dict[str, any]]:
+    def get_download_progress(self, model_name: str) -> Optional[Dict[str, Any]]:
         """Get current download progress for a model."""
         return self._download_progress.get(model_name)
 
-    def get_all_download_progress(self) -> Dict[str, Dict[str, any]]:
+    def get_all_download_progress(self) -> Dict[str, Dict[str, Any]]:
         """Get current download progress for all models."""
         return self._download_progress.copy()
 
@@ -179,7 +179,7 @@ class OllamaService:
     # PRIVATE HELPER METHODS
     # =============================================================================
 
-    def _create_error_status(self, error: str) -> Dict[str, any]:
+    def _create_error_status(self, error: str) -> Dict[str, Any]:
         """Create error status response."""
         return {
             "installed": False,
@@ -350,7 +350,7 @@ class OllamaService:
         for pid in pids:
             if pid:
                 try:
-                    os.kill(int(pid), signal.SIGKILL)
+                    os.kill(int(pid), signal.SIGKILL)  # type: ignore[attr-defined]
                 except (ValueError, ProcessLookupError, PermissionError):
                     continue
 
@@ -427,7 +427,7 @@ class OllamaService:
             if model_name in self._download_progress:
                 del self._download_progress[model_name]
 
-    def _process_download_progress(self, progress, model_name: str) -> Optional[Dict[str, any]]:
+    def _process_download_progress(self, progress, model_name: str) -> Optional[Dict[str, Any]]:
         """Process download progress from ollama client."""
         if not hasattr(progress, "status"):
             return None

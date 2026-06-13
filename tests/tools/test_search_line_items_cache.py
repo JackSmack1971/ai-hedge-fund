@@ -155,7 +155,12 @@ class TestSearchLineItemsCache:
     @patch("src.tools.api._cache")
     @patch("src.tools.api.requests.post")
     def test_different_limits_use_different_cache_keys(self, mock_post, mock_cache):
-        """Different limits should use separate cache keys."""
+        """Limits that normalize to different cache_limit values use different keys.
+
+        cache_limit = max(limit, 12), so limit=5 and limit=8 both collapse to 12
+        and share a key.  A limit above 12 (e.g. 20) normalizes to 20 and
+        therefore produces a distinct key.
+        """
         from src.tools.api import search_line_items
 
         mock_cache.get_line_items.return_value = None
@@ -170,7 +175,7 @@ class TestSearchLineItemsCache:
         mock_cache.reset_mock()
         mock_cache.get_line_items.return_value = None
 
-        search_line_items("AAPL", ["revenue"], "2024-12-31", limit=8)
+        search_line_items("AAPL", ["revenue"], "2024-12-31", limit=20)
         second_key = mock_cache.get_line_items.call_args[0][0]
 
         assert first_key != second_key

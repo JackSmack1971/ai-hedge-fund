@@ -157,7 +157,7 @@ def analyze_growth_trends(metrics: list) -> dict:
     fcf_trend = _calculate_trend(fcf_growth)
 
     # Score based on recent growth and trend
-    score = 0
+    score: float = 0
 
     # Revenue
     if rev_growth[0] is not None:
@@ -201,7 +201,7 @@ def analyze_valuation(metrics) -> dict:
     peg_ratio = metrics.peg_ratio
     ps_ratio = metrics.price_to_sales_ratio
 
-    score = 0
+    score: float = 0
 
     # PEG Ratio
     if peg_ratio is not None:
@@ -233,7 +233,7 @@ def analyze_margin_trends(metrics: list) -> dict:
     om_trend = _calculate_trend(operating_margins)
     nm_trend = _calculate_trend(net_margins)
 
-    score = 0
+    score: float = 0
 
     # Gross Margin
     if gross_margins[0] is not None:
@@ -277,7 +277,7 @@ def analyze_insider_conviction(trades: list) -> dict:
     else:
         net_flow_ratio = (buys - sells) / (buys + sells)
 
-    score = 0
+    score: float = 0
     if net_flow_ratio > 0.5:
         score = 1.0
     elif net_flow_ratio > 0.1:

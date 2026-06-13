@@ -7,7 +7,9 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.backend.services.graph import extract_base_agent_key
-from src.llm.models import ModelProvider
+from src.llm.models import AVAILABLE_MODELS, OLLAMA_MODELS, ModelProvider
+
+_ALLOWED_MODEL_NAMES = {model.model_name for model in AVAILABLE_MODELS + OLLAMA_MODELS}
 
 
 class FlowRunStatus(str, Enum):
@@ -93,6 +95,15 @@ class BaseHedgeFundRequest(BaseModel):
             raise ValueError("Each ticker must match ^[A-Z]{1,10}$")
 
         return normalized_tickers
+
+    @field_validator("model_name")
+    @classmethod
+    def validate_model_name(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        if value not in _ALLOWED_MODEL_NAMES:
+            raise ValueError("model_name must match a supported model")
+        return value
 
     def get_agent_ids(self) -> List[str]:
         """Extract agent IDs from graph structure"""

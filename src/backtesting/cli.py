@@ -51,7 +51,7 @@ def main() -> int:
         # Interactive analyst selection (same as legacy backtester)
         choices = questionary.checkbox(
             "Use the Space bar to select/unselect analysts.",
-            choices=[questionary.Choice(display, value=value) for display, value in ANALYST_ORDER],
+            choices=[questionary.Choice(display, value=value) for display, value in ANALYST_ORDER],  # type: ignore[arg-type]
             instruction="\n\nPress 'a' to toggle all.\n\nPress Enter when done to run the hedge fund.",
             validate=lambda x: len(x) > 0 or "You must select at least one analyst.",
             style=questionary.Style(
