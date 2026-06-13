@@ -89,7 +89,7 @@ export function RightSidebar({
       {!isDragging && (
         <div 
           className="absolute top-0 left-0 h-full w-1 cursor-ew-resize transition-all duration-150 z-10"
-          onMouseDown={startResize}
+          onPointerDown={startResize}
         />
       )}
     </div>
