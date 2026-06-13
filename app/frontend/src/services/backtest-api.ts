@@ -2,6 +2,7 @@
 import { NodeStatus, useNodeContext } from '@/contexts/node-context';
 import { extractBaseAgentKey } from '@/data/node-mappings';
 import { flowConnectionManager } from '@/hooks/use-flow-connection';
+import { debugLog } from '@/lib/debug';
 import { backendFetch, backendJsonHeaders } from '@/services/http';
 import {
   buildActionableHttpErrorMessage,
@@ -102,7 +103,7 @@ export const backtestApi = {
                   const eventType = eventTypeMatch[1];
                   const eventData = JSON.parse(dataMatch[1]);
                   
-                  console.log(`Parsed backtest ${eventType} event:`, eventData);
+                  debugLog(`Parsed backtest ${eventType} event:`, eventData);
                   
                   // Process based on event type
                   switch (eventType) {

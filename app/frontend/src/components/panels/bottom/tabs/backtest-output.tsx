@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { debugLog } from '@/lib/debug';
 import { cn } from '@/lib/utils';
 import { MoreHorizontal } from 'lucide-react';
 import { getActionColor } from './output-tab-utils';
@@ -36,8 +37,6 @@ function BacktestProgress({ agentData }: { agentData: Record<string, any> }) {
 // Component for displaying backtest trading table (similar to CLI)
 function BacktestTradingTable({ agentData }: { agentData: Record<string, any> }) {
   const backtestAgent = agentData['backtest'];
-
-  // console.log("backtestAgent", backtestAgent);
   
   if (!backtestAgent || !backtestAgent.backtestResults) {
     return null;
@@ -156,7 +155,7 @@ function BacktestResults({ outputData }: { outputData: any }) {
     return null;
   }
 
-  console.log("outputData", outputData);
+  debugLog('outputData', outputData);
   
   if (!outputData.performance_metrics) {
     return (

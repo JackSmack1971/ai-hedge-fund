@@ -164,3 +164,8 @@ class TestGetModel:
             get_model("gpt-4o", ModelProvider.OPENAI, api_keys={"OPENAI_API_KEY": "key-two"})
 
         assert mock_chat_openai.call_count == 2
+
+    def test_unknown_provider_raises(self):
+        with patch.dict(os.environ, {}, clear=True):
+            with pytest.raises(ValueError, match="Unknown model provider"):
+                get_model("gpt-4o", "DefinitelyNotAProvider", api_keys={})

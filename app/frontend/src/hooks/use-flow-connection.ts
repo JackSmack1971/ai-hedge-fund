@@ -1,3 +1,4 @@
+import { debugLog } from '@/lib/debug';
 import { useNodeContext } from '@/contexts/node-context';
 import { api } from '@/services/api';
 import { backtestApi } from '@/services/backtest-api';
@@ -220,7 +221,7 @@ export function useFlowConnection(flowId: string | null) {
   const stopFlow = useCallback(() => {
     if (!flowId) return;
 
-    console.log(`[stopFlow] Stopping flow ${flowId}`);
+    debugLog(`[stopFlow] Stopping flow ${flowId}`);
     if (cancelResetTimeoutRef.current) {
       clearTimeout(cancelResetTimeoutRef.current);
       cancelResetTimeoutRef.current = null;
@@ -229,13 +230,13 @@ export function useFlowConnection(flowId: string | null) {
     info('Run cancelled', `flow-run-cancelled-${flowId}`);
 
     const connection = flowConnectionManager.getConnection(flowId);
-    console.log(`[stopFlow] Current connection state:`, connection);
+    debugLog(`[stopFlow] Current connection state:`, connection);
     
     if (connection.abortController) {
-      console.log(`[stopFlow] Calling abort controller for flow ${flowId}`);
+      debugLog(`[stopFlow] Calling abort controller for flow ${flowId}`);
       connection.abortController();
     } else {
-      console.log(`[stopFlow] No abort controller found for flow ${flowId}`);
+      debugLog(`[stopFlow] No abort controller found for flow ${flowId}`);
     }
 
     // Reset only node statuses when stopping, preserving all data (backtest results, messages, etc.)
@@ -259,7 +260,7 @@ export function useFlowConnection(flowId: string | null) {
       }
     }, 750);
     
-    console.log(`[stopFlow] Flow ${flowId} stopped and reset to idle`);
+    debugLog(`[stopFlow] Flow ${flowId} stopped and reset to idle`);
   }, [flowId, info, nodeContext]);
 
   // Recover from stale states (called when loading a flow)
@@ -274,7 +275,7 @@ export function useFlowConnection(flowId: string | null) {
       const isStale = Date.now() - connection.lastActivity > 5 * 60 * 1000;
       
         if (isStale) {
-          console.log(`Recovering stale connection for flow ${flowId}`);
+          debugLog(`Recovering stale connection for flow ${flowId}`);
           flowConnectionManager.setConnection(flowId, {
             state: 'idle',
             abortController: null,

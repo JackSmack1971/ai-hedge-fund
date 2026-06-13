@@ -276,6 +276,8 @@ def _build_model(
             api_key=api_key,
             api_version="2024-10-21",
         )
+    else:
+        raise ValueError(f"Unknown model provider: {model_provider}")
 
 
 def _fingerprint_api_keys(api_keys: dict | None) -> tuple[tuple[str, str], ...] | None:

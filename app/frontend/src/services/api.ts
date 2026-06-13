@@ -4,6 +4,7 @@ import { Agent } from '@/data/agents';
 import { LanguageModel } from '@/data/models';
 import { extractBaseAgentKey } from '@/data/node-mappings';
 import { flowConnectionManager } from '@/hooks/use-flow-connection';
+import { debugLog } from '@/lib/debug';
 import { backendFetch, backendJsonHeaders } from '@/services/http';
 import {
   buildActionableHttpErrorMessage,
@@ -74,7 +75,7 @@ export const api = {
       }
 
       const result = await response.json();
-      console.log(result.message);
+      debugLog(result.message);
     } catch (error) {
       console.error('Failed to save JSON file:', error);
       throw error;
@@ -177,7 +178,7 @@ export const api = {
                   const eventType = eventTypeMatch[1];
                   const eventData = JSON.parse(dataMatch[1]);
                   
-                  console.log(`Parsed ${eventType} event:`, eventData);
+                  debugLog(`Parsed ${eventType} event:`, eventData);
                   
                   // Process based on event type
                   switch (eventType) {

@@ -1,4 +1,4 @@
-import json
+from typing import Any
 
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
@@ -20,6 +20,7 @@ from src.tools.api import get_prices, prices_to_df
 from src.config import src_settings
 from src.utils.analysts import get_analyst_nodes
 from src.utils.display import print_trading_output
+from src.utils.parsing import parse_hedge_fund_response
 from src.utils.progress import progress
 
 def hybrid_layer_node(state: AgentState) -> dict:
@@ -36,22 +37,6 @@ def hybrid_layer_node(state: AgentState) -> dict:
             "messages": list(local_state["messages"]) + list(partial.get("messages", [])),
         }
     return result
-
-
-def parse_hedge_fund_response(response):
-    """Parses a JSON string and returns a dictionary."""
-    try:
-        return json.loads(response)
-    except json.JSONDecodeError as e:
-        print(f"JSON decoding error: {e}\nResponse: {repr(response)}")
-        return None
-    except TypeError as e:
-        print(f"Invalid response type (expected string, got {type(response).__name__}): {e}")
-        return None
-    except Exception as e:
-        print(f"Unexpected error while parsing response: {e}\nResponse: {repr(response)}")
-        return None
-
 
 ##### Run the Hedge Fund #####
 def run_hedge_fund(

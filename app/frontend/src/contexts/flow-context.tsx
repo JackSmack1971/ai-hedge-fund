@@ -6,6 +6,7 @@ import { flowService } from '@/services/flow-service';
 import { Flow } from '@/types/flow';
 import { MarkerType, ReactFlowInstance, useReactFlow, XYPosition } from '@xyflow/react';
 import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
+import { debugLog } from '@/lib/debug';
 
 interface FlowContextType {
   addComponentToFlow: (componentName: string) => Promise<void>;
@@ -181,7 +182,7 @@ export function FlowProvider({ children }: FlowProviderProps) {
         const connection = flowConnectionManager.getConnection(flow.id.toString());
         if (connection.state === 'idle') {
           // No active connection, so any IN_PROGRESS states are stale and should be reset
-          console.log(`Flow ${flow.id} loaded - checking for stale connection states`);
+          debugLog(`Flow ${flow.id} loaded - checking for stale connection states`);
         }
       }, 100);
     } catch (error) {
@@ -209,7 +210,7 @@ export function FlowProvider({ children }: FlowProviderProps) {
 
       // Clear any active connections when creating a new flow
       // Note: We don't have a current flow ID to clear, so this is mainly cleanup
-      console.log('Created new flow - any previous connections should be cleaned up');
+      debugLog('Created new flow - any previous connections should be cleaned up');
     } catch (error) {
       console.error('Failed to create new flow:', error);
     }
@@ -357,4 +358,4 @@ export function FlowProvider({ children }: FlowProviderProps) {
       {children}
     </FlowContext.Provider>
   );
-} 
+}
