@@ -350,7 +350,7 @@ class OllamaService:
         for pid in pids:
             if pid:
                 try:
-                    os.kill(int(pid), signal.SIGKILL)
+                    os.kill(int(pid), signal.SIGKILL)  # type: ignore[attr-defined]
                 except (ValueError, ProcessLookupError, PermissionError):
                     continue
 

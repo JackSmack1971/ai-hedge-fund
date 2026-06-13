@@ -36,10 +36,10 @@ class ApiKeyRepository:
 
         if existing_key:
             # Update existing key
-            existing_key.key_value = encrypt_value(key_value)
-            existing_key.description = description
-            existing_key.is_active = is_active
-            existing_key.updated_at = func.now()
+            existing_key.key_value = encrypt_value(key_value)  # type: ignore[assignment]
+            existing_key.description = description  # type: ignore[assignment]
+            existing_key.is_active = is_active  # type: ignore[assignment]
+            existing_key.updated_at = func.now()  # type: ignore[assignment]
             self.db.commit()
             self.db.refresh(existing_key)
             return existing_key
@@ -85,13 +85,13 @@ class ApiKeyRepository:
             return None
 
         if key_value is not None:
-            api_key.key_value = encrypt_value(key_value)
+            api_key.key_value = encrypt_value(key_value)  # type: ignore[assignment]
         if description is not None:
-            api_key.description = description
+            api_key.description = description  # type: ignore[assignment]
         if is_active is not None:
-            api_key.is_active = is_active
+            api_key.is_active = is_active  # type: ignore[assignment]
 
-        api_key.updated_at = func.now()
+        api_key.updated_at = func.now()  # type: ignore[assignment]
         self.db.commit()
         self.db.refresh(api_key)
         return api_key
@@ -112,8 +112,8 @@ class ApiKeyRepository:
         if not api_key:
             return False
 
-        api_key.is_active = False
-        api_key.updated_at = func.now()
+        api_key.is_active = False  # type: ignore[assignment]
+        api_key.updated_at = func.now()  # type: ignore[assignment]
         self.db.commit()
         return True
 
@@ -123,7 +123,7 @@ class ApiKeyRepository:
         if not api_key:
             return False
 
-        api_key.last_used = func.now()
+        api_key.last_used = func.now()  # type: ignore[assignment]
         self.db.commit()
         return True
 
@@ -131,9 +131,9 @@ class ApiKeyRepository:
         """Migrate legacy plaintext rows to encrypted storage. Returns rows migrated."""
         migrated = 0
         for api_key in self.db.query(ApiKey).all():
-            if not is_encrypted(api_key.key_value):
-                api_key.key_value = encrypt_value(api_key.key_value)
-                api_key.updated_at = func.now()
+            if not is_encrypted(api_key.key_value):  # type: ignore[arg-type,assignment]
+                api_key.key_value = encrypt_value(api_key.key_value)  # type: ignore[arg-type,assignment]
+                api_key.updated_at = func.now()  # type: ignore[assignment]
                 migrated += 1
         if migrated:
             self.db.commit()

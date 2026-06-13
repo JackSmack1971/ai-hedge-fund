@@ -91,8 +91,8 @@ def meta_labeler_agent(state: AgentState, agent_id: str = "meta_labeler_agent"):
             ticker=ticker,
             allow_trade=allow_trade,
             size_multiplier=size_multiplier,
-            label=label,
-            reasoning=result.reasoning,
+            label=label,  # type: ignore[arg-type,attr-defined]
+            reasoning=result.reasoning,  # type: ignore[attr-defined]
         ).model_dump()
 
         progress.update_status(agent_id, ticker, f"Label: {label} (size: {size_multiplier:.2f})")

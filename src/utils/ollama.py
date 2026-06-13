@@ -304,7 +304,7 @@ def download_model(model_name: str) -> bool:
                 if percentage is not None:
                     # Only update if there's a significant change (avoid flickering)
                     if abs(percentage - last_percentage) >= 1 or (current_phase and current_phase != last_phase):
-                        last_percentage = percentage
+                        last_percentage = percentage  # type: ignore[assignment]
                         if current_phase:
                             last_phase = current_phase
 

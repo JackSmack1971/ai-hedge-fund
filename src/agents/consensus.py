@@ -101,12 +101,12 @@ def consensus_agent(state: AgentState, agent_id: str = "consensus_agent"):
             state=state,
         )
         consensus_output[ticker] = ConsensusReport(
-            dominant_stance=dominant_stance,
+            dominant_stance=dominant_stance,  # type: ignore[arg-type,attr-defined]
             dominant_count=dominant_count,
             minority_stances=minority_stances,
             consensus_confidence=consensus_confidence,
-            unresolved_conflicts=result.unresolved_conflicts,
-            summary=result.summary,
+            unresolved_conflicts=result.unresolved_conflicts,  # type: ignore[attr-defined]
+            summary=result.summary,  # type: ignore[attr-defined]
         ).model_dump()
 
         progress.update_status(agent_id, ticker, f"Consensus: {dominant_stance} ({dominant_count}/{total})")

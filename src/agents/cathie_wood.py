@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 import json
 
 from langchain_core.messages import HumanMessage
@@ -393,7 +393,7 @@ def analyze_cathie_wood_valuation(financial_line_items: list, market_cap: float)
     for year in range(1, projection_years + 1):
         future_fcf = fcf * (1 + growth_rate) ** year
         pv = future_fcf / ((1 + discount_rate) ** year)
-        present_value += pv
+        present_value += pv  # type: ignore[assignment]
 
     # Terminal Value
     terminal_value = (fcf * (1 + growth_rate) ** projection_years * terminal_multiple) / (
@@ -487,13 +487,13 @@ def generate_cathie_wood_output(
     def create_default_cathie_wood_signal():
         return CathieWoodSignal(signal="neutral", confidence=0.0, reasoning="Error in analysis, defaulting to neutral")
 
-    return call_llm(
+    return cast(CathieWoodSignal, call_llm(
         prompt=prompt,
         pydantic_model=CathieWoodSignal,
         agent_name=agent_id,
         state=state,
         default_factory=create_default_cathie_wood_signal,
-    )
+    ))
 
 
 # source: https://ark-invest.com

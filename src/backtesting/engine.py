@@ -180,7 +180,7 @@ class BacktestEngine:
                 executed_trades=executed_trades,
                 current_prices=current_prices,
                 portfolio=self._portfolio,
-                performance_metrics=self._performance_metrics,
+                performance_metrics=self._performance_metrics,  # type: ignore[arg-type]
                 total_value=total_value,
                 benchmark_return_pct=self._benchmark.get_return_pct("SPY", self._start_date, current_date_str),
             )

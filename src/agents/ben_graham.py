@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 import json
 import math
 
@@ -377,10 +377,10 @@ def generate_graham_output(
             signal="neutral", confidence=0.0, reasoning="Error in generating analysis; defaulting to neutral."
         )
 
-    return call_llm(
+    return cast(BenGrahamSignal, call_llm(
         prompt=prompt,
         pydantic_model=BenGrahamSignal,
         agent_name=agent_id,
         state=state,
         default_factory=create_default_ben_graham_signal,
-    )
+    ))

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 import json
 
 from langchain_core.messages import HumanMessage
@@ -378,10 +378,10 @@ def generate_pabrai_output(
             signal="neutral", confidence=0.0, reasoning="Error in analysis, defaulting to neutral"
         )
 
-    return call_llm(
+    return cast(MohnishPabraiSignal, call_llm(
         prompt=prompt,
         state=state,
         pydantic_model=MohnishPabraiSignal,
         agent_name=agent_id,
         default_factory=create_default_pabrai_signal,
-    )
+    ))

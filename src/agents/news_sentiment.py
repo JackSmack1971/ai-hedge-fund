@@ -108,8 +108,8 @@ def news_sentiment_agent(state: AgentState, agent_id: str = "news_sentiment_agen
                     prompt = _build_prompt(ticker, news.title)
                     response = call_llm(prompt, Sentiment, agent_name=agent_id, state=state)
                     if response:
-                        news.sentiment = response.sentiment.lower()
-                        sentiment_confidences[id(news)] = response.confidence
+                        news.sentiment = response.sentiment.lower()  # type: ignore[attr-defined]
+                        sentiment_confidences[id(news)] = response.confidence  # type: ignore[attr-defined]
                     else:
                         news.sentiment = "neutral"
                         sentiment_confidences[id(news)] = 0

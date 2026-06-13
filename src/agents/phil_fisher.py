@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 import json
 import statistics
 
@@ -594,10 +594,10 @@ def generate_fisher_output(
     def create_default_signal():
         return PhilFisherSignal(signal="neutral", confidence=0.0, reasoning="Error in analysis, defaulting to neutral")
 
-    return call_llm(
+    return cast(PhilFisherSignal, call_llm(
         prompt=prompt,
         pydantic_model=PhilFisherSignal,
         state=state,
         agent_name=agent_id,
         default_factory=create_default_signal,
-    )
+    ))

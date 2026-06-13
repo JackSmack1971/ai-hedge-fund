@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 import json
 import statistics
 
@@ -595,10 +595,10 @@ def generate_druckenmiller_output(
             signal="neutral", confidence=0.0, reasoning="Error in analysis, defaulting to neutral"
         )
 
-    return call_llm(
+    return cast(StanleyDruckenmillerSignal, call_llm(
         prompt=prompt,
         pydantic_model=StanleyDruckenmillerSignal,
         agent_name=agent_id,
         state=state,
         default_factory=create_default_signal,
-    )
+    ))

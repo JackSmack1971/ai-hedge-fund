@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 import json
 
 from langchain_core.messages import HumanMessage
@@ -743,10 +743,10 @@ def generate_jhunjhunwala_output(
             signal="neutral", confidence=0.0, reasoning="Error in analysis, defaulting to neutral"
         )
 
-    return call_llm(
+    return cast(RakeshJhunjhunwalaSignal, call_llm(
         prompt=prompt,
         pydantic_model=RakeshJhunjhunwalaSignal,
         state=state,
         agent_name=agent_id,
         default_factory=create_default_rakesh_jhunjhunwala_signal,
-    )
+    ))

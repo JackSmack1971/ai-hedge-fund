@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 import json
 
 from langchain_core.messages import HumanMessage
@@ -911,10 +911,10 @@ def generate_munger_output(
     def _default():
         return CharlieMungerSignal(signal="neutral", confidence=confidence_hint, reasoning="Insufficient data")
 
-    return call_llm(
+    return cast(CharlieMungerSignal, call_llm(
         prompt=prompt,
         pydantic_model=CharlieMungerSignal,
         agent_name=agent_id,
         state=state,
         default_factory=_default,
-    )
+    ))

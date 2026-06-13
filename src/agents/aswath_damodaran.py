@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import json
 
@@ -397,10 +397,10 @@ def generate_damodaran_output(
             reasoning="Parsing error; defaulting to neutral",
         )
 
-    return call_llm(
+    return cast(AswathDamodaranSignal, call_llm(
         prompt=prompt,
         pydantic_model=AswathDamodaranSignal,
         agent_name=agent_id,
         state=state,
         default_factory=default_signal,
-    )
+    ))

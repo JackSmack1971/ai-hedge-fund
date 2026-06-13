@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel
+from typing import cast
 from typing_extensions import Literal
 
 from src.graph.state import AgentState, show_agent_reasoning
@@ -370,10 +371,10 @@ def _generate_burry_output(
     def create_default_michael_burry_signal():
         return MichaelBurrySignal(signal="neutral", confidence=0.0, reasoning="Parsing error – defaulting to neutral")
 
-    return call_llm(
+    return cast(MichaelBurrySignal, call_llm(
         prompt=prompt,
         pydantic_model=MichaelBurrySignal,
         agent_name=agent_id,
         state=state,
         default_factory=create_default_michael_burry_signal,
-    )
+    ))

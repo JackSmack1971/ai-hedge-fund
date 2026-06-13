@@ -129,7 +129,7 @@ def psychological_guardrail_agent(state: AgentState, agent_id: str = "psychologi
             calibrated_confidence=calibrated_confidence,
             confidence_multiplier=final_multiplier,
             risk_flags=risk_flags,
-            reasoning=result.reasoning,
+            reasoning=result.reasoning,  # type: ignore[attr-defined]
         ).model_dump()
 
         progress.update_status(
