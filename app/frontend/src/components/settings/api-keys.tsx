@@ -184,7 +184,7 @@ export function ApiKeysSettings() {
               await apiKeysService.deleteApiKey(key);
             } catch {
               // Key might not exist, which is fine
-              console.log(`Key ${key} not found for deletion, which is expected`);
+              debugLog(`Key ${key} not found for deletion, which is expected`);
             }
             setSavedProviders(prev => {
               const next = new Set(prev);
