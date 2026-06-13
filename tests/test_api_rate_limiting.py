@@ -38,8 +38,8 @@ class TestRateLimiting:
         assert mock_get.call_count == 2
         mock_get.assert_has_calls(
             [
-                call(url, headers=headers, params=None, timeout=_REQUEST_TIMEOUT),
-                call(url, headers=headers, params=None, timeout=_REQUEST_TIMEOUT),
+                call(url, headers=headers, timeout=_REQUEST_TIMEOUT),
+                call(url, headers=headers, timeout=_REQUEST_TIMEOUT),
             ]
         )
 

@@ -15,7 +15,7 @@ export function SearchBox({
   return (
     <div className="px-2 py-2 sticky top-0 bg-panel z-10">
       <div className="flex items-center rounded-md bg-sidebar-accent px-3 py-1">
-        <Search className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
+        <Search className="h-4 w-4 text-muted-foreground mr-2 shrink-0" />
         <input 
           type="text" 
           placeholder={placeholder} 

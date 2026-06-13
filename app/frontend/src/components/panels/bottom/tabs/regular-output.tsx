@@ -24,7 +24,7 @@ function ProgressSection({ sortedAgents }: { sortedAgents: [string, any][] }) {
             
             return (
               <div key={agentId} className="flex items-center gap-2">
-                <StatusIcon className={cn("h-4 w-4 flex-shrink-0", color)} />
+                <StatusIcon className={cn("h-4 w-4 shrink-0", color)} />
                 <span className="font-medium">{displayName}</span>
                 {data.ticker && (
                   <span>[{data.ticker}]</span>
