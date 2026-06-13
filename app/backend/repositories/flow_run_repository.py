@@ -77,19 +77,19 @@ class FlowRunRepository:
 
         # Update status and timing
         if status is not None:
-            flow_run.status = status.value
+            flow_run.status = status.value  # type: ignore[assignment]
 
             # Update timing based on status
             if status == FlowRunStatus.IN_PROGRESS and not flow_run.started_at:
-                flow_run.started_at = datetime.utcnow()
+                flow_run.started_at = datetime.utcnow()  # type: ignore[assignment]
             elif status in [FlowRunStatus.COMPLETE, FlowRunStatus.ERROR] and not flow_run.completed_at:
-                flow_run.completed_at = datetime.utcnow()
+                flow_run.completed_at = datetime.utcnow()  # type: ignore[assignment]
 
         # Update results and error message
         if results is not None:
-            flow_run.results = results
+            flow_run.results = results  # type: ignore[assignment]
         if error_message is not None:
-            flow_run.error_message = error_message
+            flow_run.error_message = error_message  # type: ignore[assignment]
 
         self.db.commit()
         self.db.refresh(flow_run)

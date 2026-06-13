@@ -1,11 +1,12 @@
 import json
 import operator
+from typing import Any
 
 from langchain_core.messages import BaseMessage
 from typing_extensions import Annotated, Sequence, TypedDict
 
 
-def merge_dicts(a: dict[str, any], b: dict[str, any]) -> dict[str, any]:
+def merge_dicts(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
     merged = dict(a)
     for key, value in b.items():
         existing = merged.get(key)
@@ -24,8 +25,8 @@ def start(state: "AgentState"):
 # Define agent state
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], operator.add]
-    data: Annotated[dict[str, any], merge_dicts]
-    metadata: Annotated[dict[str, any], merge_dicts]
+    data: Annotated[dict[str, Any], merge_dicts]
+    metadata: Annotated[dict[str, Any], merge_dicts]
 
 
 def show_agent_reasoning(output, agent_name):

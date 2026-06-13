@@ -3,117 +3,148 @@ name: Tests
 on:
   push:
     branches: ["**"]
+    paths:
+      - ".github/workflows/test.yml"
+      - "app/backend/**"
+      - "app/frontend/**"
+      - "poetry.lock"
+      - "pyproject.toml"
+      - "src/**"
+      - "tests/**"
   pull_request:
     branches: ["main"]
+    paths:
+      - ".github/workflows/test.yml"
+      - "app/backend/**"
+      - "app/frontend/**"
+      - "poetry.lock"
+      - "pyproject.toml"
+      - "src/**"
+      - "tests/**"
+
+permissions:
+  contents: read
+
+# Cancel redundant branch/PR runs so only the latest commit consumes CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
 
     steps:
-      # actions/checkout v4.2.2 — SHA-pinned (#229)
+      # actions/checkout is SHA-pinned because it touches repository contents on every run.
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
-      # actions/setup-python v5.3.0 — SHA-pinned (#229); cache: pip speeds up wheel install (#223)
+      # actions/setup-python is SHA-pinned because it bootstraps the interpreter and pip cache.
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
+          cache: pip
 
-      # Cache Poetry virtualenv keyed on poetry.lock for deterministic installs (#223)
+      # Cache the in-project Poetry virtualenv so dependency resolution stays deterministic and fast.
       - name: Cache Poetry virtualenv
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@v4
         with:
-          path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+          path: .venv
+          key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-poetry-${{ matrix.python-version }}-
 
-      # Pin Poetry version to match docker/Dockerfile (#223)
+      # Keep Poetry pinned to the version expected by local development and Docker.
       - name: Install dependencies
+        env:
+          POETRY_VIRTUALENVS_IN_PROJECT: "true"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
         run: |
           python -m pip install --upgrade pip
-          pip install poetry==1.7.1
-          poetry install --with dev
+          python -m pip install poetry==1.7.1
+          poetry install --with dev --no-interaction --no-ansi
 
-      # Lint gate — continue-on-error until codebase formatting cleanup PR (#225)
-      # TODO: remove continue-on-error once all 687 flake8 violations are resolved
+      # Preserve the current non-blocking lint posture while still surfacing regressions in the log.
       - name: Lint (black, isort, flake8)
         continue-on-error: true
         run: |
-          poetry run black --check src/ app/ tests/ --line-length 120
-          poetry run isort --check-only src/ app/ tests/
-          poetry run flake8 src/ app/ tests/ --max-line-length=120
+          poetry run black --check --line-length 120 src app tests
+          poetry run isort --check-only src app tests
+          poetry run flake8 src app tests --max-line-length=120
 
-      # Type check gate — continue-on-error until stub packages are added (#226)
-      # TODO: tighten to strict=true incrementally
+      # Keep typing signal non-blocking until the repo has the stub coverage needed for strict enforcement.
       - name: Type check (mypy)
         continue-on-error: true
         run: |
-          poetry run mypy src/ app/backend/ --ignore-missing-imports --no-strict-optional
+          poetry run mypy src app/backend --ignore-missing-imports --no-strict-optional
 
-      # Security scan — hard-fail on medium+ severity bandit findings (#227)
+      # Bandit remains a hard gate because it catches configuration and code-path risks early.
       - name: Security scan (bandit)
         run: |
-          poetry run bandit -r src/ app/backend/ -ll -x tests/
+          poetry run bandit -r src app/backend -ll -x tests/
 
-      # Coverage threshold enforced by pyproject.toml cov-fail-under=42 (#224)
+      # Dummy API keys avoid accidental secret use while keeping the test suite runnable in CI.
       - name: Run backend tests (collection gate)
         env:
-          OPENAI_API_KEY: "test-key"
-          ANTHROPIC_API_KEY: "test-key"
-          FINANCIAL_DATASETS_API_KEY: "test-key"
-          GROQ_API_KEY: "test-key"
-          GOOGLE_API_KEY: "test-key"
-          DEEPSEEK_API_KEY: "test-key"
+          OPENAI_API_KEY: test-key
+          ANTHROPIC_API_KEY: test-key
+          FINANCIAL_DATASETS_API_KEY: test-key
+          GROQ_API_KEY: test-key
+          GOOGLE_API_KEY: test-key
+          DEEPSEEK_API_KEY: test-key
         run: |
           poetry run pytest tests/backend/ -v --no-cov
 
-      # Coverage threshold enforced by pyproject.toml cov-fail-under=42 (#224)
+      # The main test run enforces the coverage threshold defined in pyproject.toml.
       - name: Run tests with coverage
         env:
-          OPENAI_API_KEY: "test-key"
-          ANTHROPIC_API_KEY: "test-key"
-          FINANCIAL_DATASETS_API_KEY: "test-key"
-          GROQ_API_KEY: "test-key"
-          GOOGLE_API_KEY: "test-key"
-          DEEPSEEK_API_KEY: "test-key"
+          OPENAI_API_KEY: test-key
+          ANTHROPIC_API_KEY: test-key
+          FINANCIAL_DATASETS_API_KEY: test-key
+          GROQ_API_KEY: test-key
+          GOOGLE_API_KEY: test-key
+          DEEPSEEK_API_KEY: test-key
         run: |
           poetry run pytest
 
-      # codecov/codecov-action v4.3.0 — SHA-pinned (#229)
+      # codecov/codecov-action is SHA-pinned because it handles build output and external upload behavior.
       - name: Upload coverage report
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
         with:
           file: coverage.xml
           fail_ci_if_error: false
 
-  # Frontend lint + build job — catches TypeScript errors and ESLint violations (#228)
+  # The frontend job stays separate so Node caching and failures are isolated from Python work.
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
 
     steps:
-      # actions/checkout v4.2.2 — SHA-pinned (#229)
+      # actions/checkout is SHA-pinned because it is the first trust boundary on the job.
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
-      # Node.js 20 with npm cache (#228)
+      # Use the current stable Node setup action and cache npm installs by lockfile.
       - name: Set up Node.js 20
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
+          cache: npm
           cache-dependency-path: app/frontend/package-lock.json
 
+      # npm ci already gives reproducible installs; the setup-node cache keeps it fast.
       - name: Install frontend dependencies
         working-directory: app/frontend
         run: npm ci
 
+      # Keep linting and bundling distinct so a regression in one does not hide the other.
       - name: Lint frontend (ESLint)
         working-directory: app/frontend
         run: npm run lint

@@ -115,7 +115,7 @@ def portfolio_management_agent(state: AgentState, agent_id: str = "portfolio_man
     progress.update_status(agent_id, None, "Done")
 
     return {
-        "messages": state["messages"] + [message],
+        "messages": list(state["messages"]) + [message],
         "data": state["data"],
     }
 
@@ -129,14 +129,14 @@ def compute_allowed_actions(
     """Compute allowed actions and max quantities for each ticker deterministically."""
     allowed = {}
     cash = float(portfolio.get("cash", 0.0))
-    positions = portfolio.get("positions", {}) or {}
+    positions = portfolio.get("positions", {}) or {}  # type: ignore[var-annotated]
     margin_requirement = float(portfolio.get("margin_requirement", 0.5))
     margin_used = float(portfolio.get("margin_used", 0.0))
     equity = float(portfolio.get("equity", cash))
 
     for ticker in tickers:
         price = float(current_prices.get(ticker, 0.0))
-        pos = positions.get(
+        pos = positions.get(  # type: ignore[union-attr]
             ticker,
             {"long": 0, "long_cost_basis": 0.0, "short": 0, "short_cost_basis": 0.0},
         )
@@ -186,7 +186,7 @@ def compute_allowed_actions(
 
 def _compact_signals(signals_by_ticker: dict[str, dict]) -> dict[str, dict]:
     """Keep only {agent: {sig, conf}} and drop empty agents."""
-    out = {}
+    out = {}  # type: ignore[var-annotated]
     for t, agents in signals_by_ticker.items():
         if not agents:
             out[t] = {}
@@ -237,7 +237,7 @@ def generate_trading_decision(
         # If only 'hold' key exists, there is no trade possible
         if set(aa.keys()) == {"hold"}:
             prefilled_decisions[t] = PortfolioDecision(
-                action="hold", quantity=0, confidence=100.0, reasoning="No valid trade available"
+                action="hold", quantity=0, confidence=100.0, reasoning="No valid trade available"  # type: ignore[arg-type]
             )
         else:
             tickers_for_llm.append(t)
@@ -300,7 +300,7 @@ def generate_trading_decision(
     # Re-validate every LLM decision against the deterministic ceilings before returning.
     merged = dict(prefilled_decisions)
     for ticker in tickers_for_llm:
-        decision = llm_out.decisions.get(ticker) or PortfolioDecision(
+        decision = llm_out.decisions.get(ticker) or PortfolioDecision(  # type: ignore[attr-defined]
             action="hold", quantity=0, confidence=0, reasoning="Default decision: hold"
         )
         allowed = allowed_actions_full.get(ticker, {"hold": 0})

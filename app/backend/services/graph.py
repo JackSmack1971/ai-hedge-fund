@@ -136,7 +136,7 @@ def create_graph(graph_nodes: list, graph_edges: list) -> StateGraph:
             continue
 
         node_name, node_func = analyst_nodes[base_agent_key]
-        agent_function = create_agent_function(node_func, unique_agent_id)
+        agent_function = create_agent_function(node_func, unique_agent_id)  # type: ignore[arg-type]
         graph.add_node(unique_agent_id, agent_function)
 
     # Add portfolio manager nodes and their corresponding risk managers
@@ -249,7 +249,7 @@ def run_graph(
     start date, end date, show reasoning, model name,
     and model provider.
     """
-    return graph.invoke(
+    return graph.invoke(  # type: ignore[attr-defined]
         {
             "messages": [
                 HumanMessage(

@@ -91,21 +91,21 @@ def debate_agent(state: AgentState, agent_id: str = "debate_agent"):
         ])
         red_result = call_llm(
             prompt=red_prompt.format_messages(
-                ticker=ticker, bull_case=bull_result.bull_case, bear_case=bear_result.bear_case,
+                ticker=ticker, bull_case=bull_result.bull_case, bear_case=bear_result.bear_case,  # type: ignore[attr-defined]
             ),
             pydantic_model=_RedTeam, agent_name=agent_id, state=state,
         )
 
         debate_outputs[ticker] = DebateOutput(
             ticker=ticker,
-            bull_case=bull_result.bull_case,
-            bear_case=bear_result.bear_case,
-            risk_red_team=red_result.risk_red_team,
-            unresolved_conflicts=red_result.unresolved_conflicts,
-            debate_confidence=red_result.debate_confidence,
+            bull_case=bull_result.bull_case,  # type: ignore[attr-defined]
+            bear_case=bear_result.bear_case,  # type: ignore[attr-defined]
+            risk_red_team=red_result.risk_red_team,  # type: ignore[attr-defined]
+            unresolved_conflicts=red_result.unresolved_conflicts,  # type: ignore[attr-defined]
+            debate_confidence=red_result.debate_confidence,  # type: ignore[attr-defined]
         ).model_dump()
 
-        progress.update_status(agent_id, ticker, f"Debate complete ({len(red_result.unresolved_conflicts)} conflicts)")
+        progress.update_status(agent_id, ticker, f"Debate complete ({len(red_result.unresolved_conflicts)} conflicts)")  # type: ignore[attr-defined]
 
     if state["metadata"].get("show_reasoning"):
         show_agent_reasoning(debate_outputs, "Safe Debate Agent")

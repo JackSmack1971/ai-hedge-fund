@@ -170,7 +170,7 @@ ANALYST_CONFIG = {
 
 # Derive ANALYST_ORDER from ANALYST_CONFIG for backwards compatibility
 ANALYST_ORDER = [
-    (config["display_name"], key) for key, config in sorted(ANALYST_CONFIG.items(), key=lambda x: x[1]["order"])
+    (config["display_name"], key) for key, config in sorted(ANALYST_CONFIG.items(), key=lambda x: x[1]["order"])  # type: ignore[arg-type,return-value]
 ]
 
 

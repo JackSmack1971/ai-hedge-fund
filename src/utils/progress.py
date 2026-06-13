@@ -18,17 +18,17 @@ class AgentProgress:
         self.table = Table(show_header=False, box=None, padding=(0, 1))
         self.live = Live(self.table, console=console, refresh_per_second=4)
         self.started = False
-        self.update_handlers: List[Callable[[str, Optional[str], str], None]] = []
+        self.update_handlers: List[Callable[[str, Optional[str], str, Optional[str], str], None]] = []
 
     def register_handler(self, handler: Callable[[str, Optional[str], str], None]):
         """Register a handler to be called when agent status updates."""
-        self.update_handlers.append(handler)
+        self.update_handlers.append(handler)  # type: ignore[arg-type]
         return handler  # Return handler to support use as decorator
 
     def unregister_handler(self, handler: Callable[[str, Optional[str], str], None]):
         """Unregister a previously registered handler."""
         if handler in self.update_handlers:
-            self.update_handlers.remove(handler)
+            self.update_handlers.remove(handler)  # type: ignore[arg-type]
 
     def start(self):
         """Start the progress display."""

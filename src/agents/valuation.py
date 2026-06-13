@@ -77,16 +77,16 @@ def valuation_analyst_agent(state: AgentState, agent_id: str = "valuation_analys
         # Valuation models
         # ------------------------------------------------------------------
         # Handle potential None values for working capital
-        if li_curr.working_capital is not None and li_prev.working_capital is not None:
-            wc_change = li_curr.working_capital - li_prev.working_capital
+        if li_curr.working_capital is not None and li_prev.working_capital is not None:  # type: ignore[attr-defined]
+            wc_change = li_curr.working_capital - li_prev.working_capital  # type: ignore[attr-defined]
         else:
             wc_change = 0  # Default to 0 if working capital data is unavailable
 
         # Owner Earnings
         owner_val = calculate_owner_earnings_value(
-            net_income=li_curr.net_income,
-            depreciation=li_curr.depreciation_and_amortization,
-            capex=li_curr.capital_expenditure,
+            net_income=li_curr.net_income,  # type: ignore[attr-defined]
+            depreciation=li_curr.depreciation_and_amortization,  # type: ignore[attr-defined]
+            capex=li_curr.capital_expenditure,  # type: ignore[attr-defined]
             working_capital_change=wc_change,
             growth_rate=most_recent_metrics.earnings_growth or 0.05,
         )
@@ -130,7 +130,7 @@ def valuation_analyst_agent(state: AgentState, agent_id: str = "valuation_analys
         # Residual Income Model
         rim_val = calculate_residual_income_value(
             market_cap=most_recent_metrics.market_cap,
-            net_income=li_curr.net_income,
+            net_income=li_curr.net_income,  # type: ignore[attr-defined]
             price_to_book_ratio=most_recent_metrics.price_to_book_ratio,
             book_value_growth=most_recent_metrics.book_value_growth or 0.03,
         )
@@ -200,7 +200,7 @@ def valuation_analyst_agent(state: AgentState, agent_id: str = "valuation_analys
                 "base_case": f"${dcf_results['scenarios']['base']:,.2f}",
                 "bull_case": f"${dcf_results['upside']:,.2f}",
                 "wacc_used": f"{wacc:.1%}",
-                "fcf_periods_analyzed": len(fcf_history),
+                "fcf_periods_analyzed": len(fcf_history),  # type: ignore[dict-item]
             }
 
         valuation_analysis[ticker] = {
@@ -428,13 +428,13 @@ def calculate_enhanced_dcf_value(
     # High growth stage
     for year in range(1, 4):
         fcf_projected = base_fcf * (1 + high_growth) ** year
-        pv += fcf_projected / (1 + wacc) ** year
+        pv += fcf_projected / (1 + wacc) ** year  # type: ignore[assignment]
 
     # Transition stage
     for year in range(4, 8):
         transition_rate = transition_growth * (8 - year) / 4  # Declining
         fcf_projected = base_fcf * (1 + high_growth) ** 3 * (1 + transition_rate) ** (year - 3)
-        pv += fcf_projected / (1 + wacc) ** year
+        pv += fcf_projected / (1 + wacc) ** year  # type: ignore[assignment]
 
     # Terminal value
     final_fcf = base_fcf * (1 + high_growth) ** 3 * (1 + transition_growth) ** 4

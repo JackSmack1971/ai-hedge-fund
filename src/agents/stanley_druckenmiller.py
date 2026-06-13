@@ -1,3 +1,4 @@
+from typing import Any, cast
 import json
 import statistics
 
@@ -531,7 +532,7 @@ def analyze_druckenmiller_valuation(financial_line_items: list, market_cap: floa
 
 def generate_druckenmiller_output(
     ticker: str,
-    analysis_data: dict[str, any],
+    analysis_data: dict[str, Any],
     state: AgentState,
     agent_id: str,
 ) -> StanleyDruckenmillerSignal:
@@ -594,10 +595,10 @@ def generate_druckenmiller_output(
             signal="neutral", confidence=0.0, reasoning="Error in analysis, defaulting to neutral"
         )
 
-    return call_llm(
+    return cast(StanleyDruckenmillerSignal, call_llm(
         prompt=prompt,
         pydantic_model=StanleyDruckenmillerSignal,
         agent_name=agent_id,
         state=state,
         default_factory=create_default_signal,
-    )
+    ))

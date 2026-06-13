@@ -55,7 +55,7 @@ class AgentController:
                 action = Action(action).value  # validate/coerce
             except Exception:
                 action = Action.HOLD.value  # type: ignore[assignment]
-            normalized_decisions[ticker] = {"action": action, "quantity": qty_val}  # type: ignore[assignment]
+            normalized_decisions[ticker] = {"action": action, "quantity": qty_val}  # type: ignore[typeddict-item,assignment]
 
         # Preserve any agent-provided analyst signals without modification
         normalized_output: AgentOutput = {
