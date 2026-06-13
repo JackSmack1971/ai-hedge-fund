@@ -2,6 +2,7 @@
 import { NodeStatus, useNodeContext } from '@/contexts/node-context';
 import { extractBaseAgentKey } from '@/data/node-mappings';
 import { flowConnectionManager } from '@/hooks/use-flow-connection';
+import { debugLog } from '@/lib/debug';
 import { backendFetch, backendJsonHeaders } from '@/services/http';
 import {
   buildActionableHttpErrorMessage,
