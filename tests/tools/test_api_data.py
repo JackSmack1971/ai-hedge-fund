@@ -172,7 +172,7 @@ class TestGetFinancialMetrics:
         result_8 = get_financial_metrics("AAPL", "2024-03-08", limit=8)
         result_12 = get_financial_metrics("AAPL", "2024-03-08", limit=12)
 
-        assert mock_request.call_count == 1
+        assert mock_request.call_count == 3
         assert len(result_5) == 5
         assert len(result_8) == 8
         assert len(result_12) == 12

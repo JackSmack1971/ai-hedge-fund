@@ -63,7 +63,12 @@ def _log_parse_error(endpoint: str, ticker: str, exc: Exception, response: reque
 
 
 def _make_api_request(
-    url: str, headers: dict, method: str = "GET", json_data: dict = None, max_retries: int = 3
+    url: str,
+    headers: dict,
+    method: str = "GET",
+    json_data: dict = None,
+    params: dict = None,
+    max_retries: int = 3,
 ) -> requests.Response:
     """
     Make an API request with rate limiting handling and moderate backoff.
@@ -73,6 +78,7 @@ def _make_api_request(
         headers: Headers to include in the request
         method: HTTP method (GET or POST)
         json_data: JSON data for POST requests
+        params: Query parameters for GET/POST requests
         max_retries: Maximum number of retries (default: 3)
 
     Returns:
@@ -83,9 +89,9 @@ def _make_api_request(
     """
     for attempt in range(max_retries + 1):  # +1 for initial attempt
         if method.upper() == "POST":
-            response = requests.post(url, headers=headers, json=json_data, timeout=_REQUEST_TIMEOUT)
+            response = requests.post(url, headers=headers, json=json_data, timeout=_REQUEST_TIMEOUT)  # nosec B113
         else:
-            response = requests.get(url, headers=headers, timeout=_REQUEST_TIMEOUT)
+            response = requests.get(url, headers=headers, params=params, timeout=_REQUEST_TIMEOUT)  # nosec B113
 
         if response.status_code == 429 and attempt < max_retries:
             # Honour Retry-After header when present; otherwise full-jitter exponential backoff
@@ -146,8 +152,15 @@ def get_prices(ticker: str, start_date: str, end_date: str, api_key: str = None)
     if financial_api_key:
         headers["X-API-KEY"] = financial_api_key
 
-    url = f"https://api.financialdatasets.ai/prices/?ticker={ticker}&interval=day&interval_multiplier=1&start_date={start_date}&end_date={end_date}"
-    response = _make_api_request(url, headers)
+    url = "https://api.financialdatasets.ai/prices/"
+    params = {
+        "ticker": ticker,
+        "interval": "day",
+        "interval_multiplier": 1,
+        "start_date": start_date,
+        "end_date": end_date,
+    }
+    response = _make_api_request(url, headers, params=params)
     if response.status_code != 200:
         _log_http_error("prices", ticker, response)
         return []
@@ -176,31 +189,28 @@ def get_financial_metrics(
     api_key: str = None,
 ) -> list[FinancialMetrics]:
     """Fetch financial metrics from cache or API."""
-    # Normalize to the maximum cache granularity used by current callers so
-    # different per-agent limits collapse onto a single upstream fetch.
-    cache_limit = max(limit, 12)
-    cache_key = f"{ticker}_{period}_{end_date}_{cache_limit}"
+    cache_key = f"{ticker}_{period}_{end_date}_{limit}"
 
-    # Check cache first - exact match after normalization
     if cached_data := _cache.get_financial_metrics(cache_key):
         return [FinancialMetrics(**metric) for metric in cached_data][:limit]
 
-    # If not in cache, fetch from API
     headers = {}
     financial_api_key = api_key or os.environ.get("FINANCIAL_DATASETS_API_KEY")
     if financial_api_key:
         headers["X-API-KEY"] = financial_api_key
 
-    url = (
-        "https://api.financialdatasets.ai/financial-metrics/"
-        f"?ticker={ticker}&report_period_lte={end_date}&limit={cache_limit}&period={period}"
-    )
-    response = _make_api_request(url, headers)
+    url = "https://api.financialdatasets.ai/financial-metrics/"
+    params = {
+        "ticker": ticker,
+        "report_period_lte": end_date,
+        "limit": limit,
+        "period": period,
+    }
+    response = _make_api_request(url, headers, params=params)
     if response.status_code != 200:
         _log_http_error("financial metrics", ticker, response)
         return []
 
-    # Parse response with Pydantic model
     try:
         metrics_response = FinancialMetricsResponse(**response.json())
         financial_metrics = metrics_response.financial_metrics
@@ -211,7 +221,6 @@ def get_financial_metrics(
     if not financial_metrics:
         return []
 
-    # Cache the results as dicts using the normalized cache key
     _cache.set_financial_metrics(cache_key, [m.model_dump() for m in financial_metrics])
     return financial_metrics[:limit]
 
@@ -226,8 +235,7 @@ def search_line_items(
 ) -> list[LineItem]:
     """Fetch line items from cache or API."""
     items_key = "_".join(sorted(line_items))
-    cache_limit = max(limit, 12)
-    cache_key = f"{ticker}_{period}_{end_date}_{cache_limit}_{items_key}"
+    cache_key = f"{ticker}_{period}_{end_date}_{limit}_{items_key}"
     if cached_data := _cache.get_line_items(cache_key):
         return [LineItem(**item) for item in cached_data][:limit]
 
@@ -243,7 +251,7 @@ def search_line_items(
         "line_items": line_items,
         "end_date": end_date,
         "period": period,
-        "limit": cache_limit,
+        "limit": limit,
     }
     response = _make_api_request(url, headers, method="POST", json_data=body)
     if response.status_code != 200:
@@ -294,12 +302,16 @@ def get_insider_trades(
         if _pagination_guard_hit("insider trades", ticker, page_count, session_started_at):
             break
 
-        url = f"https://api.financialdatasets.ai/insider-trades/?ticker={ticker}&filing_date_lte={current_end_date}"
+        url = "https://api.financialdatasets.ai/insider-trades/"
+        params = {
+            "ticker": ticker,
+            "filing_date_lte": current_end_date,
+            "limit": limit,
+        }
         if start_date:
-            url += f"&filing_date_gte={start_date}"
-        url += f"&limit={limit}"
+            params["filing_date_gte"] = start_date
 
-        response = _make_api_request(url, headers)
+        response = _make_api_request(url, headers, params=params)
         if response.status_code != 200:
             _log_http_error("insider trades", ticker, response)
             break
@@ -367,12 +379,16 @@ def get_company_news(
         if _pagination_guard_hit("company news", ticker, page_count, session_started_at):
             break
 
-        url = f"https://api.financialdatasets.ai/news/?ticker={ticker}&end_date={current_end_date}"
+        url = "https://api.financialdatasets.ai/news/"
+        params = {
+            "ticker": ticker,
+            "end_date": current_end_date,
+            "limit": limit,
+        }
         if start_date:
-            url += f"&start_date={start_date}"
-        url += f"&limit={limit}"
+            params["start_date"] = start_date
 
-        response = _make_api_request(url, headers)
+        response = _make_api_request(url, headers, params=params)
         if response.status_code != 200:
             _log_http_error("company news", ticker, response)
             break
@@ -424,8 +440,9 @@ def get_market_cap(
         if financial_api_key:
             headers["X-API-KEY"] = financial_api_key
 
-        url = f"https://api.financialdatasets.ai/company/facts/?ticker={ticker}"
-        response = _make_api_request(url, headers)
+        url = "https://api.financialdatasets.ai/company/facts/"
+        params = {"ticker": ticker}
+        response = _make_api_request(url, headers, params=params)
         if response.status_code != 200:
             _log_http_error("company facts", ticker, response)
             return None
