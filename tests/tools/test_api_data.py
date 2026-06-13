@@ -141,7 +141,7 @@ class TestGetFinancialMetrics:
 
     @patch("src.tools.api._make_api_request")
     @patch("src.tools.api._cache", new_callable=Cache)
-    def test_limit_variants_share_cache_key_and_slice_results(self, mock_cache, mock_request):
+    def test_different_limits_produce_separate_api_calls(self, mock_cache, mock_request):
         payload = {
             "financial_metrics": [
                 _financial_metric_payload(f"2024-{month:02d}-31") for month in range(1, 13)
@@ -153,10 +153,27 @@ class TestGetFinancialMetrics:
         result_8 = get_financial_metrics("AAPL", "2024-03-08", limit=8)
         result_12 = get_financial_metrics("AAPL", "2024-03-08", limit=12)
 
-        assert mock_request.call_count == 1
+        assert mock_request.call_count == 3
         assert len(result_5) == 5
         assert len(result_8) == 8
         assert len(result_12) == 12
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_same_limit_reuses_cache(self, mock_cache, mock_request):
+        payload = {
+            "financial_metrics": [
+                _financial_metric_payload(f"2024-{month:02d}-31") for month in range(1, 6)
+            ]
+        }
+        mock_request.return_value = _mock_response(200, payload)
+
+        result_a = get_financial_metrics("AAPL", "2024-03-08", limit=5)
+        result_b = get_financial_metrics("AAPL", "2024-03-08", limit=5)
+
+        assert mock_request.call_count == 1
+        assert len(result_a) == 5
+        assert len(result_b) == 5
 
 
 # ──────────────────────────────────────────────────────────
