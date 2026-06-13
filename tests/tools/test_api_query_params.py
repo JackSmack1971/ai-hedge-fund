@@ -49,7 +49,7 @@ def test_get_financial_metrics_uses_query_params(mock_get, mock_cache):
     assert mock_get.call_args.kwargs["params"] == {
         "ticker": "AAPL&evil=1",
         "report_period_lte": "2024-01-02",
-        "limit": 10,
+        "limit": 12,  # cache_limit = max(default limit=10, 12) to normalise small fetches
         "period": "ttm",
     }
 
