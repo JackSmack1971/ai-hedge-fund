@@ -1,3 +1,4 @@
+from typing import Any, cast
 import json
 import statistics
 
@@ -533,7 +534,7 @@ def analyze_sentiment(news_items: list) -> dict:
 
 def generate_fisher_output(
     ticker: str,
-    analysis_data: dict[str, any],
+    analysis_data: dict[str, Any],
     state: AgentState,
     agent_id: str,
 ) -> PhilFisherSignal:
@@ -593,10 +594,10 @@ def generate_fisher_output(
     def create_default_signal():
         return PhilFisherSignal(signal="neutral", confidence=0.0, reasoning="Error in analysis, defaulting to neutral")
 
-    return call_llm(
+    return cast(PhilFisherSignal, call_llm(
         prompt=prompt,
         pydantic_model=PhilFisherSignal,
         state=state,
         agent_name=agent_id,
         default_factory=create_default_signal,
-    )
+    ))

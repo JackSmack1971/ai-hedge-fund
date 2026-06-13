@@ -87,7 +87,7 @@ def select_analysts(flags: dict | None = None) -> list[str]:
 
     choices = questionary.checkbox(
         "Select your AI analysts.",
-        choices=[questionary.Choice(display, value=value) for display, value in ANALYST_ORDER],
+        choices=[questionary.Choice(display, value=value) for display, value in ANALYST_ORDER],  # type: ignore[arg-type]
         instruction="\n\nInstructions: \n1. Press Space to select/unselect analysts.\n2. Press 'a' to select/unselect all.\n3. Press Enter when done.",
         validate=lambda x: len(x) > 0 or "You must select at least one analyst.",
         style=questionary.Style(

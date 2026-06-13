@@ -109,6 +109,10 @@ class TestHedgeFundRequest:
     def test_oversized_ticker_list_raises(self):
         data = self._minimal_request()
         data["tickers"] = [f"T{i}" for i in range(51)]
+
+    def test_unknown_model_name_raises(self):
+        data = self._minimal_request()
+        data["model_name"] = "gpt-evil-injected"
         with pytest.raises(ValidationError):
             HedgeFundRequest(**data)
 

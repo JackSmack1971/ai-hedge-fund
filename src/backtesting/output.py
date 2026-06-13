@@ -44,7 +44,7 @@ class OutputBuilder:
             short_val = pos["short"] * current_prices[ticker]
             net_position_value = long_val - short_val
 
-            action = decisions.get(ticker, {}).get("action", "hold")
+            action = decisions.get(ticker, {}).get("action", "hold")  # type: ignore[call-overload]
             quantity = executed_trades.get(ticker, 0)
 
             date_rows.append(

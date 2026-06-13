@@ -57,7 +57,7 @@ export function Settings({ className }: SettingsProps) {
     <div className={cn("flex justify-center h-full overflow-hidden bg-panel", className)}>
       <div className="flex w-full max-w-7xl mx-auto">
         {/* Left Navigation Pane */}
-        <div className="w-60 bg-panel flex-shrink-0">
+        <div className="w-60 bg-panel shrink-0">
           <div className="p-4 border-b">
             <h1 className="text-lg font-semibold text-primary">Settings</h1>
           </div>
@@ -76,7 +76,7 @@ export function Settings({ className }: SettingsProps) {
                       : "text-primary hover-item"
                   )}
                 >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <Icon className="h-4 w-4 shrink-0" />
                   <span className="truncate">{item.label}</span>
                 </button>
               );

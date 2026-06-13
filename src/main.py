@@ -1,5 +1,5 @@
-import json
 import os
+from typing import Any
 
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
@@ -20,11 +20,12 @@ from src.schemas.hybrid import RegimeClassification
 from src.tools.api import get_prices, prices_to_df
 from src.utils.analysts import get_analyst_nodes
 from src.utils.display import print_trading_output
+from src.utils.parsing import parse_hedge_fund_response
 from src.utils.progress import progress
 
 def hybrid_layer_node(state: AgentState) -> dict:
     """Composite node: runs all four hybrid agents sequentially with state threading (D-38)."""
-    result = {"messages": [], "data": {}}
+    result: dict[str, Any] = {"messages": [], "data": {}}
     local_state = state
     for agent_fn in [psychological_guardrail_agent, consensus_agent, debate_agent, meta_labeler_agent]:
         partial = agent_fn(local_state)
@@ -33,25 +34,9 @@ def hybrid_layer_node(state: AgentState) -> dict:
         local_state = {
             **local_state,
             "data": {**local_state["data"], **partial.get("data", {})},
-            "messages": local_state["messages"] + list(partial.get("messages", [])),
+            "messages": list(local_state["messages"]) + list(partial.get("messages", [])),
         }
     return result
-
-
-def parse_hedge_fund_response(response):
-    """Parses a JSON string and returns a dictionary."""
-    try:
-        return json.loads(response)
-    except json.JSONDecodeError as e:
-        print(f"JSON decoding error: {e}\nResponse: {repr(response)}")
-        return None
-    except TypeError as e:
-        print(f"Invalid response type (expected string, got {type(response).__name__}): {e}")
-        return None
-    except Exception as e:
-        print(f"Unexpected error while parsing response: {e}\nResponse: {repr(response)}")
-        return None
-
 
 ##### Run the Hedge Fund #####
 def run_hedge_fund(

@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 from src.data.cache import Cache
 from src.data.models import FinancialMetrics, Price
 from src.tools.api import (
+    _make_api_request,
     get_company_news,
     get_financial_metrics,
     get_insider_trades,
@@ -40,6 +41,22 @@ def _financial_metric_payload(report_period: str) -> dict:
         if field_name not in base:
             base[field_name] = None
     return base
+
+
+class TestApiRetryBackoff:
+    @patch("src.tools.api._BACKOFF_WAIT_EVENT.wait", return_value=False)
+    @patch("src.tools.api.requests.get")
+    def test_429_retry_uses_interruptible_event_wait(self, mock_get, mock_wait):
+        first = _mock_response(429, {})
+        first.headers = {"Retry-After": "2"}
+        second = _mock_response(200, {})
+        mock_get.side_effect = [first, second]
+
+        response = _make_api_request("https://example.com", {})
+
+        assert response.status_code == 200
+        assert mock_get.call_count == 2
+        mock_wait.assert_called_once_with(timeout=2.0)
 
 
 # ──────────────────────────────────────────────────────────
@@ -141,7 +158,9 @@ class TestGetFinancialMetrics:
 
     @patch("src.tools.api._make_api_request")
     @patch("src.tools.api._cache", new_callable=Cache)
-    def test_limit_variants_share_cache_key_and_slice_results(self, mock_cache, mock_request):
+    def test_different_limits_produce_separate_api_calls(self, mock_cache, mock_request):
+        # limits 5, 8, 12 all normalize to cache_limit=max(n,12)=12, so only
+        # one upstream fetch is made; results are sliced to the requested limit.
         payload = {
             "financial_metrics": [
                 _financial_metric_payload(f"2024-{month:02d}-31") for month in range(1, 13)
@@ -157,6 +176,23 @@ class TestGetFinancialMetrics:
         assert len(result_5) == 5
         assert len(result_8) == 8
         assert len(result_12) == 12
+
+    @patch("src.tools.api._make_api_request")
+    @patch("src.tools.api._cache", new_callable=Cache)
+    def test_same_limit_reuses_cache(self, mock_cache, mock_request):
+        payload = {
+            "financial_metrics": [
+                _financial_metric_payload(f"2024-{month:02d}-31") for month in range(1, 6)
+            ]
+        }
+        mock_request.return_value = _mock_response(200, payload)
+
+        result_a = get_financial_metrics("AAPL", "2024-03-08", limit=5)
+        result_b = get_financial_metrics("AAPL", "2024-03-08", limit=5)
+
+        assert mock_request.call_count == 1
+        assert len(result_a) == 5
+        assert len(result_b) == 5
 
 
 # ──────────────────────────────────────────────────────────

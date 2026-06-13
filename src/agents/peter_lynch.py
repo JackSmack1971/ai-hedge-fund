@@ -1,3 +1,4 @@
+from typing import Any, cast
 import json
 
 from langchain_core.messages import HumanMessage
@@ -443,7 +444,7 @@ def analyze_insider_activity(insider_trades: list) -> dict:
 
 def generate_lynch_output(
     ticker: str,
-    analysis_data: dict[str, any],
+    analysis_data: dict[str, Any],
     state: AgentState,
     agent_id: str,
 ) -> PeterLynchSignal:
@@ -497,10 +498,10 @@ def generate_lynch_output(
     def create_default_signal():
         return PeterLynchSignal(signal="neutral", confidence=0.0, reasoning="Error in analysis; defaulting to neutral")
 
-    return call_llm(
+    return cast(PeterLynchSignal, call_llm(
         prompt=prompt,
         pydantic_model=PeterLynchSignal,
         agent_name=agent_id,
         state=state,
         default_factory=create_default_signal,
-    )
+    ))

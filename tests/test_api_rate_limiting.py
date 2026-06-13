@@ -24,9 +24,9 @@ def _make_200():
 class TestRateLimiting:
     """Test suite for API rate limiting functionality."""
 
-    @patch("src.tools.api.time.sleep")
+    @patch("src.tools.api._BACKOFF_WAIT_EVENT.wait")
     @patch("src.tools.api.requests.get")
-    def test_handles_single_rate_limit(self, mock_get, mock_sleep):
+    def test_handles_single_rate_limit(self, mock_get, mock_wait):
         """Test that API retries once after a 429 and succeeds."""
         mock_get.side_effect = [_make_429(), _make_200()]
 
@@ -44,13 +44,13 @@ class TestRateLimiting:
         )
 
         # Full-jitter: attempt=0 → uniform(0, min(60, 2^0)=1.0)
-        mock_sleep.assert_called_once()
-        delay = mock_sleep.call_args[0][0]
+        mock_wait.assert_called_once()
+        delay = mock_wait.call_args[1]["timeout"]
         assert 0 <= delay <= 1.0
 
-    @patch("src.tools.api.time.sleep")
+    @patch("src.tools.api._BACKOFF_WAIT_EVENT.wait")
     @patch("src.tools.api.requests.get")
-    def test_handles_multiple_rate_limits(self, mock_get, mock_sleep):
+    def test_handles_multiple_rate_limits(self, mock_get, mock_wait):
         """Test that API retries multiple times after 429s with exponential backoff."""
         mock_get.side_effect = [_make_429(), _make_429(), _make_429(), _make_200()]
 
@@ -60,17 +60,17 @@ class TestRateLimiting:
 
         assert result.status_code == 200
         assert mock_get.call_count == 4
-        assert mock_sleep.call_count == 3
+        assert mock_wait.call_count == 3
 
-        delays = [c[0][0] for c in mock_sleep.call_args_list]
+        delays = [c[1]["timeout"] for c in mock_wait.call_args_list]
         # attempt=0 → cap=1.0, attempt=1 → cap=2.0, attempt=2 → cap=4.0
         assert 0 <= delays[0] <= 1.0
         assert 0 <= delays[1] <= 2.0
         assert 0 <= delays[2] <= 4.0
 
-    @patch("src.tools.api.time.sleep")
+    @patch("src.tools.api._BACKOFF_WAIT_EVENT.wait")
     @patch("src.tools.api.requests.post")
-    def test_handles_post_rate_limiting(self, mock_post, mock_sleep):
+    def test_handles_post_rate_limiting(self, mock_post, mock_wait):
         """Test that POST requests handle rate limiting."""
         mock_post.side_effect = [_make_429(), _make_200()]
 
@@ -88,13 +88,13 @@ class TestRateLimiting:
             ]
         )
 
-        mock_sleep.assert_called_once()
-        delay = mock_sleep.call_args[0][0]
+        mock_wait.assert_called_once()
+        delay = mock_wait.call_args[1]["timeout"]
         assert 0 <= delay <= 1.0
 
-    @patch("src.tools.api.time.sleep")
+    @patch("src.tools.api._BACKOFF_WAIT_EVENT.wait")
     @patch("src.tools.api.requests.get")
-    def test_ignores_other_errors(self, mock_get, mock_sleep):
+    def test_ignores_other_errors(self, mock_get, mock_wait):
         """Test that non-429 errors are returned without retrying."""
         mock_500 = Mock()
         mock_500.status_code = 500
@@ -105,11 +105,11 @@ class TestRateLimiting:
 
         assert result.status_code == 500
         assert mock_get.call_count == 1
-        mock_sleep.assert_not_called()
+        mock_wait.assert_not_called()
 
-    @patch("src.tools.api.time.sleep")
+    @patch("src.tools.api._BACKOFF_WAIT_EVENT.wait")
     @patch("src.tools.api.requests.get")
-    def test_normal_success_requests(self, mock_get, mock_sleep):
+    def test_normal_success_requests(self, mock_get, mock_wait):
         """Test that successful requests return immediately without retry."""
         mock_get.return_value = _make_200()
 
@@ -117,22 +117,22 @@ class TestRateLimiting:
 
         assert result.status_code == 200
         assert mock_get.call_count == 1
-        mock_sleep.assert_not_called()
+        mock_wait.assert_not_called()
 
-    @patch("src.tools.api.time.sleep")
+    @patch("src.tools.api._BACKOFF_WAIT_EVENT.wait")
     @patch("src.tools.api.requests.get")
-    def test_retry_after_header_respected(self, mock_get, mock_sleep):
+    def test_retry_after_header_respected(self, mock_get, mock_wait):
         """Test that Retry-After header overrides jitter calculation."""
         mock_get.side_effect = [_make_429(retry_after=5), _make_200()]
 
         _make_api_request("https://api.financialdatasets.ai/test", {})
 
-        mock_sleep.assert_called_once_with(5.0)
+        mock_wait.assert_called_once_with(timeout=5.0)
 
     @patch("src.tools.api._cache")
-    @patch("src.tools.api.time.sleep")
+    @patch("src.tools.api._BACKOFF_WAIT_EVENT.wait")
     @patch("src.tools.api.requests.get")
-    def test_full_integration(self, mock_get, mock_sleep, mock_cache):
+    def test_full_integration(self, mock_get, mock_wait, mock_cache):
         """Test that get_prices function properly handles rate limiting."""
         mock_cache.get_prices.return_value = None
 
@@ -159,15 +159,15 @@ class TestRateLimiting:
         assert len(result) == 1
         assert result[0].open == 100.0
         assert mock_get.call_count == 2
-        mock_sleep.assert_called_once()
-        delay = mock_sleep.call_args[0][0]
+        mock_wait.assert_called_once()
+        delay = mock_wait.call_args[1]["timeout"]
         assert 0 <= delay <= 1.0
         mock_cache.get_prices.assert_called_once()
         mock_cache.set_prices.assert_called_once()
 
-    @patch("src.tools.api.time.sleep")
+    @patch("src.tools.api._BACKOFF_WAIT_EVENT.wait")
     @patch("src.tools.api.requests.get")
-    def test_max_retries_exceeded(self, mock_get, mock_sleep):
+    def test_max_retries_exceeded(self, mock_get, mock_wait):
         """Test that function stops retrying after max_retries and returns final 429."""
         mock_429 = _make_429()
         mock_429.text = "Too Many Requests"
@@ -177,9 +177,9 @@ class TestRateLimiting:
 
         assert result.status_code == 429
         assert mock_get.call_count == 3  # 1 initial + 2 retries
-        assert mock_sleep.call_count == 2
+        assert mock_wait.call_count == 2
 
-        delays = [c[0][0] for c in mock_sleep.call_args_list]
+        delays = [c[1]["timeout"] for c in mock_wait.call_args_list]
         assert 0 <= delays[0] <= 1.0  # attempt=0 → cap=1
         assert 0 <= delays[1] <= 2.0  # attempt=1 → cap=2
 

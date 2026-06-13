@@ -1,3 +1,4 @@
+from typing import Any, cast
 import json
 
 from langchain_core.messages import HumanMessage
@@ -339,7 +340,7 @@ def analyze_valuation(financial_line_items: list, market_cap: float) -> dict:
     for year in range(1, projection_years + 1):
         future_fcf = fcf * (1 + growth_rate) ** year
         pv = future_fcf / ((1 + discount_rate) ** year)
-        present_value += pv
+        present_value += pv  # type: ignore[assignment]
 
     # Terminal Value
     terminal_value = (fcf * (1 + growth_rate) ** projection_years * terminal_multiple) / (
@@ -372,7 +373,7 @@ def analyze_valuation(financial_line_items: list, market_cap: float) -> dict:
 
 def generate_ackman_output(
     ticker: str,
-    analysis_data: dict[str, any],
+    analysis_data: dict[str, Any],
     state: AgentState,
     agent_id: str,
 ) -> BillAckmanSignal:
@@ -428,10 +429,10 @@ def generate_ackman_output(
     def create_default_bill_ackman_signal():
         return BillAckmanSignal(signal="neutral", confidence=0.0, reasoning="Error in analysis, defaulting to neutral")
 
-    return call_llm(
+    return cast(BillAckmanSignal, call_llm(
         prompt=prompt,
         pydantic_model=BillAckmanSignal,
         agent_name=agent_id,
         state=state,
         default_factory=create_default_bill_ackman_signal,
-    )
+    ))

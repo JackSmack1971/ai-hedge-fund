@@ -2,6 +2,7 @@
 
 import json
 from contextvars import ContextVar
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -28,7 +29,7 @@ def get_request_api_keys() -> dict | None:
 
 
 def call_llm(
-    prompt: any,
+    prompt: Any,
     pydantic_model: type[BaseModel],
     agent_name: str | None = None,
     state: AgentState | None = None,
@@ -111,8 +112,7 @@ def call_llm(
 
 
 def create_default_response(model_class: type[BaseModel]) -> BaseModel:
-    """Creates a safe default response based on the model's fields."""
-    default_values = {}
+    default_values: dict[str, Any] = {}
     for field_name, field in model_class.model_fields.items():
         if field.annotation == str:
             default_values[field_name] = "Error in analysis, using default"

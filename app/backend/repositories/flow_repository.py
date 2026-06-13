@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -77,13 +77,13 @@ class FlowRepository:
     def create_flow(
         self,
         name: str,
-        nodes: dict,
-        edges: dict,
-        description: str = None,
-        viewport: dict = None,
-        data: dict = None,
+        nodes: Dict[str, Any],
+        edges: Dict[str, Any],
+        description: Optional[str] = None,
+        viewport: Optional[Dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
         is_template: bool = False,
-        tags: List[str] = None,
+        tags: Optional[List[str]] = None,
     ) -> HedgeFundFlow:
         """Create a new hedge fund flow"""
         flow = HedgeFundFlow(
@@ -144,14 +144,14 @@ class FlowRepository:
     def update_flow(
         self,
         flow_id: int,
-        name: str = None,
-        description: str = None,
-        nodes: dict = None,
-        edges: dict = None,
-        viewport: dict = None,
-        data: dict = None,
-        is_template: bool = None,
-        tags: List[str] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        nodes: Optional[Dict[str, Any]] = None,
+        edges: Optional[Dict[str, Any]] = None,
+        viewport: Optional[Dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        is_template: Optional[bool] = None,
+        tags: Optional[List[str]] = None,
     ) -> Optional[HedgeFundFlow]:
         """Update an existing flow"""
         flow = self.get_flow_by_id(flow_id)
@@ -159,21 +159,21 @@ class FlowRepository:
             return None
 
         if name is not None:
-            flow.name = name
+            flow.name = name  # type: ignore[assignment]
         if description is not None:
-            flow.description = description
+            flow.description = description  # type: ignore[assignment]
         if nodes is not None:
-            flow.nodes = nodes
+            flow.nodes = nodes  # type: ignore[assignment]
         if edges is not None:
-            flow.edges = edges
+            flow.edges = edges  # type: ignore[assignment]
         if viewport is not None:
-            flow.viewport = viewport
+            flow.viewport = viewport  # type: ignore[assignment]
         if data is not None:
-            flow.data = data
+            flow.data = data  # type: ignore[assignment]
         if is_template is not None:
-            flow.is_template = is_template
+            flow.is_template = is_template  # type: ignore[assignment]
         if tags is not None:
-            flow.tags = tags
+            flow.tags = tags  # type: ignore[assignment]
 
         self.db.commit()
         self.db.refresh(flow)
@@ -199,11 +199,11 @@ class FlowRepository:
 
         return self.create_flow(
             name=copy_name,
-            description=original.description,
-            nodes=original.nodes,
-            edges=original.edges,
-            viewport=original.viewport,
-            data=original.data,
+            description=original.description,  # type: ignore[arg-type]
+            nodes=original.nodes,  # type: ignore[arg-type]
+            edges=original.edges,  # type: ignore[arg-type]
+            viewport=original.viewport,  # type: ignore[arg-type]
+            data=original.data,  # type: ignore[arg-type]
             is_template=False,  # Copies are not templates by default
-            tags=original.tags,
+            tags=original.tags,  # type: ignore[arg-type]
         )
