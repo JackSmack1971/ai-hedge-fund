@@ -1,5 +1,6 @@
 import logging
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
 import json
 import re
@@ -15,6 +16,8 @@ from src.graph.state import AgentState, start
 from src.utils.analysts import ANALYST_CONFIG
 
 logger = logging.getLogger(__name__)
+
+GRAPH_EXECUTOR = ThreadPoolExecutor(max_workers=32, thread_name_prefix="graph")
 
 
 def sanitize_request_payload(request):
@@ -221,17 +224,12 @@ def create_graph(graph_nodes: list, graph_edges: list) -> StateGraph:
 
 async def run_graph_async(graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request=None):
     """Async wrapper for run_graph to work with asyncio."""
-    # Use run_in_executor to run the synchronous function in a separate thread
-    # so it doesn't block the event loop
     loop = asyncio.get_running_loop()
     context = copy_context()
-    result = await loop.run_in_executor(
-        None,
-        lambda: context.run(
-            run_graph, graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request
-        ),
-    )  # Use default executor
-    return result
+    return await loop.run_in_executor(
+        GRAPH_EXECUTOR,
+        lambda: context.run(run_graph, graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request),
+    )
 
 
 def run_graph(
