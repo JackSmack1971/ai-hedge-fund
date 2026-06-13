@@ -9,6 +9,7 @@ import {
 import { flowService } from '@/services/flow-service';
 import { Flow } from '@/types/flow';
 import { useCallback } from 'react';
+import { debugLog } from '@/lib/debug';
 
 /**
  * Enhanced flow actions that include complete state persistence
@@ -81,7 +82,7 @@ export function useEnhancedFlowActions() {
       // DO NOT clear configuration state when loading flows - useNodeState handles flow isolation automatically
       // DO NOT reset runtime data when loading flows - preserve all runtime state
       // Runtime data should only be reset when explicitly starting a new run via the Play button
-      console.log(`[EnhancedFlowActions] Loading flow ${flow.id} (${flow.name}), preserving all state (configuration + runtime)`);
+      debugLog(`[EnhancedFlowActions] Loading flow ${flow.id} (${flow.name}), preserving all state (configuration + runtime)`);
 
       // Load the flow using the basic function (handles React Flow state)
       await loadFlow(flow);
@@ -99,7 +100,7 @@ export function useEnhancedFlowActions() {
       // Runtime execution data (messages, analysis, agent status) should start fresh
       // Only configuration data (tickers, model selections) is restored above
 
-      console.log('Flow loaded with complete state restoration:', flow.name);
+      debugLog('Flow loaded with complete state restoration:', flow.name);
     } catch (error) {
       console.error('Failed to load flow with complete state:', error);
       throw error;
@@ -110,4 +111,4 @@ export function useEnhancedFlowActions() {
     saveCurrentFlowWithCompleteState,
     loadFlowWithCompleteState,
   };
-} 
+}

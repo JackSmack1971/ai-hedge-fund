@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useFlowContext } from '@/contexts/flow-context';
 import { useNodeContext } from '@/contexts/node-context';
 import { useOutputNodeConnection } from '@/hooks/use-output-node-connection';
+import { debugLog } from '@/lib/debug';
 import { api } from '@/services/api';
 import { type JsonOutputNode } from '../types';
 import { JsonOutputDialog } from './json-output-dialog';
@@ -57,7 +58,7 @@ export function JsonOutputNode({
       // Save file via API
       await api.saveJsonFile(filename, data);
       
-      console.log(`JSON output saved to outputs/${filename}`);
+      debugLog(`JSON output saved to outputs/${filename}`);
     } catch (error) {
       console.error('Failed to save JSON output:', error);
     }
@@ -120,4 +121,4 @@ export function JsonOutputNode({
       />
     </>
   );
-} 
+}

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useState } from 'react';
+import { debugLog } from '@/lib/debug';
 
 // =============================================================================
 // FLOW STATE MANAGER - Handles global state and flow isolation
@@ -230,7 +231,7 @@ export function useNodeState<T>(
         setTimeout(() => {
           setValue(prevValue => {
             if (prevValue !== storedValue) {
-              console.debug(`[useNodeState] Updated ${nodeId}.${stateKey}:`, storedValue);
+              debugLog(`[useNodeState] Updated ${nodeId}.${stateKey}:`, storedValue);
               return storedValue;
             }
             return prevValue;

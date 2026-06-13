@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { debugLog } from '@/lib/debug';
 import { apiKeysService } from '@/services/api-keys-api';
 import { Eye, EyeOff, Key, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -183,7 +184,7 @@ export function ApiKeysSettings() {
               await apiKeysService.deleteApiKey(key);
             } catch {
               // Key might not exist, which is fine
-              console.log(`Key ${key} not found for deletion, which is expected`);
+              debugLog(`Key ${key} not found for deletion, which is expected`);
             }
             setSavedProviders(prev => {
               const next = new Set(prev);

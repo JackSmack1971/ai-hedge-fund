@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { debugLog } from '@/lib/debug';
 import { cn } from '@/lib/utils';
 import { AlertTriangle, Brain, CheckCircle, Download, Play, RefreshCw, Server, Square, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -291,7 +292,7 @@ export function OllamaSettings() {
       });
       
       if (response.ok) {
-        console.log(`Successfully cancelled download for ${modelName}`);
+        debugLog(`Successfully cancelled download for ${modelName}`);
       } else {
         const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
         console.warn(`Failed to cancel download for ${modelName}: ${errorData.detail}`);
@@ -320,7 +321,7 @@ export function OllamaSettings() {
     });
     announceDownload(`Download cancelled for ${displayName}`);
     
-    console.log(`Cancelled download tracking for ${modelName}`);
+    debugLog(`Cancelled download tracking for ${modelName}`);
   };
 
   const cancelDownload = (modelName: string) => {
@@ -415,7 +416,7 @@ export function OllamaSettings() {
       }
     } catch (error) {
       // Ignore errors - probably no active downloads or server not available
-      console.debug('No active downloads found or error checking:', error);
+      debugLog('No active downloads found or error checking:', error);
     }
   };
 
@@ -423,11 +424,11 @@ export function OllamaSettings() {
     const displayName = recommendedModels.find(m => m.model_name === modelName)?.display_name || modelName;
     // Don't reconnect if we're already tracking this download
     if (activeDownloads.has(modelName)) {
-      console.debug(`Already tracking download for ${modelName}`);
+      debugLog(`Already tracking download for ${modelName}`);
       return;
     }
 
-    console.log(`Monitoring existing download for ${modelName}`);
+    debugLog(`Monitoring existing download for ${modelName}`);
     
     // Poll for progress updates instead of starting a new stream
     const pollProgress = async () => {
