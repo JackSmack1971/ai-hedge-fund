@@ -142,6 +142,8 @@ class TestGetFinancialMetrics:
     @patch("src.tools.api._make_api_request")
     @patch("src.tools.api._cache", new_callable=Cache)
     def test_different_limits_produce_separate_api_calls(self, mock_cache, mock_request):
+        # limits 5, 8, 12 all normalize to cache_limit=max(n,12)=12, so only
+        # one upstream fetch is made; results are sliced to the requested limit.
         payload = {
             "financial_metrics": [
                 _financial_metric_payload(f"2024-{month:02d}-31") for month in range(1, 13)
@@ -153,7 +155,7 @@ class TestGetFinancialMetrics:
         result_8 = get_financial_metrics("AAPL", "2024-03-08", limit=8)
         result_12 = get_financial_metrics("AAPL", "2024-03-08", limit=12)
 
-        assert mock_request.call_count == 3
+        assert mock_request.call_count == 1
         assert len(result_5) == 5
         assert len(result_8) == 8
         assert len(result_12) == 12
