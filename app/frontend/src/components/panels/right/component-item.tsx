@@ -44,7 +44,7 @@ export default function ComponentItem({
         }
       }}
     >
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <Icon size={16} className={isActive ? "text-primary" : "text-muted-foreground"} />
       </div>
       <span className="truncate">{label}</span>

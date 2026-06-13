@@ -339,7 +339,7 @@ export function ApiKeysSettings() {
         <Card className="bg-destructive/10 border-destructive/20">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <Key className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+              <Key className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
               <div className="space-y-1">
                 <h4 className="text-sm font-medium text-destructive">Error</h4>
                 <p className="text-xs text-muted-foreground">{error}</p>
@@ -380,7 +380,7 @@ export function ApiKeysSettings() {
       <Card className="bg-amber-500/5 border-amber-500/20">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <Key className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+            <Key className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
             <div className="space-y-1">
               <h4 className="text-sm font-medium text-amber-500">Security Note</h4>
               <p className="text-xs text-muted-foreground">

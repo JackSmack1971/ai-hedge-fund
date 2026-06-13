@@ -130,10 +130,10 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-1 min-w-0">
               {flow.is_template ? (
-                <Layout size={14} className="text-info flex-shrink-0" />
+                <Layout size={14} className="text-info shrink-0" />
               ) : (
                 <FileText size={14} className={cn(
-                  "flex-shrink-0",
+                  "shrink-0",
                   isActive ? "text-info" : "text-muted-foreground"
                 )} />
               )}
@@ -152,7 +152,7 @@ export default function FlowItem({ flow, onLoadFlow, onDeleteFlow, onRefresh, is
             
             {/* Active connection indicator - right aligned */}
             {hasActiveConnection && (
-              <div className="flex items-center gap-1 flex-shrink-0">
+              <div className="flex items-center gap-1 shrink-0">
                 <Zap className="h-3 w-3 text-warning animate-pulse" />
                 <span className="text-xs text-warning font-medium">Running</span>
               </div>
