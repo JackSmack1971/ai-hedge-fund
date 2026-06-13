@@ -2,7 +2,6 @@ import logging
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
-from functools import partial
 import json
 import re
 from collections import deque
@@ -227,8 +226,10 @@ async def run_graph_async(graph, portfolio, tickers, start_date, end_date, model
     """Async wrapper for run_graph to work with asyncio."""
     loop = asyncio.get_running_loop()
     context = copy_context()
-    run_graph_call = partial(run_graph, graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request)
-    return await loop.run_in_executor(GRAPH_EXECUTOR, lambda: context.run(run_graph_call))
+    return await loop.run_in_executor(
+        GRAPH_EXECUTOR,
+        lambda: context.run(run_graph, graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request),
+    )
 
 
 def run_graph(
