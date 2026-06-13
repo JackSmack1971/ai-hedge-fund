@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 from src.data.cache import Cache
 from src.data.models import FinancialMetrics, Price
 from src.tools.api import (
+    _make_api_request,
     get_company_news,
     get_financial_metrics,
     get_insider_trades,
@@ -40,6 +41,22 @@ def _financial_metric_payload(report_period: str) -> dict:
         if field_name not in base:
             base[field_name] = None
     return base
+
+
+class TestApiRetryBackoff:
+    @patch("src.tools.api._BACKOFF_WAIT_EVENT.wait", return_value=False)
+    @patch("src.tools.api.requests.get")
+    def test_429_retry_uses_interruptible_event_wait(self, mock_get, mock_wait):
+        first = _mock_response(429, {})
+        first.headers = {"Retry-After": "2"}
+        second = _mock_response(200, {})
+        mock_get.side_effect = [first, second]
+
+        response = _make_api_request("https://example.com", {})
+
+        assert response.status_code == 200
+        assert mock_get.call_count == 2
+        mock_wait.assert_called_once_with(timeout=2.0)
 
 
 # ──────────────────────────────────────────────────────────
