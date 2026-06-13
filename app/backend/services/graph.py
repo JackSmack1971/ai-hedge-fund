@@ -13,6 +13,7 @@ from src.agents.portfolio_manager import portfolio_management_agent
 from src.agents.risk_manager import risk_management_agent
 from src.graph.state import AgentState, start
 from src.utils.analysts import ANALYST_CONFIG
+from src.utils.parsing import parse_hedge_fund_response
 
 logger = logging.getLogger(__name__)
 
@@ -272,18 +273,3 @@ def run_graph(
         },
         config={"recursion_limit": 50},
     )
-
-
-def parse_hedge_fund_response(response):
-    """Parses a JSON string and returns a dictionary."""
-    try:
-        return json.loads(response)
-    except json.JSONDecodeError as e:
-        logger.exception("JSON decoding error while parsing LLM response: %r", response)
-        return None
-    except TypeError as e:
-        logger.exception("Invalid response type while parsing LLM response: %s", type(response).__name__)
-        return None
-    except Exception as e:
-        logger.exception("Unexpected error while parsing LLM response: %r", response)
-        return None
