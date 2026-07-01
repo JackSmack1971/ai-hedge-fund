@@ -53,7 +53,7 @@ jobs:
 
       # Cache the in-project Poetry virtualenv so dependency resolution stays deterministic and fast.
       - name: Cache Poetry virtualenv
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .venv
           key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'pyproject.toml') }}
