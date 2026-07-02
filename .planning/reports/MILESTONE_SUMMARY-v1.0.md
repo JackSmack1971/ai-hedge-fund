@@ -1,6 +1,6 @@
 # Milestone v1.0 — Project Summary
 
-**Generated:** 2026-06-08
+**Generated:** 2026-07-01
 **Purpose:** Team onboarding and project review
 
 ---
@@ -14,8 +14,8 @@ LLMs may reason, critique, debate, and analyze, but deterministic mathematical a
 
 ### Milestone Status
 * **Current Milestone:** v1.0
-* **Status:** Planning / In-progress (0 of 4 phases completed)
-* **Current Focus:** Phase 1: Foundation & Schemas (Status: Ready to plan)
+* **Status:** Completed
+* **Current Focus:** Milestone complete
 
 ---
 
@@ -72,28 +72,28 @@ The planned architecture transitions the hedge fund from static analyst calls to
 
 | Phase | Name | Status | One-Liner |
 |-------|------|--------|-----------|
-| 1 | Foundation & Schemas | Pending / Planning | Preserved baseline verification, shared hybrid schemas, and pure math risk utilities. |
-| 2 | Hybrid Agents & Meta-Labeler | Planned / Not started | Calibrated confidence, consensus aggregation, debate layer, and meta-label permissions. |
-| 3 | Sizing & Execution Integrations | Planned / Not started | Consume multipliers and suppressions in Risk and Portfolio Managers. |
-| 4 | Adaptive Routing & Reflection | Planned / Not started | Dynamic analyst selector and JSONL trace recorder. |
+| 1 | Foundation & Schemas | Completed | Preserved baseline verification, shared hybrid schemas, and pure math risk utilities. |
+| 2 | Hybrid Agents & Meta-Labeler | Completed | Calibrated confidence, consensus aggregation, debate layer, and meta-label permissions. |
+| 3 | Sizing & Execution Integrations | Completed | Consume multipliers and suppressions in Risk and Portfolio Managers. |
+| 4 | Adaptive Routing & Reflection | Completed | Dynamic analyst selector and JSONL trace recorder. |
 
 ---
 
 ## 4. Requirements Coverage
 
-- [ ] **SCHM-01**: Define structured Pydantic models for all hybrid decision metadata (`src/schemas/hybrid.py`) - **Pending**
-- [ ] **RISK-01**: Implement deterministic signal disagreement score and standard deviation dispersion functions in `src/risk/disagreement.py` - **Pending**
-- [ ] **RISK-02**: Implement CPPI drawdown multiplier calculations in `src/risk/drawdown_guardrail.py` - **Pending**
-- [ ] **RISK-03**: Implement optional fractional Kelly helper in `src/risk/sizing.py` - **Pending**
-- [ ] **PSY-01**: Implement `psychological_guardrail_agent` for confidence calibration, subjectivity, and herding/dispersion - **Pending**
-- [ ] **DEBT-01**: Implement `consensus_agent` summarizing reports, consensus confidence, and conflicts - **Pending**
-- [ ] **DEBT-02**: Implement Safe Debate layer (Bull/Bear/Risk Red-Team sequential agents) - **Pending**
-- [ ] **META-01**: Implement `meta_labeler_agent` mapping guardrails to permission labels - **Pending**
-- [ ] **INT-01**: Integrate risk manager (`src/agents/risk_manager.py`) to consume multipliers and scale position limits - **Pending**
-- [ ] **INT-02**: Integrate portfolio manager (`src/agents/portfolio_manager.py`) to respect allowed actions and quantities - **Pending**
-- [ ] **ROUT-01**: Implement deterministic market regime classifier - **Pending**
-- [ ] **ROUT-02**: Implement adaptive Graph-of-Agents selection choosing analysts dynamically based on regime - **Pending**
-- [ ] **ROUT-03**: Implement reflection recorder (`src/reflection/recorder.py`) storing JSONL traces - **Pending**
+- [x] **SCHM-01**: Define structured Pydantic models for all hybrid decision metadata (`src/schemas/hybrid.py`) - **Completed**
+- [x] **RISK-01**: Implement deterministic signal disagreement score and standard deviation dispersion functions in `src/risk/disagreement.py` - **Completed**
+- [x] **RISK-02**: Implement CPPI drawdown multiplier calculations in `src/risk/drawdown_guardrail.py` - **Completed**
+- [x] **RISK-03**: Implement optional fractional Kelly helper in `src/risk/sizing.py` - **Completed**
+- [x] **PSY-01**: Implement `psychological_guardrail_agent` for confidence calibration, subjectivity, and herding/dispersion - **Completed**
+- [x] **DEBT-01**: Implement `consensus_agent` summarizing reports, consensus confidence, and conflicts - **Completed**
+- [x] **DEBT-02**: Implement Safe Debate layer (Bull/Bear/Risk Red-Team sequential agents) - **Completed**
+- [x] **META-01**: Implement `meta_labeler_agent` mapping guardrails to permission labels - **Completed**
+- [x] **INT-01**: Integrate risk manager (`src/agents/risk_manager.py`) to consume multipliers and scale position limits - **Completed**
+- [x] **INT-02**: Integrate portfolio manager (`src/agents/portfolio_manager.py`) to respect allowed actions and quantities - **Completed**
+- [x] **ROUT-01**: Implement deterministic market regime classifier - **Completed**
+- [x] **ROUT-02**: Implement adaptive Graph-of-Agents selection choosing analysts dynamically based on regime - **Completed**
+- [x] **ROUT-03**: Implement reflection recorder (`src/reflection/recorder.py`) storing JSONL traces - **Completed**
 
 ---
 
@@ -159,7 +159,7 @@ The planned architecture transitions the hedge fund from static analyst calls to
 ## Stats
 
 - **Timeline:** 2026-06-08 23:15:36 → 2026-06-08 23:27:50 (duration: ~12 minutes)
-- **Phases:** 0 complete / 4 total
+- **Phases:** 4 complete / 4 total
 - **Commits:** 7
 - **Files changed:** 15 (+1641 / -0)
 - **Contributors:** Test User
