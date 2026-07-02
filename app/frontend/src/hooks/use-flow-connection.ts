@@ -101,7 +101,7 @@ export function useFlowConnection(flowId: string | null) {
   const nodeContext = useNodeContext();
   const { info } = useToastManager();
   const [, forceUpdate] = useState({});
-  const listenerRef = useRef<() => void>();
+  const listenerRef = useRef<(() => void) | null>(null);
   const cancelResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Force re-render when connections change
