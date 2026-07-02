@@ -1,5 +1,7 @@
 """Tests asserting /api-keys responses never expose the stored secret value."""
 
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -91,3 +93,18 @@ def test_list_does_not_return_secret(client):
     response = client.get("/api-keys/")
     assert response.status_code == 200, response.text
     _assert_no_secret(response)
+
+
+def test_create_returns_generic_500_message_on_unexpected_error(client):
+    with patch(
+        "app.backend.routes.api_keys.ApiKeyRepository.create_or_update_api_key",
+        side_effect=RuntimeError("db password=secret"),
+    ):
+        response = client.post(
+            "/api-keys/",
+            json={"provider": "OPENAI_API_KEY", "key_value": SECRET, "is_active": True},
+        )
+
+    assert response.status_code == 500, response.text
+    assert response.json() == {"detail": "An internal error occurred"}
+    assert "password=secret" not in response.text

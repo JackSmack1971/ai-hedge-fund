@@ -54,3 +54,4 @@ async def stream_flow_run_events(flow_id: int, run_id: int, db: Session = Depend
             await asyncio.sleep(1)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+

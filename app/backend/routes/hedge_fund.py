@@ -191,7 +191,7 @@ async def run(request_data: HedgeFundRequest, request: Request, db: Session = De
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred while processing the request: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An error occurred while processing the request: {str(e)}") from e
 
 
 @router.post(
@@ -395,4 +395,5 @@ async def get_agents():
     try:
         return {"agents": get_agents_list()}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve agents: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve agents: {str(e)}") from e
+

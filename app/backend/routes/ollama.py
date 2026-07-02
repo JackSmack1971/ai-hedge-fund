@@ -69,7 +69,7 @@ async def get_ollama_status():
         return OllamaStatusResponse(**status)
     except Exception as e:
         logger.error(f"Failed to check Ollama status: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to check Ollama status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to check Ollama status: {str(e)}") from e
 
 
 @router.post(
@@ -102,7 +102,7 @@ async def start_ollama_server():
         raise
     except Exception as e:
         logger.error(f"Unexpected error starting Ollama server: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to start Ollama server: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to start Ollama server: {str(e)}") from e
 
 
 @router.post(
@@ -135,7 +135,7 @@ async def stop_ollama_server():
         raise
     except Exception as e:
         logger.error(f"Unexpected error stopping Ollama server: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to stop Ollama server: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to stop Ollama server: {str(e)}") from e
 
 
 @router.post(
@@ -173,7 +173,7 @@ async def download_model(request: ModelRequest):
         raise
     except Exception as e:
         logger.error(f"Unexpected error downloading model {request.model_name}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to download model: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to download model: {str(e)}") from e
 
 
 @router.post(
@@ -213,7 +213,7 @@ async def download_model_with_progress(request: ModelRequest):
         raise
     except Exception as e:
         logger.error(f"Unexpected error setting up progress download for {request.model_name}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to start progress download: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to start progress download: {str(e)}") from e
 
 
 @router.get(
@@ -236,7 +236,7 @@ async def get_download_progress(model_name: str = Path(pattern=_MODEL_NAME_PATTE
         raise
     except Exception as e:
         logger.error(f"Error getting download progress for {model_name}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get download progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get download progress: {str(e)}") from e
 
 
 @router.get(
@@ -260,7 +260,7 @@ async def get_active_downloads():
         return active_downloads
     except Exception as e:
         logger.error(f"Error getting active downloads: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get active downloads: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get active downloads: {str(e)}") from e
 
 
 @router.delete(
@@ -298,7 +298,7 @@ async def delete_model(model_name: str = Path(pattern=_MODEL_NAME_PATTERN.patter
         raise
     except Exception as e:
         logger.error(f"Unexpected error deleting model {model_name}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete model: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete model: {str(e)}") from e
 
 
 @router.get(
@@ -315,7 +315,7 @@ async def get_recommended_models():
         return [RecommendedModel(**model) for model in models]
     except Exception as e:
         logger.error(f"Failed to get recommended models: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get recommended models: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get recommended models: {str(e)}") from e
 
 
 @router.delete(
@@ -342,4 +342,5 @@ async def cancel_download(model_name: str = Path(pattern=_MODEL_NAME_PATTERN.pat
         raise
     except Exception as e:
         logger.error(f"Unexpected error cancelling download for {model_name}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to cancel download: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to cancel download: {str(e)}") from e
+

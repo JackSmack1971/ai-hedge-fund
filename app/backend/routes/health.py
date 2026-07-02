@@ -32,3 +32,4 @@ async def ping():
             await asyncio.sleep(1)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+

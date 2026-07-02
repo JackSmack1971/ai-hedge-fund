@@ -40,7 +40,7 @@ async def create_flow(request: FlowCreateRequest, db: Session = Depends(get_db))
         )
         return FlowResponse.model_validate(flow)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create flow: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create flow: {str(e)}") from e
 
 
 @router.get(
@@ -58,7 +58,7 @@ async def get_flows(include_templates: bool = True, db: Session = Depends(get_db
         flows = repo.get_all_flows(include_templates=include_templates)
         return [FlowSummaryResponse.model_validate(flow) for flow in flows]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve flows: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve flows: {str(e)}") from e
 
 
 @router.get(
@@ -80,7 +80,7 @@ async def get_flow(flow_id: int, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve flow: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve flow: {str(e)}") from e
 
 
 @router.put(
@@ -112,7 +112,7 @@ async def update_flow(flow_id: int, request: FlowUpdateRequest, db: Session = De
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update flow: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update flow: {str(e)}") from e
 
 
 @router.delete(
@@ -134,7 +134,7 @@ async def delete_flow(flow_id: int, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete flow: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete flow: {str(e)}") from e
 
 
 @router.post(
@@ -156,7 +156,7 @@ async def duplicate_flow(flow_id: int, new_name: str = None, db: Session = Depen
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to duplicate flow: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to duplicate flow: {str(e)}") from e
 
 
 @router.get(
@@ -173,4 +173,5 @@ async def search_flows(name: str, db: Session = Depends(get_db)):
         flows = repo.get_flows_by_name(name)
         return [FlowSummaryResponse.model_validate(flow) for flow in flows]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to search flows: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to search flows: {str(e)}") from e
+

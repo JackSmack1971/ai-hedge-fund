@@ -6,7 +6,7 @@ from collections import defaultdict, deque
 from importlib.metadata import PackageNotFoundError, version
 from threading import Lock
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -104,6 +104,20 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AI Hedge Fund API", description="Backend API for AI Hedge Fund", version=APP_VERSION, lifespan=lifespan
 )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code == 500:
+        logger.error("Internal server error at %s", request.url.path, exc_info=(type(exc), exc, exc.__traceback__))
+        return JSONResponse(status_code=500, content={"detail": "An internal error occurred"})
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled exception at %s", request.url.path, exc_info=(type(exc), exc, exc.__traceback__))
+    return JSONResponse(status_code=500, content={"detail": "An internal error occurred"})
 
 
 @app.middleware("http")

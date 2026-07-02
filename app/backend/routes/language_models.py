@@ -31,7 +31,7 @@ async def get_language_models():
 
         return {"models": models}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve models: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve models: {str(e)}") from e
 
 
 @router.get(
@@ -58,4 +58,5 @@ async def get_language_model_providers():
 
         return {"providers": list(providers.values())}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve providers: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve providers: {str(e)}") from e
+

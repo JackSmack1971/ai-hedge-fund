@@ -35,7 +35,7 @@ async def create_flow_run(flow_id: int, request: FlowRunCreateRequest, db: Sessi
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create flow run: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create flow run: {str(e)}") from e
 
 
 @router.get(
@@ -59,7 +59,7 @@ async def get_flow_runs(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve flow runs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve flow runs: {str(e)}") from e
 
 
 @router.get(
@@ -78,7 +78,7 @@ async def get_active_flow_run(flow_id: int, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve active flow run: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve active flow run: {str(e)}") from e
 
 
 @router.get(
@@ -97,7 +97,7 @@ async def get_latest_flow_run(flow_id: int, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve latest flow run: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve latest flow run: {str(e)}") from e
 
 
 @router.get(
@@ -116,7 +116,7 @@ async def get_flow_run(flow_id: int, run_id: int, db: Session = Depends(get_db))
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve flow run: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve flow run: {str(e)}") from e
 
 
 @router.put(
@@ -135,7 +135,7 @@ async def update_flow_run(flow_id: int, run_id: int, request: FlowRunUpdateReque
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update flow run: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update flow run: {str(e)}") from e
 
 
 @router.delete(
@@ -153,7 +153,7 @@ async def delete_flow_run(flow_id: int, run_id: int, db: Session = Depends(get_d
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete flow run: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete flow run: {str(e)}") from e
 
 
 @router.delete(
@@ -171,7 +171,7 @@ async def delete_all_flow_runs(flow_id: int, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete flow runs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete flow runs: {str(e)}") from e
 
 
 @router.get(
@@ -189,4 +189,5 @@ async def get_flow_run_count(flow_id: int, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get flow run count: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get flow run count: {str(e)}") from e
+
