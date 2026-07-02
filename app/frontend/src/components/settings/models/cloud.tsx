@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { backendFetch } from '@/services/http';
 import { Cloud, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -30,7 +31,7 @@ export function CloudModels({ className }: CloudModelsProps) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8000/language-models/providers');
+      const response = await backendFetch('/language-models/providers');
       if (response.ok) {
         const data = await response.json();
         setProviders(data.providers);
