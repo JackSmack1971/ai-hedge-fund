@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { debugLog } from '@/lib/debug';
 import { cn } from '@/lib/utils';
 import { AlertTriangle, Brain, CheckCircle, Download, Play, RefreshCw, Server, Square, Trash2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface OllamaStatus {
   installed: boolean;
@@ -42,7 +42,7 @@ export function OllamaSettings() {
   const [error, setError] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<Record<string, DownloadProgress>>({});
   const [activeDownloads, setActiveDownloads] = useState<Set<string>>(new Set());
-  const [pollIntervals, setPollIntervals] = useState<Set<NodeJS.Timeout>>(new Set());
+  const pollIntervalsRef = useRef<Set<number>>(new Set());
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     modelName: string;
@@ -533,30 +533,25 @@ export function OllamaSettings() {
     };
 
     // Start polling every 2 seconds
-    const pollInterval = setInterval(async () => {
+    const clearTrackedPollInterval = () => {
+      window.clearInterval(pollInterval);
+      pollIntervalsRef.current.delete(pollInterval);
+    };
+
+    const pollInterval: number = window.setInterval(async () => {
       const shouldContinue = await pollProgress();
       if (!shouldContinue) {
-        clearInterval(pollInterval);
-        setPollIntervals(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(pollInterval);
-          return newSet;
-        });
+        clearTrackedPollInterval();
       }
     }, 2000);
 
     // Track the interval for cleanup
-    setPollIntervals(prev => new Set(prev).add(pollInterval));
+    pollIntervalsRef.current.add(pollInterval);
 
     // Do an initial poll
     const shouldContinue = await pollProgress();
     if (!shouldContinue) {
-      clearInterval(pollInterval);
-      setPollIntervals(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(pollInterval);
-        return newSet;
-      });
+      clearTrackedPollInterval();
     }
   };
 
@@ -575,10 +570,13 @@ export function OllamaSettings() {
 
   // Cleanup polling intervals on unmount
   useEffect(() => {
+    const pollIntervals = pollIntervalsRef.current;
+
     return () => {
-      pollIntervals.forEach(interval => clearInterval(interval));
+      pollIntervals.forEach(interval => window.clearInterval(interval));
+      pollIntervals.clear();
     };
-  }, [pollIntervals]);
+  }, []);
 
   const getStatusIcon = () => {
     if (!ollamaStatus) return <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />;
