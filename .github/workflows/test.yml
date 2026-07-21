@@ -42,7 +42,7 @@ jobs:
 
     steps:
       # actions/checkout is SHA-pinned because it touches repository contents on every run.
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       # actions/setup-python is SHA-pinned because it bootstraps the interpreter and pip cache.
       - name: Set up Python ${{ matrix.python-version }}
@@ -129,7 +129,7 @@ jobs:
 
     steps:
       # actions/checkout is SHA-pinned because it is the first trust boundary on the job.
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       # Use the current stable Node setup action and cache npm installs by lockfile.
       - name: Set up Node.js 20
